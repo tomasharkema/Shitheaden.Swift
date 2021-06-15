@@ -40,12 +40,11 @@ func >>> (color: Color, string: String) -> String {
 
 infix operator >>>
 
-extension Position {
-  public var cliRep: String {
+public extension Position {
+  var cliRep: String {
     return "\u{1B}[\(y);\(x)H"
   }
 }
-
 
 extension String {
   func print() {

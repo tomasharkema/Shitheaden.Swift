@@ -20,6 +20,7 @@ public actor Game {
   public var players = [Player]()
   public private(set) var table = Table()
   var burnt = [Card]()
+  var turns = [(String, Turn)]()
 
   let rules = Rules.all
 
@@ -59,53 +60,68 @@ public actor Game {
     }
   }
 
-  func commitTurn(playerIndex: Int, player oldPlayer: Player, render: (Game) async -> ()) async -> Player {
-    guard !oldPlayer.done, !done else {
-      return oldPlayer
+  func commitTurn(
+    playerIndex: Int,
+    player oldP: Player,
+    render: (Game) async -> Void,
+    numberCalled: Int
+  ) async -> Player {
+    var player = oldP
+
+    guard !player.done, !done, numberCalled < 100 else {
+      return player
     }
 
-    var player = oldPlayer
     player.sortCards()
 
-    let req = TurnRequest(handCards: player.handCards, openTableCards: player.openTableCards, lastTableCard: table.lastCard, numberOfClosedTableCards: player.closedTableCards.count, phase: player.phase, amountOfTableCards: table.count, amountOfDeckCards: deck.cards.count)
+    let req = TurnRequest(
+      handCards: player.handCards,
+      openTableCards: player.openTableCards,
+      lastTableCard: table.lastCard,
+      numberOfClosedTableCards: player.closedTableCards.count,
+      phase: player.phase,
+      amountOfTableCards: table.count,
+      amountOfDeckCards: deck.cards.count
+    )
 
     let turn = await player.ai.move(request: req)
 
-    guard req.possibleTurns().contains(turn) else {
-      print(
-        "ISSUE!",
-        oldPlayer.phase,
-        turn,
-        req.possibleTurns(),
-        player.handCards,
-        player.openTableCards,
-        player.closedTableCards,
-        player.hasPutCardsOpen,
-        player.done
-      )
-      print("NO POSSIBLE")
-      assertionFailure("This is not possible")
-      return try await commitTurn(playerIndex: playerIndex, player: oldPlayer, render: render)
-    }
+    try! turn.verify()
 
-    // let count = player.turns.filter { $0 == turn }.count
-    // if count > 50 {
-    //   // bail out when player is in a loop
-    //   pass(playerIndex: playerIndex)
-    //   return player
-    // }
+    guard req.possibleTurns().contains(turn) else {
+//      print(
+//        "ISSUE!",
+//        oldPlayer.phase,
+//        turn,
+//        req.possibleTurns(),
+//        player.handCards,
+//        player.openTableCards,
+//        player.closedTableCards,
+//        player.hasPutCardsOpen,
+//        player.done
+//      )
+      print("NO POSSIBLE", numberCalled, await player.ai.algoName, player.phase, turn, req.possibleTurns())
+      assertionFailure("This is not possible")
+      return await commitTurn(
+        playerIndex: playerIndex,
+        player: player,
+        render: render,
+        numberCalled: numberCalled + 1
+      )
+    }
 
     player.turns.append(turn)
 
     switch turn {
-
-    case .closedCardIndex(let index):
+    case let .closedCardIndex(index):
 
       if player.phase == .tableClosed {
         let previousTable = table
         let card = player.closedTableCards[index - 1]
-        player.closedTableCards.remove(el: card)
-        table = Array([table, [card]].joined())
+
+        player.closedTableCards.remove(at: player.closedTableCards.firstIndex(of: card)!)
+
+        table += [card]
 
         if let lastTable = previousTable.last, let lastApplied = table.last,
            !lastTable.afters.contains(lastApplied)
@@ -118,12 +134,12 @@ public actor Game {
         fatalError("Can not throw closedCardIndex")
       }
     case let .play(possibleBeurt):
-      table = table + possibleBeurt
+      table.append(contentsOf: possibleBeurt)
 
       switch player.phase {
       case .hand:
         for p in possibleBeurt {
-          player.handCards.remove(el: p)
+          player.handCards.remove(at: player.handCards.firstIndex(of: p)!)
         }
 
         for _ in 0 ..< 3 {
@@ -136,13 +152,13 @@ public actor Game {
 
       case .tableOpen:
         for p in possibleBeurt {
-          player.openTableCards.remove(el: p)
+          player.openTableCards.remove(at: player.openTableCards.firstIndex(of: p)!)
         }
 
       case .tableClosed:
 //        throw PlayerError(text: "Cannot play in this phase")
         fatalError("Cannot play in this phase")
-        
+
       case .putOnTable:
         break
       }
@@ -152,19 +168,27 @@ public actor Game {
       table = []
 
     case let .putOnTable(card1, card2, card3):
-      player.handCards.remove(el: card1)
-      player.handCards.remove(el: card2)
-      player.handCards.remove(el: card3)
+      player.handCards.remove(at: player.handCards.firstIndex(of: card1)!)
+      player.handCards.remove(at: player.handCards.firstIndex(of: card2)!)
+      player.handCards.remove(at: player.handCards.firstIndex(of: card3)!)
+
       player.openTableCards.append(card1)
       player.openTableCards.append(card2)
       player.openTableCards.append(card3)
       player.hasPutCardsOpen = true
     }
 
+    turns += [(player.name, turn)]
+
     if turn == .pass, rules.contains(.againAfterPass), !player.done, !done {
 //      printState()
       await render(self)
-      return try await commitTurn(playerIndex: playerIndex, player: player, render: render)
+      return await commitTurn(
+        playerIndex: playerIndex,
+        player: player,
+        render: render,
+        numberCalled: numberCalled + 1
+      )
     }
 
     if lastCard?.number == .ten {
@@ -174,7 +198,12 @@ public actor Game {
 
       await render(self)
       if rules.contains(.againAfterGoodBehavior), !player.done, !done {
-        return try await commitTurn(playerIndex: playerIndex, player: player, render: render)
+        return await commitTurn(
+          playerIndex: playerIndex,
+          player: player,
+          render: render,
+          numberCalled: numberCalled + 1
+        )
       }
     } else if table.suffix(4).reduce((0, nil) as (Int, Number?), { prev, curr in
       if let prefNumber = prev.1 {
@@ -190,17 +219,25 @@ public actor Game {
       burnt.append(contentsOf: table)
       table = []
       if rules.contains(.againAfterGoodBehavior), !player.done, !done {
-        return try await commitTurn(playerIndex: playerIndex, player: player, render: render)
+        return await commitTurn(
+          playerIndex: playerIndex,
+          player: player,
+          render: render,
+          numberCalled: numberCalled + 1
+        )
       }
     }
 
     return player
   }
 
-  func beurt(render: (Game) async -> ()) async {
-    for (index, player) in notDonePlayers.enumerated() {
-      players[index] = await commitTurn(playerIndex: index, player: player, render: render)
-//      printState()
+  func beurt(render: (Game) async -> Void) async {
+    for (index, player) in players.enumerated() {
+      if !player.done {
+      players[index] = await commitTurn(playerIndex: index, player: player, render: render,
+                                        numberCalled: 0)
+      try! checkIntegrity()
+      }
       await render(self)
     }
     if !done {
@@ -248,7 +285,7 @@ public actor Game {
     }
   }
 
-  func startRound(render: @escaping (Game) async -> ()) async {
+  func startRound(render: @escaping (Game) async -> Void) async {
     resetBeurten()
 
     shuffle()
@@ -262,59 +299,76 @@ public actor Game {
   }
 
   private func startGameRec(
-    render: @escaping (Game) async -> ()
+    render: @escaping (Game) async -> Void
   ) async {
     await startRound(render: render)
   }
 
-  public func startGame(render: @escaping (Game) async -> ()) async {
+  public func startGame(render: @escaping (Game) async -> Void) async {
     await startGameRec(
       render: render
     )
+  }
+
+  func checkIntegrity() throws {
+//#if DEBUG
+      var pastCards = [(Card, String)]()
+
+      for player in players {
+        for handCard in player.handCards {
+          if pastCards.contains { $0.0 == handCard } {
+            try PlayerError(text: "DOUBLE CARD ENCOUNTERED")
+          }
+          pastCards.append((handCard, "\(player.name):hand"))
+        }
+        for openTableCard in player.openTableCards {
+          if pastCards.contains { $0.0 == openTableCard } {
+            try PlayerError(text: "DOUBLE CARD ENCOUNTERED")
+          }
+          pastCards.append((openTableCard, "\(player.name):openTableCard"))
+        }
+        for closedTableCard in player.closedTableCards {
+          if pastCards.contains { $0.0 == closedTableCard } {
+            try PlayerError(text: "DOUBLE CARD ENCOUNTERED")
+          }
+          pastCards.append((closedTableCard, "\(player.name):closedTableCard"))
+        }
+      }
+
+      for c in table {
+        if let found = pastCards.first(where: { $0.0 == c }) {
+          print("found", found)
+          try PlayerError(text: "DOUBLE CARD ENCOUNTERED")
+        }
+        pastCards.append((c, "table"))
+      }
+
+      for c in deck.cards {
+        if pastCards.contains(where: { $0.0 == c }) {
+          try PlayerError(text: "DOUBLE CARD ENCOUNTERED")
+        }
+        pastCards.append((c, "deck"))
+      }
+
+      for c in burnt {
+        if pastCards.contains { $0.0 == c } {
+          try PlayerError(text: "DOUBLE CARD ENCOUNTERED")
+        }
+        pastCards.append((c, "burnt"))
+      }
+
+      if pastCards.count != 52 {
+        print(pastCards.count)
+        print(turns)
+        try PlayerError(text: "SHOULD HAVE 52 CARDS!")
+      }
+
+//#endif
   }
 }
 
 extension Table {
   var lastCard: Card? {
     return lazy.filter { $0.number != .three }.last
-  }
-}
-
-extension Array where Element == Turn {
-  var includeDoubles: Set<Turn> {
-    var turns = Set<Turn>()
-
-    for el in self {
-      turns.insert(el)
-
-      if case let .play(cards) = el {
-        for card in cards {
-          for case let .play(otherCards) in turns {
-            var a = Set([card])
-            // a.insert(contentsOf: otherCards.filter { $0.number == card.number })
-            for e in otherCards.filter { $0.number == card.number } {
-              a.insert(e)
-            }
-            turns.insert(Turn.play(a))
-          }
-        }
-      }
-    }
-    return turns
-
-    // return self.flatMap { el in
-    //   [[el], self.flatMap { (d) -> [Turn] in
-    //     if d == el {
-    //       return []
-    //     } else {
-    //       if case .play(let card) = d, case .play(let elCard) = el {
-    //         return ([card, elCard].flatMap {
-    //           Turn.play($0)
-    //         }).joined()
-    //       } else {
-    //         return []
-    //       }
-    //     }
-    //    }].joined()
   }
 }

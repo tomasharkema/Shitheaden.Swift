@@ -32,25 +32,31 @@
 import ShitheadenShared
 
 extension TurnRequest {
-  func possibleTurns() -> Set<Turn> {
+  func possibleTurns() -> [Turn] {
     switch phase {
     case .putOnTable:
 
       var turns = [Turn]()
       for firstIteration in handCards {
-        for secondIteration in handCards.filter { $0 != firstIteration } {
-          for thirdIteration in handCards.filter { $0 != firstIteration && $0 != secondIteration } {
+        for secondIteration in handCards.filter({ $0 != firstIteration }) {
+          for thirdIteration in handCards
+            .filter({ $0 != firstIteration && $0 != secondIteration })
+          {
             turns.append(Turn.putOnTable(firstIteration, secondIteration, thirdIteration))
           }
         }
       }
 
-      return turns.includeDoubles
+      return turns.unique()
 
     case .hand:
       let actions = handCards.filter { lastTableCard?.afters.contains($0) ?? true }
         .map { Turn.play([$0]) }
-      return Array([actions, [.pass]].joined()).includeDoubles
+      let e = Array([actions, [.pass]].joined()).includeDoubles.unique()
+      if e.doubles() {
+        fatalError()
+      }
+      return e
 
     case .tableOpen:
       let actions = openTableCards.filter { lastTableCard?.afters.contains($0) ?? true }
@@ -58,10 +64,10 @@ extension TurnRequest {
       if actions.isEmpty {
         return [Turn.pass]
       }
-      return actions.includeDoubles
+      return actions.includeDoubles.unique()
 
     case .tableClosed:
-      return Set((1...numberOfClosedTableCards).map { Turn.closedCardIndex($0) })
+      return (1 ... numberOfClosedTableCards).map { Turn.closedCardIndex($0) }.unique()
     }
   }
 }

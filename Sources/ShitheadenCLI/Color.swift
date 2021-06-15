@@ -23,7 +23,6 @@ extension Symbol {
       return .Red
     }
   }
-
 }
 
 extension Card: CustomStringConvertible {
@@ -35,7 +34,6 @@ extension Card: CustomStringConvertible {
 }
 
 extension Player {
-
   var showedTable: String {
     return openTableCards.map { $0.description }.joined(separator: " ")
   }
@@ -47,5 +45,4 @@ extension Player {
   var closedTableShowed: String {
     return closedTableCards.map { $0.description }.joined(separator: " ")
   }
-
 }

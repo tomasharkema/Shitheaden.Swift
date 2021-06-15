@@ -14,66 +14,66 @@ extension Array {
 //    }
 //  }
 
-  func without(index: Int) -> [Element] {
-    var newArray = [Element]()
-    newArray = self
-    newArray.remove(at: index)
-    return newArray
-  }
+//  func without(index: Int) -> [Element] {
+//    var newArray = [Element]()
+//    newArray = self
+//    newArray.remove(at: index)
+//    return newArray
+//  }
 }
 
-extension Array where Element: Equatable {
-  mutating func remove(el: Element) {
-    self = filter { (element: Element) -> Bool in
-      el != element
-    }
-  }
-
-  func without(el: Element) -> [Element] {
-    var newArray = self
-
-    if let index = newArray.firstIndex(of: el) {
-      newArray.remove(at: index)
-    }
-    return newArray
-  }
-
-  func without(el: [Element]) -> [Element] {
-    var newArray = self
-
-    for e in el {
-      newArray = newArray.without(el: e)
-    }
-
-    return newArray
-  }
-}
-
-extension Array where Element: Hashable {
-  func without(el: Set<Element>) -> [Element] {
-    var newArray = self
-
-    for e in el {
-      newArray.remove(el: e)
-    }
-
-    return newArray
-  }
-}
-
-extension Set where Element: Equatable {
-  func without(el: Element) -> Set<Element> {
-    var newArray = Set<Element>()
-
-    for obj in self {
-      if el != obj {
-        newArray.insert(obj)
-      }
-    }
-
-    return newArray
-  }
-}
+// extension Array where Element: Equatable {
+//  mutating func remove(el: Element) {
+//    self = filter { (element: Element) -> Bool in
+//      el != element
+//    }
+//  }
+//
+//  func without(el: Element) -> [Element] {
+//    var newArray = self
+//
+//    if let index = newArray.firstIndex(of: el) {
+//      newArray.remove(at: index)
+//    }
+//    return newArray
+//  }
+//
+//  func without(el: [Element]) -> [Element] {
+//    var newArray = self
+//
+//    for e in el {
+//      newArray = newArray.without(el: e)
+//    }
+//
+//    return newArray
+//  }
+// }
+//
+// extension Array where Element: Hashable {
+//  func without(el: Set<Element>) -> [Element] {
+//    var newArray = self
+//
+//    for e in el {
+//      newArray.remove(el: e)
+//    }
+//
+//    return newArray
+//  }
+// }
+//
+// extension Set where Element: Equatable {
+//  func without(el: Element) -> Set<Element> {
+//    var newArray = Set<Element>()
+//
+//    for obj in self {
+//      if el != obj {
+//        newArray.insert(obj)
+//      }
+//    }
+//
+//    return newArray
+//  }
+// }
 
 //
 //

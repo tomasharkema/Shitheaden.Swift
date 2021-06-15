@@ -6,9 +6,9 @@
 //  Copyright © 2015 Tomas Harkema. All rights reserved.
 //
 
+import CustomAlgo
 import Shitheaden
 import ShitheadenShared
-import CustomAlgo
 
 struct PlayedGame {
   let games: [Game]
@@ -57,7 +57,9 @@ class Tournament {
   }
 
   func peformanceOfAI(ai: [(GameAi.Type, String)], gameId: String = "0") async -> PlayedGame {
-    let playedGames: [Game] = await withTaskGroup(of: [Game].self) { group in
+
+
+      let playedGames: [Game] = await withTaskGroup(of: [Game].self) { group in
       for idx in 1 ... self.roundsPerGame {
         group.async {
           let players: [Player] = ai.enumerated().map { index, element in
@@ -69,11 +71,12 @@ class Tournament {
             )
           }
           let game = Game(players: players)
-          let shouldPrint = true
+
           await game.startGame(render: { _ in
+//            print("STEP", players)
           })
-          print("\(gameId) \(idx) winner: \(await game.winner?.ai.algoName)")
-          return await [game]
+          print("\(gameId) \(idx) winner: \(await game.winner?.ai.algoName ?? "")")
+          return [game]
         }
       }
 
@@ -85,7 +88,7 @@ class Tournament {
 
   func playTournament() async {
     let AIs: [GameAi.Type] = allAlgos + [
-      CustomAlgo.self,
+      CardRankingAlgo.self, CardRankingAlgoWithUnfairPassing.self,
     ]
 
     let watch = StopWatch()
@@ -93,6 +96,8 @@ class Tournament {
 
     let stats = await withTaskGroup(of: ([String: Int], [String: [String: Int]])
       .self) { g -> ([String: Int], [String: [String: Int]]) in
+//      g.async {
+//        var result = [([String : Int],  [String: [String: Int]] )]()
       for (index1, ai1) in AIs.enumerated() {
         for (index2, ai2) in AIs.enumerated() {
           for (index3, ai3) in AIs.enumerated() {
@@ -117,12 +122,23 @@ class Tournament {
                 print(
                   "\(potjeIndex) \(winnings) : \(aisPrint)\ntime: \(watch.getLap()) - \(duration.getLap())"
                 )
-
+//              result.append(await (winnings, res.winningsFrom()))
                 return await (winnings, res.winningsFrom())
               }
             }
           }
         }
+//        return g.reduce(([String: Int](), [String: [String: Int]]())) { prev, curr in
+//          var new = prev
+//
+//          for el in curr.0.keys {
+//            new.0[el] = curr.0[el]
+//          }
+//          for el in curr.1.keys {
+//            new.1[el] = curr.1[el]
+//          }
+//          return new
+//        }
       }
 
       return await g.reduce(([String: Int](), [String: [String: Int]]())) { prev, curr in
@@ -137,7 +153,6 @@ class Tournament {
         return new
       }
     }
-//    dispatch_group_wait(dispatchGroup, DISPATCH_TIME_FOREVER)
 
     let scores = stats.0.sorted { lhs, rhs in
       lhs.1 > rhs.1

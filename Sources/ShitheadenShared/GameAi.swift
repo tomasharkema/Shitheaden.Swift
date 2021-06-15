@@ -12,12 +12,12 @@ public protocol GameAi: Actor {
   func move(request: TurnRequest) async -> Turn
 }
 
-extension GameAi {
-  public var algoName: String {
+public extension GameAi {
+  var algoName: String {
     String(describing: self)
   }
 
-  public static var algoName: String {
+  static var algoName: String {
     String(describing: Self.self)
   }
 }

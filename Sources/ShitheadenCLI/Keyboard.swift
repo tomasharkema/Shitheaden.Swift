@@ -22,7 +22,6 @@ class Keyboard {
     let inputs = input.split(separator: ",").map {
       Int($0.trimmingCharacters(in: .whitespacesAndNewlines))
     }
-
     if inputs.contains(nil) {
       Position.input.down(n: 1) >>> "Je moet p of een aantal cijfers invullen..."
       return nil

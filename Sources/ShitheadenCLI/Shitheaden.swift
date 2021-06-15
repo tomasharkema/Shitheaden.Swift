@@ -6,12 +6,12 @@
 //  Copyright © 2015 Tomas Harkema. All rights reserved.
 //
 
+import CustomAlgo
 import Foundation
 import Shitheaden
 
 @main
 enum Shitheaden {
-
   static func main() async {
     let args = CommandLine.arguments
 
@@ -32,7 +32,6 @@ enum Shitheaden {
     }
   }
 
-
   private static func playTournament() async {
     CLI.shouldPrintGlbl = false
     await Tournament(roundsPerGame: 10).playTournament()
@@ -46,29 +45,28 @@ enum Shitheaden {
         ai: UserInputAI()
       ),
       Player(
-        name: "West",
+        name: "West (Unfair)",
         position: .west,
-        ai: RandomBot()
+        ai: CardRankingAlgoWithUnfairPassing()
       ),
       Player(
         name: "Noord",
         position: .noord,
-        ai: RandomBot()
+        ai: CardRankingAlgo()
       ),
       Player(
         name: "Oost",
         position: .oost,
-        ai: RandomBot()
+        ai: CardRankingAlgo()
       ),
-    ]
-    )
-    
+    ])
+
     CLI.shouldPrintGlbl = true
 
     await game.startGame { game in
       CLI.setBackground()
       CLI.clear()
-      Position.header >>> "EENENDERTIGEN"
+      Position.header.down(n: 1) >>> " Shitheaden"
       await Position.tafel >>> game.table.suffix(5).map { $0.description }.joined(separator: " ")
 
       for player in await game.players {
@@ -81,49 +79,7 @@ enum Shitheaden {
           player.position >>> "\(player.name) KLAAR"
         }
       }
-      Thread.sleep(forTimeInterval: 1)
+      Thread.sleep(forTimeInterval: 0.1)
     }
   }
-}
-
-extension Game {
-
-  //  func finishRound() {
-  //    for loser in pickLosers() {
-  //      if let index = players.index(of: loser) {
-  //        players[index].sticks -= 1
-  //      }
-  //    }
-  //  }
-//
-//  func printEndState() {
-//    CLI.setBackground()
-//    CLI.clear()
-//    Position.header >>> "EENENDERTIGEN"
-//    Position.tafel >>> table.map { $0.description }.joined(separator: " ")
-//
-//    let losers = pickLosers()
-//
-//    for player in players {
-//      if !player.done {
-//        let extraMessage: String
-//        if !shouldDoAnotherRound() {
-//          extraMessage = " WINNAAR!"
-//        } else if losers.contains(player) {
-//          extraMessage = " - Klaar"
-//        } else {
-//          extraMessage = "\(player.handCards.count) kaarten"
-//        }
-//        //        } else if player.points == .Verbied || player.points == .AasVerbied {
-//        //          extraMessage = " - Verbied!"
-//        //        }
-//
-//        player.position >>> "\(player.name)\(extraMessage)"
-//
-//        player.position.down(n: 1) >>> ""
-//      } else {
-//        player.position >>> "\(player.name) KLAAR!"
-//      }
-//    }
-//  }
 }

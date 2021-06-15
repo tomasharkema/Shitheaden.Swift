@@ -33,3 +33,30 @@ public struct Card: Equatable, Hashable {
     number.afters.contains(other.number)
   }
 }
+
+public extension Array where Element == Card {
+  
+  func sortNumbers() -> [Card] {
+    let enumerated = Number.allCases.enumerated()
+    return sorted { l, r in
+      return (enumerated.first { $0.element == l.number }?.offset ?? 100) <
+        (enumerated.first { $0.element == r.number }?.offset ?? 100)
+    }
+  }
+
+  func sortSymbol() ->[Card] {
+    let enumerated = Symbol.allCases.enumerated()
+    return sorted { l, r in
+      return (enumerated.first { $0.element == l.symbol }?.offset ?? 100) <
+        (enumerated.first { $0.element == r.symbol }?.offset ?? 100)
+    }
+  }
+
+  func sameNumber() -> Bool {
+    return !contains {
+      $0.number != first?.number
+    }
+  }
+}
+
+

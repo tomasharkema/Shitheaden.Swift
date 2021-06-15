@@ -10,14 +10,6 @@ import Foundation
 import Shitheaden
 import ShitheadenShared
 
-struct PlayerError: LocalizedError {
-  let text: String
-
-  var errorDescription: String? {
-    text
-  }
-}
-
 actor UserInputAI: GameAi {
   static let algoName = "UserInputAI"
 
@@ -48,10 +40,14 @@ actor UserInputAI: GameAi {
 
       switch request.phase {
       case .hand:
-
-        executeTurn = .play(Set(request.handCards.lazy.enumerated().filter {
+        let elements = request.handCards.lazy.enumerated().filter {
           keuze.contains($0.offset + 1)
-        }.map { $0.element }))
+        }.map { $0.element }
+
+        if elements.count > 1, !elements.sameNumber() {
+          throw PlayerError(text: "Je moet kaarten met dezelfde nummers opgeven")
+        }
+        executeTurn = .play(elements.sortSymbol())
       case .putOnTable:
 
         if keuze.count != 3 {
@@ -59,7 +55,7 @@ actor UserInputAI: GameAi {
         }
         let cards = request.handCards.lazy.enumerated().filter {
           keuze.contains($0.offset + 1)
-        }.map { $0.element }
+        }.map { $0.element }.sortSymbol()
         executeTurn = .putOnTable(cards[0], cards[1], cards[2])
 
       case .tableClosed:
@@ -67,7 +63,7 @@ actor UserInputAI: GameAi {
           throw PlayerError(text: "Je kan maar 1 kaart spelen")
         }
 
-        guard let i = (1...request.numberOfClosedTableCards).first(where: {
+        guard let i = (1 ... request.numberOfClosedTableCards).first(where: {
           $0 == keuze.first
         }) else {
           throw PlayerError(text: "Deze kaart kan je niet spelen")
@@ -76,9 +72,9 @@ actor UserInputAI: GameAi {
         executeTurn = .closedCardIndex(i)
 
       case .tableOpen:
-        executeTurn = .play(Set(request.openTableCards.lazy.enumerated().filter {
+        executeTurn = .play(request.openTableCards.lazy.enumerated().filter {
           keuze.contains($0.offset + 1)
-        }.map { $0.element }))
+        }.map { $0.element })
       }
 
     } else {
@@ -86,7 +82,7 @@ actor UserInputAI: GameAi {
     }
 
 //    if request.possibleTurns.contains(executeTurn) {
-      return executeTurn
+    return executeTurn
 //    } else {
 //      throw PlayerError(text: "\(executeTurn) is not in \(request.possibleTurns) phase: \(request.phase)")
 //    }
@@ -96,17 +92,16 @@ actor UserInputAI: GameAi {
     do {
       return try await getBeurtFromUser(request: request)
     } catch {
-      Position.input.down(n: -2) >>> error.localizedDescription
+      Position.input.down(n: -2) >>> ((error as? PlayerError)?.text ?? error.localizedDescription)
       return nil
     }
   }
 
-func move(request: TurnRequest) async -> Turn {
-  if let res = await execute(request: request) {
-    return res
-  } else {
-    return await move(request: request)
+  func move(request: TurnRequest) async -> Turn {
+    if let res = await execute(request: request) {
+      return res
+    } else {
+      return await move(request: request)
+    }
   }
-}
-
 }

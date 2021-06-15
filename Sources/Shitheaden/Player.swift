@@ -20,11 +20,11 @@ public struct Player: CustomStringConvertible, Equatable, Hashable {
   public internal(set) var hasPutCardsOpen: Bool = false
 
   public init(name: String, position: Position, ai: GameAi) {
-    self.handCards = []
-    self.openTableCards = []
-    self.closedTableCards = []
+    handCards = []
+    openTableCards = []
+    closedTableCards = []
     self.name = name
-    self.turns = []
+    turns = []
     self.position = position
     self.ai = ai
   }
@@ -59,7 +59,7 @@ public struct Player: CustomStringConvertible, Equatable, Hashable {
 
       return "put on table"
 
-    case .closedCardIndex(let i):
+    case let .closedCardIndex(i):
       return "put on table card \(i)"
 
     case .none:
@@ -73,11 +73,7 @@ public struct Player: CustomStringConvertible, Equatable, Hashable {
   }
 
   mutating func sortCards() {
-    handCards = handCards.sorted { l, r in
-      let enumerated = Number.allCases.enumerated()
-      return (enumerated.first { $0.element == l.number }?.offset ?? 100) <
-        (enumerated.first { $0.element == r.number }?.offset ?? 100)
-    }
+    handCards = handCards.sortNumbers()
   }
 
   public static func == (lhs: Player, rhs: Player) -> Bool {

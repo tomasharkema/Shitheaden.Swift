@@ -12,7 +12,11 @@ let package = Package(
     // Products define the executables and libraries a package produces, and make them visible to other packages.
     .executable(name: "ShitheadenCLI", targets: ["ShitheadenCLI"]),
     .library(name: "Shitheaden", type: .static, targets: ["Shitheaden"]),
-    .library(name: "ShitheadenShared", type: .static, targets: ["ShitheadenShared"]),
+    .library(
+      name: "ShitheadenShared",
+      type: .static,
+      targets: ["ShitheadenShared"]//, "ShitheadenSharedTests"]
+    ),
     .library(name: "CustomAlgo", type: .static, targets: ["CustomAlgo"]),
   ],
   dependencies: [
@@ -24,26 +28,27 @@ let package = Package(
       name: "ShitheadenCLI",
       dependencies: [
         .target(name: "Shitheaden"),
-        .target(name: "CustomAlgo")
+        .target(name: "CustomAlgo"),
       ],
       swiftSettings: [
         .unsafeFlags([
           "-Xfrontend",
           "-enable-experimental-concurrency",
-          "-Xfrontend", "-disable-availability-checking",
+          "-Xfrontend",
+          "-disable-availability-checking",
         ]),
       ]
     ),
 
-      .target(
-        name: "Shitheaden",
-        dependencies: ["ShitheadenShared"],
-        swiftSettings: [.unsafeFlags([
-          "-Xfrontend",
-          "-enable-experimental-concurrency",
-          "-Xfrontend", "-disable-availability-checking",
-        ]),]
-      ),
+    .target(
+      name: "Shitheaden",
+      dependencies: ["ShitheadenShared"],
+      swiftSettings: [.unsafeFlags([
+        "-Xfrontend",
+        "-enable-experimental-concurrency",
+        "-Xfrontend", "-disable-availability-checking",
+      ]), .define("DEBUG", .when(configuration: .debug))]
+    ),
 
     .target(
       name: "ShitheadenShared",
@@ -52,17 +57,20 @@ let package = Package(
         "-Xfrontend",
         "-enable-experimental-concurrency",
         "-Xfrontend", "-disable-availability-checking",
-      ]),]
+      ])]
     ),
     .target(
       name: "CustomAlgo",
       dependencies: [
-        .target(name: "ShitheadenShared")],
+        .target(name: "ShitheadenShared"),
+      ],
       swiftSettings: [.unsafeFlags([
         "-Xfrontend",
         "-enable-experimental-concurrency",
         "-Xfrontend", "-disable-availability-checking",
-      ]),]
+      ])]
     ),
+
+//    .testTarget(name: "ShitheadenSharedTests"),
   ]
 )
