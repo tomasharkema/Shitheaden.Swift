@@ -11,27 +11,29 @@ public actor CardRankingAlgo: GameAi {
   private var passes = 0
   public required init() {}
 
-  public func move(request: TurnRequest) async -> Turn {
+  public func beginMove(request: TurnRequest,
+                        previousError _: PlayerError?) async -> (Card, Card, Card)
+  {
+    let putOnTable = request.handCards.map {
+      ($0, $0.number.importanceScore)
+    }.sorted {
+      $0.1 > $1.1
+    }.map {
+      $0.0
+    }
+
+    return (
+      putOnTable.first!,
+      putOnTable.dropFirst().first!,
+      putOnTable.dropFirst().dropFirst().first!
+    )
+  }
+
+  public func move(request: TurnRequest, previousError _: PlayerError?) async -> Turn {
     passes += 1
 //    print("PASSES: ", passes)
 
     switch request.phase {
-    case .putOnTable:
-
-      let putOnTable = request.handCards.map {
-        ($0, $0.number.importanceScore)
-      }.sorted {
-        $0.1 > $1.1
-      }.map {
-        $0.0
-      }
-      
-      return .putOnTable(
-        putOnTable.first!,
-        putOnTable.dropFirst().first!,
-        putOnTable.dropFirst().dropFirst().first!
-      )
-
     case .hand, .tableOpen:
       let pt = request.possibleTurns()
 
@@ -54,8 +56,8 @@ public actor CardRankingAlgo: GameAi {
 extension Turn {
   var playedCards: [Card] {
     switch self {
-    case let .putOnTable(f, s, t):
-      return [f, s, t]
+//    case let .putOnTable(f, s, t):
+//      return [f, s, t]
     case let .play(cards):
       return Array(cards)
     case .closedCardIndex, .pass:
@@ -77,17 +79,17 @@ extension Number {
       return 11
     case .ten:
       return 10
-    case .negen:
+    case .nine:
       return 9
-    case .acht:
+    case .eight:
       return 8
     case .seven:
       return 7
-    case .zes:
+    case .six:
       return 6
-    case .vijf:
+    case .five:
       return 5
-    case .vier:
+    case .four:
       return 4
     case .three:
       return 3

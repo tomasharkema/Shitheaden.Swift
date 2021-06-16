@@ -8,8 +8,8 @@
 
 import ShitheadenShared
 
-struct Deck {
-  var cards: [Card]
+public struct Deck {
+  public private(set) var cards: [Card]
 
   mutating func draw() -> Card? {
     if cards.isEmpty {

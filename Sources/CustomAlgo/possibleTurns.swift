@@ -10,18 +10,18 @@ import ShitheadenShared
 extension TurnRequest {
   func possibleTurns() -> [Turn] {
     switch phase {
-    case .putOnTable:
-
-      var turns = [Turn]()
-      for firstIteration in handCards {
-        for secondIteration in handCards.filter { $0 != firstIteration } {
-          for thirdIteration in handCards.filter { $0 != firstIteration && $0 != secondIteration } {
-            turns.append(Turn.putOnTable(firstIteration, secondIteration, thirdIteration))
-          }
-        }
-      }
-
-      return turns
+//    case .putOnTable:
+//
+//      var turns = [Turn]()
+//      for firstIteration in handCards {
+//        for secondIteration in handCards.filter { $0 != firstIteration } {
+//          for thirdIteration in handCards.filter { $0 != firstIteration && $0 != secondIteration } {
+//            turns.append(Turn.putOnTable(firstIteration, secondIteration, thirdIteration))
+//          }
+//        }
+//      }
+//
+//      return turns
 
     case .hand:
       let actions = handCards.filter { lastTableCard?.afters.contains($0) ?? true }

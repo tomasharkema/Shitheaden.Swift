@@ -35,22 +35,19 @@ public struct Card: Equatable, Hashable {
 }
 
 public extension Array where Element == Card {
-  
   func sortNumbers() -> [Card] {
-    let enumerated = Number.allCases.enumerated()
-    return sorted { l, r in
-      return (enumerated.first { $0.element == l.number }?.offset ?? 100) <
-        (enumerated.first { $0.element == r.number }?.offset ?? 100)
+    return sorted {
+      $0 < $1
     }
   }
 
-  func sortSymbol() ->[Card] {
-    let enumerated = Symbol.allCases.enumerated()
-    return sorted { l, r in
-      return (enumerated.first { $0.element == l.symbol }?.offset ?? 100) <
-        (enumerated.first { $0.element == r.symbol }?.offset ?? 100)
-    }
-  }
+//  func sortSymbol() -> [Card] {
+//    let enumerated = Symbol.allCases.enumerated()
+//    return sorted { l, r in
+//      (enumerated.first { $0.element == l.symbol }?.offset ?? 100) <
+//        (enumerated.first { $0.element == r.symbol }?.offset ?? 100)
+//    }
+//  }
 
   func sameNumber() -> Bool {
     return !contains {
@@ -59,4 +56,14 @@ public extension Array where Element == Card {
   }
 }
 
+extension Card {
+  var order: Int {
+    number.order
+  }
+}
 
+extension Card: Comparable {
+  public static func < (lhs: Card, rhs: Card) -> Bool {
+    return lhs.number < rhs.number
+  }
+}

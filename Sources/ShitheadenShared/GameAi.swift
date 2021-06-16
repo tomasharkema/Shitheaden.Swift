@@ -9,15 +9,16 @@
 public protocol GameAi: Actor {
   init()
 
-  func move(request: TurnRequest) async -> Turn
+  func beginMove(request: TurnRequest, previousError: PlayerError?) async -> (Card, Card, Card)
+  func move(request: TurnRequest, previousError: PlayerError?) async -> Turn
 }
 
 public extension GameAi {
-  var algoName: String {
+  nonisolated var algoName: String {
     String(describing: self)
   }
 
-  static var algoName: String {
+  nonisolated static var algoName: String {
     String(describing: Self.self)
   }
 }

@@ -7,8 +7,7 @@
 //
 
 public enum Turn: Equatable, Hashable {
-  case play([Card])
-  case putOnTable(Card, Card, Card)
+  case play(Set<Card>)
   case pass
   case closedCardIndex(Int)
 
@@ -17,11 +16,6 @@ public enum Turn: Equatable, Hashable {
     case let .play(cards):
       hasher.combine("play")
       hasher.combine(cards)
-    case let .putOnTable(f, s, t):
-      hasher.combine("putOnTable")
-      hasher.combine(f)
-      hasher.combine(s)
-      hasher.combine(t)
     case .pass:
       hasher.combine("pass")
     case let .closedCardIndex(i):
@@ -41,15 +35,10 @@ public enum Turn: Equatable, Hashable {
         throw PlayerError(text: "Not all the same")
       }
 
-      if cards.doubles() {
-        print("cards", cards)
-        throw PlayerError(text: "Found double")
-      }
-
-    case let .putOnTable(a, b, c):
-      if [a, b, c].doubles() {
-        throw PlayerError(text: "Found double")
-      }
+//    case let .putOnTable(a, b, c):
+//      if [a, b, c].doubles() {
+//        throw PlayerError(text: "Found double")
+//      }
 
     case .closedCardIndex, .pass:
       return
@@ -57,22 +46,8 @@ public enum Turn: Equatable, Hashable {
   }
 }
 
-extension Array where Element: Equatable {
-public func doubles() -> Bool {
-    var elements = [Element]()
-
-    for e in self {
-      if elements.contains(e) {
-        print("doubles", elements, e)
-        return true
-      }
-      elements.append(e)
-    }
-
-    return false
-  }
-
-  public func unique() -> [Element] {
+public extension Array where Element: Equatable {
+  func unique() -> [Element] {
     var found = [Element]()
 
     for e in self {
@@ -86,26 +61,26 @@ public func doubles() -> Bool {
 }
 
 public extension Array where Element == Turn {
-  var includeDoubles: [Turn] {
+  func includeDoubles() -> [Turn] {
     var turns = [Turn]()
 
     for el in self {
       turns.append(el)
-
       if case let .play(cards) = el {
         for card in cards {
           for case let .play(otherCards) in turns {
-            var a = [card]
+            var a = Set([card])
             // a.insert(contentsOf: otherCards.filter { $0.number == card.number })
-            for e in otherCards.filter({ $0.number == card.number && $0.symbol != card.symbol }) {
-              a.append(e)
+            for e in otherCards.filter({ $0.number == card.number }) {
+              a.insert(e)
             }
-
-            turns.append(Turn.play(a.sortSymbol()))
+            if a.count > 1 {
+              turns.append(Turn.play(a))
+            }
           }
         }
       }
     }
-    return turns.unique()
+    return turns //.unique()
   }
 }

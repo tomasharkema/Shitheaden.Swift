@@ -11,12 +11,12 @@ public enum Number: CaseIterable, Equatable {
   case heer
   case vrouw
   case boer
-  case negen
-  case acht
+  case nine
+  case eight
   case seven
-  case zes
-  case vijf
-  case vier
+  case six
+  case five
+  case four
 
   case ten
   case three
@@ -37,17 +37,17 @@ public enum Number: CaseIterable, Equatable {
       return "B"
     case .ten:
       return "10"
-    case .negen:
+    case .nine:
       return "9"
-    case .acht:
+    case .eight:
       return "8"
     case .seven:
       return "7"
-    case .zes:
+    case .six:
       return "6"
-    case .vijf:
+    case .five:
       return "5"
-    case .vier:
+    case .four:
       return "4"
     case .three:
       return "3"
@@ -71,5 +71,28 @@ public enum Number: CaseIterable, Equatable {
         [self],
       ].joined())
     }
+  }
+}
+
+extension Number {
+  var order: Int {
+    switch self {
+    case .two, .three, .four, .five, .six, .seven, .eight, .nine, .ten:
+      return Int(string) ?? Int.max
+    case .boer:
+      return 11
+    case .vrouw:
+      return 12
+    case .heer:
+      return 13
+    case .aas:
+      return 14
+    }
+  }
+}
+
+extension Number: Comparable {
+  public static func < (lhs: Number, rhs: Number) -> Bool {
+    return lhs.order < rhs.order
   }
 }

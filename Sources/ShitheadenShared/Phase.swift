@@ -7,7 +7,6 @@
 //
 
 public enum Phase {
-  case putOnTable
   case hand
   case tableOpen
   case tableClosed

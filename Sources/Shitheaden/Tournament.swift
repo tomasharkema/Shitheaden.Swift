@@ -7,41 +7,51 @@
 //
 
 import CustomAlgo
-import Shitheaden
+import ShitheadenRuntime
 import ShitheadenShared
+import Dispatch
 
 struct PlayedGame {
   let games: [Game]
-
-  // spelers.without(el: winner).map { type(of: $0.ai).algoName }
-
+  
   func winnigs() async -> [String: Int] {
     var playerAndScores = [String: Int]()
-
-    for game in games {
-      guard let winner = await game.winner else {
-        break
+    let winners: [(Game, Player)] = await withTaskGroup(of: [(Game, Player)].self) { group in
+      for game in games {
+        group.async(priority: .background) {
+          await [(game, game.winner!)]
+        }
       }
+      return await group.reduce([], +)
+    }
 
-      playerAndScores[String(describing: type(of: winner.ai))] =
-        (playerAndScores[String(describing: type(of: winner.ai))] ?? 0) + 1
+    for winner in winners {
+      playerAndScores[String(describing: type(of: winner.1.ai))] =
+        (playerAndScores[String(describing: type(of: winner.1.ai))] ?? 0) + 1
     }
 
     return playerAndScores
   }
 
   func winningsFrom() async -> [String: [String: Int]] {
+    let winners: [(Game, [Player], Player, GameAi)] =
+      await withTaskGroup(of: [(Game, [Player], Player, GameAi)].self) { group in
+        for game in games {
+          group.async(priority: .background) {
+            await [(game, game.players, game.winner!, game.winner!.ai)]
+          }
+        }
+        return await group.reduce([], +)
+      }
+
     var playerAndScores = [String: [String: Int]]()
 
-    for game in games {
-      guard let winner = await game.winner else {
-        break
-      }
-      var arr = [String: Int]()
-      for winner in await game.players {
-        arr = await playerAndScores[winner.ai.algoName] ?? [:]
-        await arr[winner.ai.algoName] = (arr[winner.ai.algoName] ?? 0) + 1
-        await playerAndScores[winner.ai.algoName] = arr
+    for (game, players, winner, _) in winners {
+      for winner in players {
+        var arr = [String: Int]()
+        arr = playerAndScores[winner.ai.algoName] ?? [:]
+        arr[winner.ai.algoName] = (arr[winner.ai.algoName] ?? 0) + 1
+        playerAndScores[winner.ai.algoName] = arr
       }
     }
 
@@ -51,36 +61,34 @@ struct PlayedGame {
 
 class Tournament {
   let roundsPerGame: Int
+  let parallelization: Int
 
-  init(roundsPerGame: Int) {
+  init(roundsPerGame: Int, parallelization: Int) {
     self.roundsPerGame = roundsPerGame
+    self.parallelization = parallelization
   }
 
   func peformanceOfAI(ai: [(GameAi.Type, String)], gameId: String = "0") async -> PlayedGame {
 
 
-      let playedGames: [Game] = await withTaskGroup(of: [Game].self) { group in
-      for idx in 1 ... self.roundsPerGame {
-        group.async {
-          let players: [Player] = ai.enumerated().map { index, element in
-            let (ai, name) = element
-            return Player(
-              name: name,
-              position: Position.allCases[index],
-              ai: ai.init()
-            )
-          }
-          let game = Game(players: players)
+    var playedGames = [Game]()
 
-          await game.startGame(render: { _ in
-//            print("STEP", players)
-          })
-          print("\(gameId) \(idx) winner: \(await game.winner?.ai.algoName ?? "")")
-          return [game]
-        }
+    for idx in 1 ... self.roundsPerGame {
+      let players: [Player] = ai.enumerated().map { index, element in
+        let (ai, name) = element
+        return Player(
+          name: name,
+          position: Position.allCases[index],
+          ai: ai.init()
+        )
       }
+      let game = Game(players: players, render: { (_, _) in })
 
-      return await group.reduce([], +)
+      print(" START: \(gameId) \(idx) / \(self.roundsPerGame)")
+      await game.startGame()
+      print(" END: \(gameId) \(idx) / \(self.roundsPerGame) winner: \(await game.winner?.ai.algoName ?? "")")
+
+      playedGames.append(game)
     }
 
     return PlayedGame(games: playedGames)
@@ -94,6 +102,8 @@ class Tournament {
     let watch = StopWatch()
     watch.start()
 
+    let semaphore = DispatchSemaphore(value: parallelization)
+
     let stats = await withTaskGroup(of: ([String: Int], [String: [String: Int]])
       .self) { g -> ([String: Int], [String: [String: Int]]) in
 //      g.async {
@@ -102,6 +112,7 @@ class Tournament {
         for (index2, ai2) in AIs.enumerated() {
           for (index3, ai3) in AIs.enumerated() {
             for (index4, ai4) in AIs.enumerated() {
+              semaphore.wait()
               g.async {
                 let potjeIndex: String = [index1, index2, index3, index4].map { "\($0)" }
                   .joined(separator: ",")
@@ -113,7 +124,11 @@ class Tournament {
                   (ai3, "\(ai3.algoName) 3"),
                   (ai4, "\(ai4.algoName) 4"),
                 ]
+
+                print("START: \(index1 + index2 + index3 + index4) / \(AIs.count * 4) / \(self.roundsPerGame)")
                 let res = await self.peformanceOfAI(ai: ais, gameId: potjeIndex)
+                print("END: \(index1 + index2 + index3 + index4) / \(AIs.count * 4) / \(self.roundsPerGame)")
+
                 let winnings = await res.winnigs()
 
                 let aisPrint = ais.map {
@@ -122,23 +137,12 @@ class Tournament {
                 print(
                   "\(potjeIndex) \(winnings) : \(aisPrint)\ntime: \(watch.getLap()) - \(duration.getLap())"
                 )
-//              result.append(await (winnings, res.winningsFrom()))
+                semaphore.signal()
                 return await (winnings, res.winningsFrom())
               }
             }
           }
         }
-//        return g.reduce(([String: Int](), [String: [String: Int]]())) { prev, curr in
-//          var new = prev
-//
-//          for el in curr.0.keys {
-//            new.0[el] = curr.0[el]
-//          }
-//          for el in curr.1.keys {
-//            new.1[el] = curr.1[el]
-//          }
-//          return new
-//        }
       }
 
       return await g.reduce(([String: Int](), [String: [String: Int]]())) { prev, curr in

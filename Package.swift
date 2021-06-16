@@ -4,31 +4,38 @@
 import PackageDescription
 
 let package = Package(
-  name: "Shitheaden",
-//  platforms: [
-//    .macOS(),
-//  ],
+  name: "Shitheaden", platforms: [
+    .macOS(.v10_15),
+  ],
   products: [
-    // Products define the executables and libraries a package produces, and make them visible to other packages.
-    .executable(name: "ShitheadenCLI", targets: ["ShitheadenCLI"]),
-    .library(name: "Shitheaden", type: .static, targets: ["Shitheaden"]),
+    .executable(name: "shitheaden", targets: ["shitheaden"]),
+    .library(name: "ShitheadenRuntime", type: .static, targets: ["ShitheadenRuntime"]),
     .library(
       name: "ShitheadenShared",
       type: .static,
-      targets: ["ShitheadenShared"]//, "ShitheadenSharedTests"]
+      targets: ["ShitheadenShared"] // , "ShitheadenSharedTests"]
     ),
     .library(name: "CustomAlgo", type: .static, targets: ["CustomAlgo"]),
   ],
   dependencies: [
-    // Dependencies declare other packages that this package depends on.
-    // .package(url: /* package url */, from: "1.0.0"),
+    .package(
+      url: "https://github.com/tomasharkema/swift-argument-parser.git",
+      branch: "swift-5.5-async"
+    ),
+    .package(url: "https://github.com/tomasharkema/SwiftSocket", branch: "master"),
+//        .package( url: "https://github.com/apple/swift-nio-ssh", from: "0.2.1")
+    .package(url: "https://github.com/flintprocessor/ANSIEscapeCode", branch: "master"),
   ],
   targets: [
     .executableTarget(
-      name: "ShitheadenCLI",
+      name: "shitheaden",
       dependencies: [
-        .target(name: "Shitheaden"),
+        .target(name: "ShitheadenRuntime"),
         .target(name: "CustomAlgo"),
+        .product(name: "ArgumentParser", package: "swift-argument-parser"),
+        .product(name: "SwiftSocket", package: "SwiftSocket"),
+        .product(name: "ANSIEscapeCode", package: "ANSIEscapeCode"),
+//        .product(name: "NIOSSH", package: "swift-nio-ssh"),
       ],
       swiftSettings: [
         .unsafeFlags([
@@ -37,17 +44,18 @@ let package = Package(
           "-Xfrontend",
           "-disable-availability-checking",
         ]),
+        .define("DEBUG", .when(configuration: .debug))
       ]
     ),
-
     .target(
-      name: "Shitheaden",
+      name: "ShitheadenRuntime",
       dependencies: ["ShitheadenShared"],
       swiftSettings: [.unsafeFlags([
         "-Xfrontend",
         "-enable-experimental-concurrency",
         "-Xfrontend", "-disable-availability-checking",
-      ]), .define("DEBUG", .when(configuration: .debug))]
+      ]),
+      .define("DEBUG", .when(configuration: .debug))]
     ),
 
     .target(
@@ -70,7 +78,5 @@ let package = Package(
         "-Xfrontend", "-disable-availability-checking",
       ])]
     ),
-
-//    .testTarget(name: "ShitheadenSharedTests"),
   ]
 )

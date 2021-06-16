@@ -6,6 +6,7 @@
 //  Copyright © 2015 Tomas Harkema. All rights reserved.
 //
 
+import Foundation
 import ShitheadenShared
 
 public struct Player: CustomStringConvertible, Equatable, Hashable {
@@ -13,11 +14,11 @@ public struct Player: CustomStringConvertible, Equatable, Hashable {
   public internal(set) var openTableCards: [Card]
   public internal(set) var closedTableCards: [Card]
 
+  public let id: UUID = UUID()
   public let name: String
   public internal(set) var turns: [Turn]
   public let position: Position
   public let ai: GameAi
-  public internal(set) var hasPutCardsOpen: Bool = false
 
   public init(name: String, position: Position, ai: GameAi) {
     handCards = []
@@ -30,9 +31,7 @@ public struct Player: CustomStringConvertible, Equatable, Hashable {
   }
 
   var phase: Phase {
-    if openTableCards.isEmpty, !hasPutCardsOpen {
-      return .putOnTable
-    } else if !handCards.isEmpty {
+    if !handCards.isEmpty {
       return .hand
     } else if !openTableCards.isEmpty {
       return .tableOpen
@@ -55,9 +54,9 @@ public struct Player: CustomStringConvertible, Equatable, Hashable {
       return "played \(t)"
     case .pass:
       return "took all cards"
-    case let .putOnTable(cards):
-
-      return "put on table"
+//    case let .putOnTable(cards):
+//
+//      return "put on table"
 
     case let .closedCardIndex(i):
       return "put on table card \(i)"
@@ -68,7 +67,7 @@ public struct Player: CustomStringConvertible, Equatable, Hashable {
   }
 
   public var done: Bool {
-    return hasPutCardsOpen && handCards.isEmpty && openTableCards.isEmpty && closedTableCards
+    return handCards.isEmpty && openTableCards.isEmpty && closedTableCards
       .isEmpty
   }
 
