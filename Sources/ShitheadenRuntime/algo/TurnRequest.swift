@@ -32,11 +32,10 @@
 import ShitheadenShared
 
 extension TurnRequest {
-
   #if DEBUG
-  public func possibleTurns() -> [Turn] {
-    return _possibleTurns()
-  }
+    public func possibleTurns() -> [Turn] {
+      return _possibleTurns()
+    }
   #endif
 
   func _possibleTurns() -> [Turn] {
@@ -59,7 +58,7 @@ extension TurnRequest {
     case .hand:
       let actions = handCards.filter { lastTableCard?.afters.contains($0) ?? true }
         .map { Turn.play([$0]) }
-      let e = Array([actions, [.pass]].joined()).includeDoubles()//.unique()
+      let e = Array([actions, [.pass]].joined()).includeDoubles() // .unique()
 //      if e.doubles() {
 //        fatalError()
 //      }

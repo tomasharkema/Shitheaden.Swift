@@ -10,7 +10,6 @@ import Foundation
 import ShitheadenShared
 
 public actor Game {
-
   public private(set) var deck = Deck(cards: [])
   public var players = [Player]()
   public private(set) var table = Table()
@@ -318,7 +317,10 @@ public actor Game {
 
   func sortPlayerLowestCard() {
     guard let player = players
-      .min(by: { ($0.handCards.min { $0 > $1 }!) > ($1.handCards.min { $0 > $1 }!) })
+      .min(by: {
+        ($0.handCards.filter { $0.number >= .four }.min { $0 > $1 }!) >
+          ($1.handCards.filter { $0.number >= .four }.min { $0 > $1 }!)
+      })
     else {
       return
     }

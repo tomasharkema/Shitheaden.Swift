@@ -50,9 +50,9 @@ actor UserInputAI: GameAi {
 
   private func getBeurtFromUser(request: TurnRequest) async throws -> Turn {
     await printHand(request: request)
-    #if DEBUG
-    await render(Position.input.down(n: 5).cliRep + ANSIEscapeCode.Erase.eraseInLine(.entireLine) + "\(request.possibleTurns())")
-    #endif
+//    #if DEBUG
+//    await render(Position.input.down(n: 5).cliRep + ANSIEscapeCode.Erase.eraseInLine(.entireLine) + "\(request.possibleTurns())")
+//    #endif
     let input = await getInput()
 
     let executeTurn: Turn
@@ -72,7 +72,7 @@ actor UserInputAI: GameAi {
         if elements.count > 1, !elements.sameNumber() {
           throw PlayerError(text: "Je moet kaarten met dezelfde nummers opgeven")
         }
-        executeTurn = .play(Set(elements))//.sortSymbol()))
+        executeTurn = .play(Set(elements)) // .sortSymbol()))
 
       case .tableClosed:
         if keuze.count != 1 {
@@ -167,7 +167,7 @@ actor UserInputAI: GameAi {
       }
       let cards = request.handCards.lazy.enumerated().filter {
         keuze.contains($0.offset + 1)
-      }.map { $0.element }//.sortSymbol()
+      }.map { $0.element } // .sortSymbol()
 
       return (cards[0], cards[1], cards[2])
 

@@ -10,5 +10,6 @@ struct Rules: OptionSet {
   let rawValue: Int
   static let againAfterPass = Rules(rawValue: 1 << 0)
   static let againAfterGoodBehavior = Rules(rawValue: 1 << 1)
+  static let showHint = Rules(rawValue: 1 << 2)
   static let all = Rules(rawValue: Int.max)
 }

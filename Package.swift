@@ -44,7 +44,7 @@ let package = Package(
           "-Xfrontend",
           "-disable-availability-checking",
         ]),
-        .define("DEBUG", .when(configuration: .debug))
+        .define("DEBUG", .when(configuration: .debug)),
       ]
     ),
     .target(

@@ -14,7 +14,7 @@ public struct Player: CustomStringConvertible, Equatable, Hashable {
   public internal(set) var openTableCards: [Card]
   public internal(set) var closedTableCards: [Card]
 
-  public let id: UUID = UUID()
+  public let id = UUID()
   public let name: String
   public internal(set) var turns: [Turn]
   public let position: Position

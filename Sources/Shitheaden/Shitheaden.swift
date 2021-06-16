@@ -60,7 +60,7 @@ struct Shitheaden: ParsableCommand {
         position: .oost,
         ai: CardRankingAlgo()
       ),
-    ], render: { (game, clear) in
+    ], render: { game, clear in
       await print(Renderer.render(game: game, clear: clear))
 //      Thread.sleep(forTimeInterval: 0.1)
     })

@@ -7,13 +7,13 @@
 //
 
 import CustomAlgo
+import Dispatch
 import ShitheadenRuntime
 import ShitheadenShared
-import Dispatch
 
 struct PlayedGame {
   let games: [Game]
-  
+
   func winnigs() async -> [String: Int] {
     var playerAndScores = [String: Int]()
     let winners: [(Game, Player)] = await withTaskGroup(of: [(Game, Player)].self) { group in
@@ -69,11 +69,9 @@ class Tournament {
   }
 
   func peformanceOfAI(ai: [(GameAi.Type, String)], gameId: String = "0") async -> PlayedGame {
-
-
     var playedGames = [Game]()
 
-    for idx in 1 ... self.roundsPerGame {
+    for idx in 1 ... roundsPerGame {
       let players: [Player] = ai.enumerated().map { index, element in
         let (ai, name) = element
         return Player(
@@ -82,11 +80,13 @@ class Tournament {
           ai: ai.init()
         )
       }
-      let game = Game(players: players, render: { (_, _) in })
+      let game = Game(players: players, render: { _, _ in })
 
-      print(" START: \(gameId) \(idx) / \(self.roundsPerGame)")
+      print(" START: \(gameId) \(idx) / \(roundsPerGame)")
       await game.startGame()
-      print(" END: \(gameId) \(idx) / \(self.roundsPerGame) winner: \(await game.winner?.ai.algoName ?? "")")
+      print(
+        " END: \(gameId) \(idx) / \(roundsPerGame) winner: \(await game.winner?.ai.algoName ?? "")"
+      )
 
       playedGames.append(game)
     }
@@ -125,9 +125,13 @@ class Tournament {
                   (ai4, "\(ai4.algoName) 4"),
                 ]
 
-                print("START: \(index1 + index2 + index3 + index4) / \(AIs.count * 4) / \(self.roundsPerGame)")
+                print(
+                  "START: \(index1 + index2 + index3 + index4) / \(AIs.count * 4) / \(self.roundsPerGame)"
+                )
                 let res = await self.peformanceOfAI(ai: ais, gameId: potjeIndex)
-                print("END: \(index1 + index2 + index3 + index4) / \(AIs.count * 4) / \(self.roundsPerGame)")
+                print(
+                  "END: \(index1 + index2 + index3 + index4) / \(AIs.count * 4) / \(self.roundsPerGame)"
+                )
 
                 let winnings = await res.winnigs()
 
