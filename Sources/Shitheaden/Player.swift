@@ -6,16 +6,28 @@
 //  Copyright © 2015 Tomas Harkema. All rights reserved.
 //
 
-struct Player: CustomStringConvertible, Equatable, Hashable {
-  var handCards: [Card]
-  var openTableCards: [Card]
-  var closedTableCards: [Card]
+import ShitheadenShared
 
-  let name: String
-  var turns: [Turn]
-  let position: Position
-  let ai: PlayerMove
-  var hasPutCardsOpen: Bool = false
+public struct Player: CustomStringConvertible, Equatable, Hashable {
+  public internal(set) var handCards: [Card]
+  public internal(set) var openTableCards: [Card]
+  public internal(set) var closedTableCards: [Card]
+
+  public let name: String
+  public internal(set) var turns: [Turn]
+  public let position: Position
+  public let ai: GameAi
+  public internal(set) var hasPutCardsOpen: Bool = false
+
+  public init(name: String, position: Position, ai: GameAi) {
+    self.handCards = []
+    self.openTableCards = []
+    self.closedTableCards = []
+    self.name = name
+    self.turns = []
+    self.position = position
+    self.ai = ai
+  }
 
   var phase: Phase {
     if openTableCards.isEmpty, !hasPutCardsOpen {
@@ -29,15 +41,15 @@ struct Player: CustomStringConvertible, Equatable, Hashable {
     }
   }
 
-  var description: String {
+  public var description: String {
     return "SPELER_description"
   }
 
-  func hash(into hasher: inout Hasher) {
+  public func hash(into hasher: inout Hasher) {
     hasher.combine(name)
   }
 
-  var latestState: String {
+  public var latestState: String {
     switch turns.last {
     case let .play(t):
       return "played \(t)"
@@ -46,24 +58,16 @@ struct Player: CustomStringConvertible, Equatable, Hashable {
     case let .putOnTable(cards):
 
       return "put on table"
+
+    case .closedCardIndex(let i):
+      return "put on table card \(i)"
+
     case .none:
       return ""
     }
   }
 
-  var showedTable: String {
-    return openTableCards.map { $0.description }.joined(separator: " ")
-  }
-
-  var closedTable: String {
-    return closedTableCards.map { _ in "0" }.joined(separator: " ")
-  }
-
-  var closedTableShowed: String {
-    return closedTableCards.map { $0.description }.joined(separator: " ")
-  }
-
-  var done: Bool {
+  public var done: Bool {
     return hasPutCardsOpen && handCards.isEmpty && openTableCards.isEmpty && closedTableCards
       .isEmpty
   }
@@ -76,40 +80,7 @@ struct Player: CustomStringConvertible, Equatable, Hashable {
     }
   }
 
-  func possibleTurns(table: Table) -> Set<Turn> {
-    switch phase {
-    case .putOnTable:
-
-      var turns = [Turn]()
-      for firstIteration in handCards {
-        for secondIteration in handCards.filter { $0 != firstIteration } {
-          for thirdIteration in handCards.filter { $0 != firstIteration && $0 != secondIteration } {
-            turns.append(Turn.putOnTable(firstIteration, secondIteration, thirdIteration))
-          }
-        }
-      }
-
-      return turns.includeDoubles
-
-    case .hand:
-      let actions = handCards.filter { table.lastCard?.afters.contains($0) ?? true }
-        .map { Turn.play([$0]) }
-      return Array([actions, [.pass]].joined()).includeDoubles
-
-    case .tableOpen:
-      let actions = openTableCards.filter { table.lastCard?.afters.contains($0) ?? true }
-        .map { Turn.play([$0]) }
-      if actions.isEmpty {
-        return [Turn.pass]
-      }
-      return actions.includeDoubles
-
-    case .tableClosed:
-      return Set(closedTableCards.map { Turn.play([$0]) })
-    }
-  }
-
-  static func == (lhs: Player, rhs: Player) -> Bool {
+  public static func == (lhs: Player, rhs: Player) -> Bool {
     return lhs.handCards == rhs.handCards &&
       lhs.closedTableCards == rhs.closedTableCards &&
       lhs.openTableCards == rhs.openTableCards &&

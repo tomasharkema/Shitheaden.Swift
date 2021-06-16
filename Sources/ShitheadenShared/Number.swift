@@ -6,7 +6,7 @@
 //  Copyright © 2015 Tomas Harkema. All rights reserved.
 //
 
-enum Number: CaseIterable {
+public enum Number: CaseIterable {
   case aas
   case heer
   case vrouw
@@ -25,7 +25,7 @@ enum Number: CaseIterable {
   static let specials: [Self] = [.ten, .three, .two]
   static let nonSpecials: [Self] = Number.allCases.filter { !specials.contains($0) }
 
-  var string: String {
+  public var string: String {
     switch self {
     case .aas:
       return "A"
@@ -56,7 +56,7 @@ enum Number: CaseIterable {
     }
   }
 
-  var afters: Set<Number> {
+  public var afters: Set<Number> {
     if self == .two {
       // return Set([.three, .two, .ten])
       return Set(Number.allCases)

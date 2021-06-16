@@ -6,12 +6,13 @@
 //  Copyright © 2015 Tomas Harkema. All rights reserved.
 //
 
-enum Turn: Equatable, Hashable {
+public enum Turn: Equatable, Hashable {
   case play(Set<Card>)
   case putOnTable(Card, Card, Card)
   case pass
+  case closedCardIndex(Int)
 
-  func hash(into hasher: inout Hasher) {
+  public func hash(into hasher: inout Hasher) {
     switch self {
     case let .play(cards):
       hasher.combine("play")
@@ -23,6 +24,9 @@ enum Turn: Equatable, Hashable {
       hasher.combine(t)
     case .pass:
       hasher.combine("pass")
+    case .closedCardIndex(let i):
+      hasher.combine("closedCardIndex")
+      hasher.combine(i)
     }
   }
 }

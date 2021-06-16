@@ -6,6 +6,8 @@
 //  Copyright © 2015 Tomas Harkema. All rights reserved.
 //
 
+import Shitheaden
+
 enum CLI {
   static let Background = "44"
   static let TextColor = "39"
@@ -37,3 +39,16 @@ func >>> (color: Color, string: String) -> String {
 }
 
 infix operator >>>
+
+extension Position {
+  public var cliRep: String {
+    return "\u{1B}[\(y);\(x)H"
+  }
+}
+
+
+extension String {
+  func print() {
+    Swift.print(self)
+  }
+}

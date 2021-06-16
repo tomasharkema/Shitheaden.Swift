@@ -6,7 +6,7 @@
 //  Copyright © 2015 Tomas Harkema. All rights reserved.
 //
 
-enum Phase {
+public enum Phase {
   case putOnTable
   case hand
   case tableOpen

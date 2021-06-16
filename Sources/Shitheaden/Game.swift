@@ -5,65 +5,38 @@
 //  Created by Tomas Harkema on 18-07-15.
 //  Copyright © 2015 Tomas Harkema. All rights reserved.
 //
+
 import Foundation
+import ShitheadenShared
 
-typealias Table = [Card]
+public typealias Table = [Card]
 
-actor Game {
-  let shouldPrint: Bool
-
-  init(shouldPrint: Bool, players: [Player]? = nil) {
-    self.shouldPrint = shouldPrint
-    self.players = players ?? [
-      Player(
-        handCards: [],
-        openTableCards: [],
-        closedTableCards: [],
-        name: "Zuid (JIJ)",
-        turns: [],
-        position: .zuid,
-        ai: UserInputAI()
-      ),
-      Player(
-        handCards: [],
-        openTableCards: [],
-        closedTableCards: [],
-        name: "West",
-        turns: [],
-        position: .west,
-        ai: RandomBot()
-      ),
-      Player(
-        handCards: [],
-        openTableCards: [],
-        closedTableCards: [],
-        name: "Noord",
-        turns: [],
-        position: .noord,
-        ai: RandomBot()
-      ),
-      Player(
-        handCards: [],
-        openTableCards: [],
-        closedTableCards: [],
-        name: "Oost",
-        turns: [],
-        position: .oost,
-        ai: RandomBot()
-      ),
-    ]
-    CLI.shouldPrintGlbl = shouldPrint
+public actor Game {
+  public init(players: [Player]) {
+    self.players = players
   }
 
   var deck = Deck(cards: [])
-  var players = [Player]()
-  var table = Table()
+  public var players = [Player]()
+  public private(set) var table = Table()
   var burnt = [Card]()
 
   let rules = Rules.all
 
   var lastCard: Card? {
     return table.lastCard
+  }
+
+  var notDonePlayers: [Player] {
+    return Array(players.filter { !$0.done })
+  }
+
+  public var done: Bool {
+    notDonePlayers.count == 1
+  }
+
+  public var winner: Player? {
+    done ? players.max { $0.turns.count < $1.turns.count } : nil
   }
 
   func shuffle() {
@@ -86,21 +59,24 @@ actor Game {
     }
   }
 
-  func commitTurn(playerIndex: Int, player oldPlayer: Player) async -> Player {
+  func commitTurn(playerIndex: Int, player oldPlayer: Player, render: (Game) async -> ()) async -> Player {
     guard !oldPlayer.done, !done else {
       return oldPlayer
     }
 
     var player = oldPlayer
     player.sortCards()
-    let turn = await player.ai.move(player: player, table: table)
 
-    guard oldPlayer.possibleTurns(table: table).contains(turn) else {
+    let req = TurnRequest(handCards: player.handCards, openTableCards: player.openTableCards, lastTableCard: table.lastCard, numberOfClosedTableCards: player.closedTableCards.count, phase: player.phase, amountOfTableCards: table.count, amountOfDeckCards: deck.cards.count)
+
+    let turn = await player.ai.move(request: req)
+
+    guard req.possibleTurns().contains(turn) else {
       print(
         "ISSUE!",
         oldPlayer.phase,
         turn,
-        oldPlayer.possibleTurns(table: table),
+        req.possibleTurns(),
         player.handCards,
         player.openTableCards,
         player.closedTableCards,
@@ -109,7 +85,7 @@ actor Game {
       )
       print("NO POSSIBLE")
       assertionFailure("This is not possible")
-      return await commitTurn(playerIndex: playerIndex, player: oldPlayer)
+      return try await commitTurn(playerIndex: playerIndex, player: oldPlayer, render: render)
     }
 
     // let count = player.turns.filter { $0 == turn }.count
@@ -122,9 +98,27 @@ actor Game {
     player.turns.append(turn)
 
     switch turn {
+
+    case .closedCardIndex(let index):
+
+      if player.phase == .tableClosed {
+        let previousTable = table
+        let card = player.closedTableCards[index - 1]
+        player.closedTableCards.remove(el: card)
+        table = Array([table, [card]].joined())
+
+        if let lastTable = previousTable.last, let lastApplied = table.last,
+           !lastTable.afters.contains(lastApplied)
+        {
+          player.handCards.append(contentsOf: table)
+          table = []
+        }
+      } else {
+//        throw PlayerError(text: "Can not throw closedCardIndex")
+        fatalError("Can not throw closedCardIndex")
+      }
     case let .play(possibleBeurt):
-      let previousTable = table
-      table = Array([table + possibleBeurt].joined())
+      table = table + possibleBeurt
 
       switch player.phase {
       case .hand:
@@ -146,17 +140,9 @@ actor Game {
         }
 
       case .tableClosed:
-        for p in possibleBeurt {
-          player.closedTableCards.remove(el: p)
-        }
-
-        if let lastTable = previousTable.last, let lastApplied = table.last,
-           !lastTable.afters.contains(lastApplied)
-        {
-          player.handCards.append(contentsOf: table)
-          table = []
-        }
-
+//        throw PlayerError(text: "Cannot play in this phase")
+        fatalError("Cannot play in this phase")
+        
       case .putOnTable:
         break
       }
@@ -176,16 +162,19 @@ actor Game {
     }
 
     if turn == .pass, rules.contains(.againAfterPass), !player.done, !done {
-      printState()
-      return await commitTurn(playerIndex: playerIndex, player: player)
+//      printState()
+      await render(self)
+      return try await commitTurn(playerIndex: playerIndex, player: player, render: render)
     }
 
     if lastCard?.number == .ten {
       burnt += table
       table = []
-      printState()
+//      printState()
+
+      await render(self)
       if rules.contains(.againAfterGoodBehavior), !player.done, !done {
-        return await commitTurn(playerIndex: playerIndex, player: player)
+        return try await commitTurn(playerIndex: playerIndex, player: player, render: render)
       }
     } else if table.suffix(4).reduce((0, nil) as (Int, Number?), { prev, curr in
       if let prefNumber = prev.1 {
@@ -201,99 +190,21 @@ actor Game {
       burnt.append(contentsOf: table)
       table = []
       if rules.contains(.againAfterGoodBehavior), !player.done, !done {
-        return await commitTurn(playerIndex: playerIndex, player: player)
+        return try await commitTurn(playerIndex: playerIndex, player: player, render: render)
       }
     }
 
     return player
   }
 
-  var notDonePlayers: [Player] {
-    return Array(players.filter { !$0.done })
-  }
-
-  var done: Bool {
-    notDonePlayers.count == 1
-  }
-
-  var winner: Player? {
-    done ? players.max { $0.turns.count < $1.turns.count } : nil
-  }
-
-  func beurt() async {
+  func beurt(render: (Game) async -> ()) async {
     for (index, player) in notDonePlayers.enumerated() {
-      players[index] = await commitTurn(playerIndex: index, player: player)
-      printState()
+      players[index] = await commitTurn(playerIndex: index, player: player, render: render)
+//      printState()
+      await render(self)
     }
     if !done {
-      return await beurt()
-    }
-  }
-
-  func printState(shouldWait: Bool = true) {
-    if !shouldPrint {
-      return
-    }
-    CLI.setBackground()
-    CLI.clear()
-    Position.header >>> "EENENDERTIGEN"
-    Position.tafel >>> table.suffix(5).map { $0.description }.joined(separator: " ")
-
-    for player in players {
-      if !player.done {
-        player.position >>> "\(player.name) \(player.handCards.count) kaarten"
-        player.position.down(n: 1) >>> player.latestState
-        player.position.down(n: 2) >>> player.showedTable
-        player.position.down(n: 3) >>> player.closedTable
-      } else {
-        player.position >>> "\(player.name) KLAAR"
-      }
-    }
-    if shouldWait {
-//      Thread.sleep(forTimeInterval: 0.5)
-    }
-  }
-
-//  func finishRound() {
-//    for loser in pickLosers() {
-//      if let index = players.index(of: loser) {
-//        players[index].sticks -= 1
-//      }
-//    }
-//  }
-
-  func printEndState() {
-    if !shouldPrint {
-      return
-    }
-
-    CLI.setBackground()
-    CLI.clear()
-    Position.header >>> "EENENDERTIGEN"
-    Position.tafel >>> table.map { $0.description }.joined(separator: " ")
-
-    let losers = pickLosers()
-
-    for player in players {
-      if !player.done {
-        let extraMessage: String
-        if !shouldDoAnotherRound() {
-          extraMessage = " WINNAAR!"
-        } else if losers.contains(player) {
-          extraMessage = " - Klaar"
-        } else {
-          extraMessage = "\(player.handCards.count) kaarten"
-        }
-//        } else if player.points == .Verbied || player.points == .AasVerbied {
-//          extraMessage = " - Verbied!"
-//        }
-
-        player.position >>> "\(player.name)\(extraMessage)"
-
-        player.position.down(n: 1) >>> ""
-      } else {
-        player.position >>> "\(player.name) KLAAR!"
-      }
+      return await beurt(render: render)
     }
   }
 
@@ -337,54 +248,28 @@ actor Game {
     }
   }
 
-  func startRound() async {
+  func startRound(render: @escaping (Game) async -> ()) async {
     resetBeurten()
 
     shuffle()
     deel()
-    printState()
-    await beurt()
+//    printState()
+    await render(self)
+    await beurt(render: render)
 
 //    finishRound()
-    printEndState()
+//    printEndState(render: render)
   }
 
   private func startGameRec(
-    restartClosure: (() async -> Bool)?,
-    finishClosure: (() async -> Bool)?
+    render: @escaping (Game) async -> ()
   ) async {
-    await startRound()
-
-    let restart: () async -> Bool = {
-      if self.players[0].done {
-        return true
-      } else {
-        return await restartClosure?() ?? true
-      }
-    }
-
-    if shouldDoAnotherRound(), await restart() {
-      await startGameRec(
-        restartClosure: restartClosure,
-        finishClosure: finishClosure
-      )
-    } else {
-      if await finishClosure?() ?? false {
-        await startGame(
-          restartClosure: restartClosure,
-          finishClosure: finishClosure
-        )
-      }
-    }
+    await startRound(render: render)
   }
 
-  func startGame(
-    restartClosure: (() async -> Bool)? = nil,
-    finishClosure: (() async -> Bool)? = nil
-  ) async {
+  public func startGame(render: @escaping (Game) async -> ()) async {
     await startGameRec(
-      restartClosure: restartClosure,
-      finishClosure: finishClosure
+      render: render
     )
   }
 }

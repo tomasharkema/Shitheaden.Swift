@@ -7,6 +7,8 @@
 //
 
 import Foundation
+import Shitheaden
+import ShitheadenShared
 
 struct PlayerError: LocalizedError {
   let text: String
@@ -16,20 +18,19 @@ struct PlayerError: LocalizedError {
   }
 }
 
-class UserInputAI: PlayerMove {
+actor UserInputAI: GameAi {
   static let algoName = "UserInputAI"
 
   required init() {}
 
-  private func getBeurtFromUser(table: Table, player: Player) async throws -> Turn {
-    let kaartenString = player.handCards.map { $0.description }.joined(separator: " ")
+  private func getBeurtFromUser(request: TurnRequest) async throws -> Turn {
+    let kaartenString = request.handCards.map { $0.description }.joined(separator: " ")
 
-    let handString = player.handCards.enumerated()
+    let handString = request.handCards.enumerated()
       .map { "\($0.offset + 1)\($0.element.description)" }.joined(separator: " ")
 
-    let possibleTurns = player.possibleTurns(table: table)
-
-    Position.debug >>> String("\(possibleTurns)")
+//    let possibleTurns = player.possibleTurns(table: table)
+//    Position.debug >>> String("\(possibleTurns)")
 
     Position.hand >>> "Hand:  \(handString)"
     Position.input >>>
@@ -45,10 +46,10 @@ class UserInputAI: PlayerMove {
         throw PlayerError(text: "Je moet meer dan 1 keuze opgeven.")
       }
 
-      switch player.phase {
+      switch request.phase {
       case .hand:
 
-        executeTurn = .play(Set(player.handCards.lazy.enumerated().filter {
+        executeTurn = .play(Set(request.handCards.lazy.enumerated().filter {
           keuze.contains($0.offset + 1)
         }.map { $0.element }))
       case .putOnTable:
@@ -56,22 +57,26 @@ class UserInputAI: PlayerMove {
         if keuze.count != 3 {
           throw PlayerError(text: "not implemented")
         }
-        let cards = player.handCards.lazy.enumerated().filter {
+        let cards = request.handCards.lazy.enumerated().filter {
           keuze.contains($0.offset + 1)
         }.map { $0.element }
         executeTurn = .putOnTable(cards[0], cards[1], cards[2])
 
       case .tableClosed:
         if keuze.count != 1 {
-          throw PlayerError(text: "not implemented")
+          throw PlayerError(text: "Je kan maar 1 kaart spelen")
         }
 
-        executeTurn = .play(Set(player.closedTableCards.lazy.enumerated().filter {
-          keuze.contains($0.offset + 1)
-        }.map { $0.element }))
+        guard let i = (1...request.numberOfClosedTableCards).first(where: {
+          $0 == keuze.first
+        }) else {
+          throw PlayerError(text: "Deze kaart kan je niet spelen")
+        }
+
+        executeTurn = .closedCardIndex(i)
 
       case .tableOpen:
-        executeTurn = .play(Set(player.openTableCards.lazy.enumerated().filter {
+        executeTurn = .play(Set(request.openTableCards.lazy.enumerated().filter {
           keuze.contains($0.offset + 1)
         }.map { $0.element }))
       }
@@ -80,27 +85,28 @@ class UserInputAI: PlayerMove {
       throw PlayerError(text: "not implemented")
     }
 
-    if possibleTurns.contains(executeTurn) {
+//    if request.possibleTurns.contains(executeTurn) {
       return executeTurn
-    } else {
-      throw PlayerError(text: "\(executeTurn) is not in \(possibleTurns) phase: \(player.phase)")
-    }
+//    } else {
+//      throw PlayerError(text: "\(executeTurn) is not in \(request.possibleTurns) phase: \(request.phase)")
+//    }
   }
 
-  func execute(player: Player, table: Table) async -> Turn? {
+  func execute(request: TurnRequest) async -> Turn? {
     do {
-      return try await getBeurtFromUser(table: table, player: player)
+      return try await getBeurtFromUser(request: request)
     } catch {
       Position.input.down(n: -2) >>> error.localizedDescription
       return nil
     }
   }
 
-  func move(player: Player, table: Table) async -> Turn {
-    if let res = await execute(player: player, table: table) {
-      return res
-    } else {
-      return await move(player: player, table: table)
-    }
+func move(request: TurnRequest) async -> Turn {
+  if let res = await execute(request: request) {
+    return res
+  } else {
+    return await move(request: request)
   }
+}
+
 }

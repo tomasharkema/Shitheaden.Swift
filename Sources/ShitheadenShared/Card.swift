@@ -6,23 +6,22 @@
 //  Copyright © 2015 Tomas Harkema. All rights reserved.
 //
 
-struct Card: CustomStringConvertible, Equatable, Hashable {
-  let symbol: Symbol
-  let number: Number
+public struct Card: Equatable, Hashable {
+  public let symbol: Symbol
+  public let number: Number
 
-  static let allCases = Symbol.allCases.flatMap { symbol in
+  public init(symbol: Symbol, number: Number) {
+    self.symbol = symbol
+    self.number = number
+  }
+
+  public static let allCases = Symbol.allCases.flatMap { symbol in
     Number.allCases.map { number in
       Card(symbol: symbol, number: number)
     }
   }
 
-  var description: String {
-    let color = symbol.color
-
-    return color >>> "\(symbol.string)\(number.string)"
-  }
-
-  var afters: [Self] {
+  public var afters: [Self] {
     Symbol.allCases.flatMap { symbol in
       self.number.afters.map {
         Card(symbol: symbol, number: $0)
@@ -30,7 +29,7 @@ struct Card: CustomStringConvertible, Equatable, Hashable {
     }
   }
 
-  func apply(_ other: Self) -> Bool {
+  public func apply(_ other: Self) -> Bool {
     number.afters.contains(other.number)
   }
 }

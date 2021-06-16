@@ -10,7 +10,8 @@ let package = Package(
 //  ],
   products: [
     // Products define the executables and libraries a package produces, and make them visible to other packages.
-    .executable(name: "Shitheaden", targets: ["Shitheaden"]),
+    .executable(name: "ShitheadenCLI", targets: ["ShitheadenCLI"]),
+    .library(name: "Shitheaden", type: .static, targets: ["Shitheaden"]),
     .library(name: "ShitheadenShared", type: .static, targets: ["ShitheadenShared"]),
     .library(name: "CustomAlgo", type: .static, targets: ["CustomAlgo"]),
   ],
@@ -20,12 +21,11 @@ let package = Package(
   ],
   targets: [
     .executableTarget(
-      name: "Shitheaden",
+      name: "ShitheadenCLI",
       dependencies: [
-        .target(name: "ShitheadenShared"),
-        .target(name: "CustomAlgo"),
+        .target(name: "Shitheaden"),
+        .target(name: "CustomAlgo")
       ],
-      path: "Sources/Shitheaden",
       swiftSettings: [
         .unsafeFlags([
           "-Xfrontend",
@@ -35,16 +35,34 @@ let package = Package(
       ]
     ),
 
+      .target(
+        name: "Shitheaden",
+        dependencies: ["ShitheadenShared"],
+        swiftSettings: [.unsafeFlags([
+          "-Xfrontend",
+          "-enable-experimental-concurrency",
+          "-Xfrontend", "-disable-availability-checking",
+        ]),]
+      ),
+
     .target(
       name: "ShitheadenShared",
       dependencies: [],
-      path: "./Sources/ShitheadenShared"
+      swiftSettings: [.unsafeFlags([
+        "-Xfrontend",
+        "-enable-experimental-concurrency",
+        "-Xfrontend", "-disable-availability-checking",
+      ]),]
     ),
     .target(
       name: "CustomAlgo",
       dependencies: [
         .target(name: "ShitheadenShared")],
-      path: "./Sources/CustomAlgo"
+      swiftSettings: [.unsafeFlags([
+        "-Xfrontend",
+        "-enable-experimental-concurrency",
+        "-Xfrontend", "-disable-availability-checking",
+      ]),]
     ),
   ]
 )

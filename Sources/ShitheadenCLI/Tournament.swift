@@ -6,34 +6,42 @@
 //  Copyright © 2015 Tomas Harkema. All rights reserved.
 //
 
+import Shitheaden
+import ShitheadenShared
+import CustomAlgo
+
 struct PlayedGame {
   let games: [Game]
 
   // spelers.without(el: winner).map { type(of: $0.ai).algoName }
 
-  func winnigs() -> [String: Int] {
+  func winnigs() async -> [String: Int] {
     var playerAndScores = [String: Int]()
 
-    for score in scores {
-      let winner = score.winner()
+    for game in games {
+      guard let winner = await game.winner else {
+        break
+      }
 
-      playerAndScores[type(of: winner.0.ai).algoName] =
-        (playerAndScores[type(of: winner.0.ai).algoName] ?? 0) + 1
+      playerAndScores[String(describing: type(of: winner.ai))] =
+        (playerAndScores[String(describing: type(of: winner.ai))] ?? 0) + 1
     }
 
     return playerAndScores
   }
 
-  func winningsFrom() -> [String: [String: Int]] {
+  func winningsFrom() async -> [String: [String: Int]] {
     var playerAndScores = [String: [String: Int]]()
 
-    for score in scores {
-      let winner = score.winner()
+    for game in games {
+      guard let winner = await game.winner else {
+        break
+      }
       var arr = [String: Int]()
-      for winn in winner.1 {
-        arr = playerAndScores[type(of: winner.0.ai).algoName] ?? [:]
-        arr[winn] = (arr[winn] ?? 0) + 1
-        playerAndScores[type(of: winner.0.ai).algoName] = arr
+      for winner in await game.players {
+        arr = await playerAndScores[winner.ai.algoName] ?? [:]
+        await arr[winner.ai.algoName] = (arr[winner.ai.algoName] ?? 0) + 1
+        await playerAndScores[winner.ai.algoName] = arr
       }
     }
 
@@ -48,24 +56,22 @@ class Tournament {
     self.roundsPerGame = roundsPerGame
   }
 
-  func peformanceOfAI(ai: [(PlayerMove.Type, String)], gameId: String = "0") async -> PlayedGame {
+  func peformanceOfAI(ai: [(GameAi.Type, String)], gameId: String = "0") async -> PlayedGame {
     let playedGames: [Game] = await withTaskGroup(of: [Game].self) { group in
       for idx in 1 ... self.roundsPerGame {
         group.async {
           let players: [Player] = ai.enumerated().map { index, element in
             let (ai, name) = element
             return Player(
-              handCards: [],
-              openTableCards: [],
-              closedTableCards: [],
               name: name,
-              turns: [],
               position: Position.allCases[index],
               ai: ai.init()
             )
           }
-          let game = Game(shouldPrint: false, players: players)
-          await game.startGame()
+          let game = Game(players: players)
+          let shouldPrint = true
+          await game.startGame(render: { _ in
+          })
           print("\(gameId) \(idx) winner: \(await game.winner?.ai.algoName)")
           return await [game]
         }
@@ -78,8 +84,8 @@ class Tournament {
   }
 
   func playTournament() async {
-    let AIs: [PlayerMove.Type] = [
-      RandomBot.self,
+    let AIs: [GameAi.Type] = allAlgos + [
+      CustomAlgo.self,
     ]
 
     let watch = StopWatch()
@@ -103,7 +109,7 @@ class Tournament {
                   (ai4, "\(ai4.algoName) 4"),
                 ]
                 let res = await self.peformanceOfAI(ai: ais, gameId: potjeIndex)
-                let winnings = res.winnigs()
+                let winnings = await res.winnigs()
 
                 let aisPrint = ais.map {
                   $0.1
@@ -112,7 +118,7 @@ class Tournament {
                   "\(potjeIndex) \(winnings) : \(aisPrint)\ntime: \(watch.getLap()) - \(duration.getLap())"
                 )
 
-                return (winnings, res.winningsFrom())
+                return await (winnings, res.winningsFrom())
               }
             }
           }

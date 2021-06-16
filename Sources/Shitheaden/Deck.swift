@@ -6,6 +6,8 @@
 //  Copyright © 2015 Tomas Harkema. All rights reserved.
 //
 
+import ShitheadenShared
+
 struct Deck {
   var cards: [Card]
 
