@@ -55,21 +55,92 @@ public enum Number: CaseIterable, Equatable, Hashable {
       return "2"
     }
   }
-
 }
 
 extension Number {
-  private static let TwoAfter: Set<Number> = Set(arrayLiteral: .two, .three, .four, .five, .six, .seven, .eight, .nine, .ten, .boer, .vrouw, .heer, .aas)
+  private static let TwoAfter: Set<Number> = Set(
+    arrayLiteral: .two,
+    .three,
+    .four,
+    .five,
+    .six,
+    .seven,
+    .eight,
+    .nine,
+    .ten,
+    .boer,
+    .vrouw,
+    .heer,
+    .aas
+  )
   private static let ThreeAfter: Set<Number> = Set()
-  private static let FourAfter: Set<Number> = Set(arrayLiteral: .two, .three, .four, .five, .six, .seven, .eight, .nine, .ten, .boer, .vrouw, .heer, .aas)
-  private static let FiveAfter: Set<Number> = Set(arrayLiteral: .two, .three, .five, .six, .seven, .eight, .nine, .ten, .boer, .vrouw, .heer, .aas)
-  private static let SixAfter: Set<Number> = Set(arrayLiteral: .two, .three, .six, .seven, .eight, .nine, .ten, .boer, .vrouw, .heer, .aas)
-  private static let SevenAfter: Set<Number> = Set(arrayLiteral: .two, .three, .four, .five, .six, .seven, .ten)
-  private static let EightAfter: Set<Number> = Set(arrayLiteral: .two, .three, .eight, .nine, .ten, .boer, .vrouw, .heer, .aas)
-  private static let NineAfter: Set<Number> = Set(arrayLiteral: .two, .three, .nine, .ten, .boer, .vrouw, .heer, .aas)
-  private static let TenAfter: Set<Number> = Set(arrayLiteral: .two, .three, .four, .five, .six, .seven, .eight, .nine, .ten, .boer, .vrouw, .heer, .aas)
-  private static let BoerAfter: Set<Number> = Set(arrayLiteral: .two, .three, .ten, .boer, .vrouw, .heer, .aas)
-  private static let VrouwAfter: Set<Number> = Set(arrayLiteral: .two, .three, .ten, .vrouw, .heer, .aas)
+  private static let FourAfter: Set<Number> = Set(
+    arrayLiteral: .two,
+    .three,
+    .four,
+    .five,
+    .six,
+    .seven,
+    .eight,
+    .nine,
+    .ten,
+    .boer,
+    .vrouw,
+    .heer,
+    .aas
+  )
+  private static let FiveAfter: Set<Number> = Set(
+    arrayLiteral: .two,
+    .three,
+    .five,
+    .six,
+    .seven,
+    .eight,
+    .nine,
+    .ten,
+    .boer,
+    .vrouw,
+    .heer,
+    .aas
+  )
+  private static let SixAfter: Set<Number> = Set(
+    arrayLiteral: .two,
+    .three,
+    .six,
+    .seven,
+    .eight,
+    .nine,
+    .ten,
+    .boer,
+    .vrouw,
+    .heer,
+    .aas
+  )
+  private static let SevenAfter: Set<Number> = Set(arrayLiteral: .two, .three, .four, .five, .six,
+                                                   .seven, .ten)
+  private static let EightAfter: Set<Number> = Set(arrayLiteral: .two, .three, .eight, .nine, .ten,
+                                                   .boer, .vrouw, .heer, .aas)
+  private static let NineAfter: Set<Number> = Set(arrayLiteral: .two, .three, .nine, .ten, .boer,
+                                                  .vrouw, .heer, .aas)
+  private static let TenAfter: Set<Number> = Set(
+    arrayLiteral: .two,
+    .three,
+    .four,
+    .five,
+    .six,
+    .seven,
+    .eight,
+    .nine,
+    .ten,
+    .boer,
+    .vrouw,
+    .heer,
+    .aas
+  )
+  private static let BoerAfter: Set<Number> = Set(arrayLiteral: .two, .three, .ten, .boer, .vrouw,
+                                                  .heer, .aas)
+  private static let VrouwAfter: Set<Number> = Set(arrayLiteral: .two, .three, .ten, .vrouw, .heer,
+                                                   .aas)
   private static let HeerAfter: Set<Number> = Set(arrayLiteral: .two, .three, .ten, .heer, .aas)
   private static let AasAfter: Set<Number> = Set(arrayLiteral: .two, .three, .ten, .aas)
 
@@ -78,7 +149,7 @@ extension Number {
     switch self {
     case .two:
       return Number.TwoAfter
-    case  .three:
+    case .three:
       return Number.ThreeAfter
     case .four:
       return Number.FourAfter
@@ -125,11 +196,11 @@ extension Number {
   var order: Int {
     switch self {
     case .two:
-        return 2
+      return 2
     case .three:
-        return 3
+      return 3
     case .four:
-        return 4
+      return 4
     case .five: return 5
     case .six: return 6
     case .seven: return 7

@@ -84,7 +84,6 @@
 
       let playedGames: [Game] = await withTaskGroup(of: [Game].self) { g in
         for idx in 1 ... roundsPerGame {
-          
           let unlock = await roundEaser.wait()
           g.async {
             let players: [Player] = ai.enumerated().map { index, element in

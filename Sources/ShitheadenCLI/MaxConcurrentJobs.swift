@@ -13,19 +13,18 @@ class MaxConcurrentJobs {
 
   init(spawn: Int) {
     self.spawn = spawn
-    self.jobs = Jobs(spawn: spawn)
+    jobs = Jobs(spawn: spawn)
   }
 
   func wait() async -> @Sendable () async -> Void {
     let fun: @Sendable () async -> Void = {
       print("========== CONTINUE FUN")
 //      asyncDetached {
-        await self.jobs.cont()
+      await self.jobs.cont()
 //      }
     }
 
     await print("========== START!!!!!!!!", jobs.current, spawn)
-
 
     if await jobs.hasPlace() {
       await print("========== CONTINUE", jobs.current, spawn)
@@ -57,18 +56,17 @@ extension MaxConcurrentJobs {
       self.spawn = spawn
     }
 
-
-  func cont() {
-    print("========== CONTINUE FUN OJOO \(current) \(tasks.count)")
-    current -= 1
-    print("========== CONTINUE FUN OJOO less \(current) \(tasks.count)")
-    if let task = tasks.first {
-      asyncDetached {
-        task.resume()
+    func cont() {
+      print("========== CONTINUE FUN OJOO \(current) \(tasks.count)")
+      current -= 1
+      print("========== CONTINUE FUN OJOO less \(current) \(tasks.count)")
+      if let task = tasks.first {
+        asyncDetached {
+          task.resume()
+        }
+        tasks.removeFirst()
       }
-      tasks.removeFirst()
     }
-  }
 
     func hasPlace() -> Bool {
       print("HAS PLACE")
@@ -85,5 +83,4 @@ extension MaxConcurrentJobs {
       tasks.append(r)
     }
   }
-
 }

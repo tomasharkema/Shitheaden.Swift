@@ -12,8 +12,6 @@ import ShitheadenRuntime
 import ShitheadenShared
 
 actor UserInputAI: GameAi {
-  static let algoName = "UserInputAI"
-
   let reader: () async -> String
   let render: (String) async -> Void
   required init() {
@@ -43,9 +41,15 @@ actor UserInputAI: GameAi {
 
   private func getBeurtFromUser(request: TurnRequest) async throws -> Turn {
     #if DEBUG
-    await render(Position.input.down(n: 5).cliRep + ANSIEscapeCode.Erase.eraseInLine(.entireLine) + "\(request.possibleTurns())")
+      await render(Position.input.down(n: 5).cliRep + ANSIEscapeCode.Erase
+        .eraseInLine(.entireLine) + "\(request.possibleTurns())")
     #endif
 
+    let handString = request.handCards.sortNumbers().enumerated()
+      .map { "\($0.offset + 1)\($0.element.description)" }.joined(separator: " ")
+
+    let hand = Position.hand >>> "Hand: \(handString)"
+    await render(hand)
     await render(Position.input.cliRep)
     let input = await getInput()
 

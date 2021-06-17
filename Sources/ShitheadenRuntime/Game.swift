@@ -313,16 +313,16 @@ public actor Game {
 
   func beginRound() async {
 //    await withTaskGroup(of: Void.self) { g in
-      for (index, player) in players.enumerated() {
+    for (index, player) in players.enumerated() {
 //        g.async {
-          await self.updatePlayer(player: await self.commitBeginTurn(
-              playerIndex: index,
-              player: player,
-              numberCalled: 0,
-              previousError: nil
-            ))
-          try! await self.checkIntegrity()
-          await self.render(self, false)
+      await updatePlayer(player: await commitBeginTurn(
+        playerIndex: index,
+        player: player,
+        numberCalled: 0,
+        previousError: nil
+      ))
+      try! await checkIntegrity()
+      await render(self, false)
 //        }
 //      }
     }
@@ -416,59 +416,59 @@ public actor Game {
   }
 
   func checkIntegrity() throws {
-//     #if DEBUG
-    var pastCards = [(Card, String)]()
+    #if DEBUG
+      var pastCards = [(Card, String)]()
 
-    for player in players {
-      for handCard in player.handCards {
-        if pastCards.contains(where: { $0.0 == handCard }) {
+      for player in players {
+        for handCard in player.handCards {
+          if pastCards.contains(where: { $0.0 == handCard }) {
+            throw PlayerError(text: "DOUBLE CARD ENCOUNTERED")
+          }
+          pastCards.append((handCard, "\(player.name):hand"))
+        }
+        for openTableCard in player.openTableCards {
+          if pastCards.contains(where: { $0.0 == openTableCard }) {
+            throw PlayerError(text: "DOUBLE CARD ENCOUNTERED")
+          }
+          pastCards.append((openTableCard, "\(player.name):openTableCard"))
+        }
+        for closedTableCard in player.closedTableCards {
+          if pastCards.contains(where: { $0.0 == closedTableCard }) {
+            throw PlayerError(text: "DOUBLE CARD ENCOUNTERED")
+          }
+          pastCards.append((closedTableCard, "\(player.name):closedTableCard"))
+        }
+      }
+
+      for c in table {
+        if let found = pastCards.first(where: { $0.0 == c }) {
+          print("found", found)
           throw PlayerError(text: "DOUBLE CARD ENCOUNTERED")
         }
-        pastCards.append((handCard, "\(player.name):hand"))
+        pastCards.append((c, "table"))
       }
-      for openTableCard in player.openTableCards {
-        if pastCards.contains(where: { $0.0 == openTableCard }) {
+
+      for c in deck.cards {
+        if pastCards.contains(where: { $0.0 == c }) {
           throw PlayerError(text: "DOUBLE CARD ENCOUNTERED")
         }
-        pastCards.append((openTableCard, "\(player.name):openTableCard"))
+        pastCards.append((c, "deck"))
       }
-      for closedTableCard in player.closedTableCards {
-        if pastCards.contains(where: { $0.0 == closedTableCard }) {
+
+      for c in burnt {
+        if pastCards.contains(where: { $0.0 == c }) {
           throw PlayerError(text: "DOUBLE CARD ENCOUNTERED")
         }
-        pastCards.append((closedTableCard, "\(player.name):closedTableCard"))
+        pastCards.append((c, "burnt"))
       }
-    }
 
-    for c in table {
-      if let found = pastCards.first(where: { $0.0 == c }) {
-        print("found", found)
-        throw PlayerError(text: "DOUBLE CARD ENCOUNTERED")
+      if pastCards.count != 52 {
+        print(pastCards.count)
+        print(turns)
+        throw PlayerError(text: "SHOULD HAVE 52 CARDS!")
       }
-      pastCards.append((c, "table"))
-    }
 
-    for c in deck.cards {
-      if pastCards.contains(where: { $0.0 == c }) {
-        throw PlayerError(text: "DOUBLE CARD ENCOUNTERED")
-      }
-      pastCards.append((c, "deck"))
-    }
-
-    for c in burnt {
-      if pastCards.contains(where: { $0.0 == c }) {
-        throw PlayerError(text: "DOUBLE CARD ENCOUNTERED")
-      }
-      pastCards.append((c, "burnt"))
-    }
-
-    if pastCards.count != 52 {
-      print(pastCards.count)
-      print(turns)
-      throw PlayerError(text: "SHOULD HAVE 52 CARDS!")
-    }
-
-//     #endif
+    #endif
   }
 }
 
