@@ -145,6 +145,7 @@ print("Spawning \(spawn) threads")
                 print(
                   "\(potjeIndex) \(winnings) : \(aisPrint)\ntime: \(watch.getLap()) - \(duration.getLap())"
                 )
+                print("UNLOCK!!!!!")
                 await unlock()
                 return await (winnings, res.winningsFrom())
               }
@@ -205,6 +206,7 @@ actor Easer {
   }
 
   private func cont() {
+    print("========== CONTINUE FUN OJOO")
     self.current -= 1
     if let task = self.tasks.first {
       task.resume()
@@ -212,23 +214,27 @@ actor Easer {
     }
   }
 
-  func wait() async -> @Sendable () async -> () {
-    let fun: @Sendable () async -> () = {
-      await self.cont()
+  func wait() async -> () -> () {
+    let fun: () -> () = {
+      print("========== CONTINUE FUN")
+      self.cont()
     }
 
-    print(current, spawn)
+    print("========== START!!!!!!!!", current, spawn)
 
     if current < spawn {
       current += 1
 
+      print("========== CONTINUE", current, spawn)
       return fun
     }
 
+    print("========== WAIT", current, spawn)
     await withUnsafeContinuation { r in
       tasks.append(r)
     }
 
+    print("========== CONTINUE AFTER WAIT", current, spawn)
     return await wait()
   }
 }
