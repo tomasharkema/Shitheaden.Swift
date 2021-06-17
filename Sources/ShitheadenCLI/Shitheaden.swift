@@ -15,9 +15,9 @@ import SwiftSocket
 @main
 struct Shitheaden: ParsableCommand {
   #if os(macOS)
-  @Flag(help: "Test all the AI's")
-  var testAi = false
-#endif
+    @Flag(help: "Test all the AI's")
+    var testAi = false
+  #endif
 
   @Flag(help: "Start a server")
   var server = false
@@ -26,38 +26,36 @@ struct Shitheaden: ParsableCommand {
   var parallelization: Int = 8
 
   mutating func run() async throws {
-
-#if os(Linux)
-    await startServer()
-    return
-#endif
+    #if os(Linux)
+      await startServer()
+      return
+    #endif
 
     print("START!")
     if server {
       await startServer()
       return
     }
-      #if os(macOS)
+    #if os(macOS)
       if testAi {
-      await playTournament()
-      return
-    } 
+        await playTournament()
+        return
+      }
     #endif
-      await interactive()
-    
+    await interactive()
   }
 
-    #if os(macOS)
-  private func playTournament() async {
-    return await withUnsafeContinuation { d in
-      DispatchQueue.global().async {
-        async {
-          await Tournament(roundsPerGame: 10, parallelization: parallelization).playTournament()
-          d.resume()
+  #if os(macOS)
+    private func playTournament() async {
+      return await withUnsafeContinuation { d in
+        DispatchQueue.global().async {
+          async {
+            await Tournament(roundsPerGame: 10, parallelization: parallelization).playTournament()
+            d.resume()
+          }
         }
       }
     }
-  }
   #endif
 
   private func interactive() async {
@@ -82,7 +80,7 @@ struct Shitheaden: ParsableCommand {
         position: .oost,
         ai: CardRankingAlgo()
       ),
-    ], slowMode: true, render: { (game, clear) in
+    ], slowMode: true, render: { game, clear in
       await print(Renderer.render(game: game, clear: clear))
     })
 
@@ -142,14 +140,13 @@ struct Shitheaden: ParsableCommand {
         position: .oost,
         ai: CardRankingAlgo()
       ),
-    ], slowMode: true, render: { (game, clear) in
+    ], slowMode: true, render: { game, clear in
       await client.send(string: Renderer.render(game: game, clear: clear))
     })
 
     await game.startGame()
   }
 }
-
 
 actor AtomicBool {
   var value: Bool
@@ -164,7 +161,6 @@ actor AtomicBool {
 }
 
 extension TCPClient {
-
   func _read(cancel: AtomicBool) async -> String {
     while bytesAvailable() == 0 {}
     guard let bytes = bytesAvailable(), await !cancel.value else {
@@ -196,11 +192,11 @@ extension TCPClient {
     }, operation: {
       var string = ""
 
-      while !(string.hasSuffix("\n") || string.hasSuffix("\r")), await !cancel.value  {
+      while !(string.hasSuffix("\n") || string.hasSuffix("\r")), await !cancel.value {
         string += await _read(cancel: cancel)
         print("APPEND: \(string)")
       }
-        print("COMMIT: \(string)")
+      print("COMMIT: \(string)")
       return string
     })
   }

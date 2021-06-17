@@ -16,7 +16,7 @@ class Keyboard {
     print("READ: '\(inputData)'")
     guard let line = inputData else {
       return ""
-    } 
+    }
     return line.trimmingCharacters(in: .newlines)
   }
 }

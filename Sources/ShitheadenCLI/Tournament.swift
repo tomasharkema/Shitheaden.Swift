@@ -8,244 +8,198 @@
 
 #if os(macOS)
 
-import CustomAlgo
-import Dispatch
-import ShitheadenRuntime
-import ShitheadenShared
-import Foundation
+  import CustomAlgo
+  import Dispatch
+  import Foundation
+  import ShitheadenRuntime
+  import ShitheadenShared
 
-struct PlayedGame {
-  let games: [Game]
+  struct PlayedGame {
+    let games: [Game]
 
-  func winnigs() async -> [String: Int] {
-    var playerAndScores = [String: Int]()
-    let winners: [(Game, Player)] = await withTaskGroup(of: [(Game, Player)].self) { group in
-      for game in games {
-        group.async(priority: .background) {
-          await [(game, game.winner!)]
-        }
-      }
-      return await group.reduce([], +)
-    }
-
-    for winner in winners {
-      playerAndScores[String(describing: type(of: winner.1.ai))] =
-        (playerAndScores[String(describing: type(of: winner.1.ai))] ?? 0) + 1
-    }
-
-    return playerAndScores
-  }
-
-  func winningsFrom() async -> [String: [String: Int]] {
-    let winners: [(Game, [Player], Player, GameAi)] =
-      await withTaskGroup(of: [(Game, [Player], Player, GameAi)].self) { group in
+    func winnigs() async -> [String: Int] {
+      var playerAndScores = [String: Int]()
+      let winners: [(Game, Player)] = await withTaskGroup(of: [(Game, Player)].self) { group in
         for game in games {
           group.async(priority: .background) {
-            await [(game, game.players, game.winner!, game.winner!.ai)]
+            await [(game, game.winner!)]
           }
         }
         return await group.reduce([], +)
       }
 
-    var playerAndScores = [String: [String: Int]]()
-
-    for (game, players, winner, _) in winners {
-      for winner in players {
-        var arr = [String: Int]()
-        arr = playerAndScores[winner.ai.algoName] ?? [:]
-        arr[winner.ai.algoName] = (arr[winner.ai.algoName] ?? 0) + 1
-        playerAndScores[winner.ai.algoName] = arr
+      for winner in winners {
+        playerAndScores[String(describing: type(of: winner.1.ai))] =
+          (playerAndScores[String(describing: type(of: winner.1.ai))] ?? 0) + 1
       }
+
+      return playerAndScores
     }
 
-    return playerAndScores
+    func winningsFrom() async -> [String: [String: Int]] {
+      let winners: [(Game, [Player], Player, GameAi)] =
+        await withTaskGroup(of: [(Game, [Player], Player, GameAi)].self) { group in
+          for game in games {
+            group.async(priority: .background) {
+              await [(game, game.players, game.winner!, game.winner!.ai)]
+            }
+          }
+          return await group.reduce([], +)
+        }
+
+      var playerAndScores = [String: [String: Int]]()
+
+      for (game, players, winner, _) in winners {
+        for winner in players {
+          var arr = [String: Int]()
+          arr = playerAndScores[winner.ai.algoName] ?? [:]
+          arr[winner.ai.algoName] = (arr[winner.ai.algoName] ?? 0) + 1
+          playerAndScores[winner.ai.algoName] = arr
+        }
+      }
+
+      return playerAndScores
+    }
   }
-}
 
-class Tournament {
-  let roundsPerGame: Int
-  let parallelization: Int
-  let easer: Easer
-  let roundEaser: Easer
+  class Tournament {
+    let roundsPerGame: Int
+    let parallelization: Int
+    let easer: MaxConcurrentJobs
+    let roundEaser: MaxConcurrentJobs
 
-  init(roundsPerGame: Int, parallelization: Int) {
-    self.roundsPerGame = roundsPerGame
-    self.parallelization = parallelization
+    init(roundsPerGame: Int, parallelization: Int) {
+      self.roundsPerGame = roundsPerGame
+      self.parallelization = parallelization
 
-    let spawn = max(2, parallelization)
-    print("Spawning \(spawn) threads")
+      let spawn = max(2, parallelization)
+      print("Spawning \(spawn) threads")
 
-    easer = Easer(spawn: spawn)
-    roundEaser = Easer(spawn: spawn)
-  }
+      easer = MaxConcurrentJobs(spawn: spawn)
+      roundEaser = MaxConcurrentJobs(spawn: spawn)
+    }
 
-  func peformanceOfAI(ai: [(GameAi.Type, String)], gameId: String = "0") async -> PlayedGame {
+    func peformanceOfAI(ai: [(GameAi.Type, String)], gameId: String = "0") async -> PlayedGame {
 //    var playedGames = [Game]()
 
-    let playedGames: [Game] = await withTaskGroup(of: [Game].self) { g in
-      for idx in 1 ... roundsPerGame {
-        g.async {
-        let players: [Player] = ai.enumerated().map { index, element in
-          let (ai, name) = element
-          return Player(
-            name: name,
-            position: Position.allCases[index],
-            ai: ai.init()
-          )
-        }
-        let game = Game(players: players, slowMode: false, render: { _, _ in })
+      let playedGames: [Game] = await withTaskGroup(of: [Game].self) { g in
+        for idx in 1 ... roundsPerGame {
+          
+          let unlock = await roundEaser.wait()
+          g.async {
+            let players: [Player] = ai.enumerated().map { index, element in
+              let (ai, name) = element
+              return Player(
+                name: name,
+                position: Position.allCases[index],
+                ai: ai.init()
+              )
+            }
+            let game = Game(players: players, slowMode: false, render: { _, _ in })
 
-          print(" START: \(gameId) \(idx) / \(self.roundsPerGame)")
-        await game.startGame()
-        print(
-          " END: \(gameId) \(idx) / \(self.roundsPerGame) winner: \(await game.winner?.ai.algoName ?? "")"
-        )
-          return [game]
+            print(" START: \(gameId) \(idx) / \(self.roundsPerGame)")
+            await game.startGame()
+            print(
+              " END: \(gameId) \(idx) / \(self.roundsPerGame) winner: \(await game.winner?.ai.algoName ?? "")"
+            )
+            unlock()
+            return [game]
+          }
         }
+        return await g.reduce([], +)
       }
-      return await g.reduce([], +)
+      return PlayedGame(games: playedGames)
     }
-    return PlayedGame(games: playedGames)
-  }
 
-  func playTournament() async {
-    let AIs: [GameAi.Type] = allAlgos + [
-      CardRankingAlgo.self, CardRankingAlgoWithUnfairPassing.self,
-    ]
+    func playTournament() async {
+      let AIs: [GameAi.Type] = allAlgos + [
+        CardRankingAlgo.self, CardRankingAlgoWithUnfairPassing.self,
+      ]
 
-    let watch = StopWatch()
-    watch.start()
+      let watch = StopWatch()
+      watch.start()
 
-    let stats = await withTaskGroup(of: ([String: Int], [String: [String: Int]])
-      .self) { g -> ([String: Int], [String: [String: Int]]) in
-      for (index1, ai1) in AIs.enumerated() {
-        for (index2, ai2) in AIs.enumerated() {
-          for (index3, ai3) in AIs.enumerated() {
-            for (index4, ai4) in AIs.enumerated() {
-              let unlock = await easer.wait()
-              g.async {
-                let potjeIndex: String = [index1, index2, index3, index4].map { "\($0)" }
-                  .joined(separator: ",")
-                let duration = StopWatch()
-                duration.start()
-                let ais = [
-                  (ai1, "\(ai1.algoName) 1"),
-                  (ai2, "\(ai2.algoName) 2"),
-                  (ai3, "\(ai3.algoName) 3"),
-                  (ai4, "\(ai4.algoName) 4"),
-                ]
+      let stats = await withTaskGroup(of: ([String: Int], [String: [String: Int]])
+        .self) { g -> ([String: Int], [String: [String: Int]]) in
+        for (index1, ai1) in AIs.enumerated() {
+          for (index2, ai2) in AIs.enumerated() {
+            for (index3, ai3) in AIs.enumerated() {
+              for (index4, ai4) in AIs.enumerated() {
+                let unlock = await easer.wait()
+                g.async {
+                  let potjeIndex: String = [index1, index2, index3, index4].map { "\($0)" }
+                    .joined(separator: ",")
+                  let duration = StopWatch()
+                  duration.start()
+                  let ais = [
+                    (ai1, "\(ai1.algoName) 1"),
+                    (ai2, "\(ai2.algoName) 2"),
+                    (ai3, "\(ai3.algoName) 3"),
+                    (ai4, "\(ai4.algoName) 4"),
+                  ]
 
-                print(
-                  "START: \(index1 + index2 + index3 + index4) / \(AIs.count * 4) / \(self.roundsPerGame)"
-                )
-                let res = await self.peformanceOfAI(ai: ais, gameId: potjeIndex)
-                print(
-                  "END: \(index1 + index2 + index3 + index4) / \(AIs.count * 4) / \(self.roundsPerGame)"
-                )
+                  print(
+                    "START: \(index1 + index2 + index3 + index4) / \(AIs.count * 4) / \(self.roundsPerGame)"
+                  )
+                  let res = await self.peformanceOfAI(ai: ais, gameId: potjeIndex)
+                  print(
+                    "END: \(index1 + index2 + index3 + index4) / \(AIs.count * 4) / \(self.roundsPerGame)"
+                  )
 
-                let winnings = await res.winnigs()
+                  let winnings = await res.winnigs()
 
-                let aisPrint = ais.map {
-                  $0.1
+                  let aisPrint = ais.map {
+                    $0.1
+                  }
+                  print(
+                    "\(potjeIndex) \(winnings) : \(aisPrint)\ntime: \(watch.getLap()) - \(duration.getLap())"
+                  )
+                  print("UNLOCK!!!!!")
+                  unlock()
+                  return await (winnings, res.winningsFrom())
                 }
-                print(
-                  "\(potjeIndex) \(winnings) : \(aisPrint)\ntime: \(watch.getLap()) - \(duration.getLap())"
-                )
-                print("UNLOCK!!!!!")
-                await unlock()
-                return await (winnings, res.winningsFrom())
               }
             }
           }
         }
-      }
 
-      return await g.reduce(([String: Int](), [String: [String: Int]]())) { prev, curr in
-        var new = prev
+        return await g.reduce(([String: Int](), [String: [String: Int]]())) { prev, curr in
+          var new = prev
 
-        for el in curr.0.keys {
-          new.0[el] = curr.0[el]
+          for el in curr.0.keys {
+            new.0[el] = curr.0[el]
+          }
+          for el in curr.1.keys {
+            new.1[el] = curr.1[el]
+          }
+          return new
         }
-        for el in curr.1.keys {
-          new.1[el] = curr.1[el]
+      }
+
+      let scores = stats.0.sorted { lhs, rhs in
+        lhs.1 > rhs.1
+      }
+
+      print("\n\nSCORES: (potjes van \(roundsPerGame) gewonnen)\n")
+
+      scores.reduce("") { prev, el in
+        prev + "\(el.0): \(el.1)\n"
+      }.print()
+
+      // winnings from
+      print(stats.1.reduce("Performance:\n") { prev, el in
+
+        let ranks = el.1.sorted { l, r in
+          l.1 > r.1
+        }.reduce("") { prev, el in
+          prev + "     \(el.0): \(el.1)\n"
         }
-        return new
-      }
+
+        return prev + "\(el.0): wint van\n\(ranks)\n"
+      })
+
+      print("Tijd: \(watch.getLap())\n")
     }
-
-    let scores = stats.0.sorted { lhs, rhs in
-      lhs.1 > rhs.1
-    }
-
-    print("\n\nSCORES: (potjes van \(roundsPerGame) gewonnen)\n")
-
-    scores.reduce("") { prev, el in
-      prev + "\(el.0): \(el.1)\n"
-    }.print()
-
-    // winnings from
-    print(stats.1.reduce("Performance:\n") { prev, el in
-
-      let ranks = el.1.sorted { l, r in
-        l.1 > r.1
-      }.reduce("") { prev, el in
-        prev + "     \(el.0): \(el.1)\n"
-      }
-
-      return prev + "\(el.0): wint van\n\(ranks)\n"
-    })
-
-    print("Tijd: \(watch.getLap())\n")
   }
-}
 
 #endif
-
-actor Easer {
-  let spawn: Int
-  var current: Int = 0
-
-  var tasks = [UnsafeContinuation<Void, Never>]()
-
-  init(spawn: Int) {
-    self.spawn = spawn
-  }
-
-  private func cont() {
-    print("========== CONTINUE FUN OJOO \(current)")
-    self.current -= 1
-    print("========== CONTINUE FUN OJOO less \(current)")
-    if let task = self.tasks.first {
-      asyncDetached {
-      task.resume()
-      }
-      self.tasks.removeFirst()
-    }
-  }
-
-  func wait() async -> () -> () {
-    let fun: () -> () = {
-      print("========== CONTINUE FUN")
-      asyncDetached {
-        await self.cont()
-      }
-    }
-
-    print("========== START!!!!!!!!", current, spawn)
-
-    if current < spawn {
-      current += 1
-
-      print("========== CONTINUE", current, spawn)
-      return fun
-    }
-
-    print("========== WAIT", current, spawn)
-    await withUnsafeContinuation { r in
-      tasks.append(r)
-    }
-
-    print("========== CONTINUE AFTER WAIT", current, spawn)
-    return await wait()
-  }
-}

@@ -107,7 +107,7 @@ actor UserInputAI: GameAi {
     }
 
 //    do {
-      return try await getBeurtFromUser(request: request)
+    return try await getBeurtFromUser(request: request)
 //    } catch {
 //      await render(Position.input
 //        .down(n: -2) >>> ((error as? PlayerError)?.text ?? error.localizedDescription))

@@ -39,7 +39,7 @@ class Renderer {
         await Position.header.down(n: 4) >>> " Burnt: \(game.burnt.suffix(5)) kaarten",
         await Position.tafel >>> game.table.suffix(5).map { $0.description }.joined(separator: " "),
         await Position.tafel.down(n: 1) >>> "\(game.table.count)",
-        hand
+        hand,
       ],
       playersString,
     ]

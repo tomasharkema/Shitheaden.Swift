@@ -9,13 +9,13 @@ let package = Package(
   ],
   products: [
     .executable(name: "shitheaden", targets: ["shitheaden"]),
-    .library(name: "ShitheadenRuntime", type: .dynamic, targets: ["ShitheadenRuntime"]),
+    .library(name: "ShitheadenRuntime", type: .static, targets: ["ShitheadenRuntime"]),
     .library(
       name: "ShitheadenShared",
-      type: .dynamic,
+      type: .static,
       targets: ["ShitheadenShared"] // , "ShitheadenSharedTests"]
     ),
-    .library(name: "CustomAlgo", type: .dynamic, targets: ["CustomAlgo"]),
+    .library(name: "CustomAlgo", type: .static, targets: ["CustomAlgo"]),
   ],
   dependencies: [
     .package(
@@ -33,7 +33,8 @@ let package = Package(
         .target(name: "ShitheadenRuntime"),
         .target(name: "CustomAlgo"),
         .product(name: "ArgumentParser", package: "swift-argument-parser"),
-        .product(name: "SwiftSocket", package: "SwiftSocket"),//, condition: .when(platforms: [.macOS, .macCatalyst])),
+        .product(name: "SwiftSocket", package: "SwiftSocket"),
+        // , condition: .when(platforms: [.macOS, .macCatalyst])),
         .product(name: "ANSIEscapeCode", package: "ANSIEscapeCode"),
 //        .product(name: "NIOSSH", package: "swift-nio-ssh"),
       ],
