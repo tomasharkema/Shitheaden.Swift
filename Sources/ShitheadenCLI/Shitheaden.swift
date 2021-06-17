@@ -120,8 +120,8 @@ struct Shitheaden: ParsableCommand {
           print("READ!")
           return await client.read()
         } render: { string in
-          _ = await withUnsafeContinuation { c in
-            c.resume(returning: client.send(string: string + "\n"))
+          async {
+            client.send(string: string)
           }
         }
       ),

@@ -44,6 +44,6 @@ class Renderer {
       playersString,
     ]
 
-    return strings.joined().joined(separator: "\n") + "\n"
+    return strings.joined().joined(separator: "\n")
   }
 }
