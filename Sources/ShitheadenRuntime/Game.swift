@@ -202,6 +202,7 @@ public actor Game {
         {
           player.handCards.append(contentsOf: table)
           table = []
+          updatePlayer(player: player)
           await render(self, true)
           if rules.contains(.againAfterPass) {
             return await commitTurn(
@@ -256,6 +257,7 @@ public actor Game {
     if turn == .pass, rules.contains(.againAfterPass), !player.done, !done {
 //      printState()
       await render(self, true)
+      updatePlayer(player: player)
       return await commitTurn(
         playerIndex: playerIndex,
         player: player,
@@ -268,6 +270,7 @@ public actor Game {
       table = []
 
       await render(self, true)
+      updatePlayer(player: player)
 
       if rules.contains(.againAfterGoodBehavior), !player.done, !done {
         return await commitTurn(
@@ -290,6 +293,7 @@ public actor Game {
       burnt.append(contentsOf: table)
       table = []
       await render(self, true)
+      updatePlayer(player: player)
       if rules.contains(.againAfterGoodBehavior), !player.done, !done {
         return await commitTurn(
           playerIndex: playerIndex,
@@ -313,19 +317,20 @@ public actor Game {
 
   func beginRound() async {
 //    await withTaskGroup(of: Void.self) { g in
-    for (index, player) in players.enumerated() {
+      for (index, player) in players.enumerated() {
 //        g.async {
-      await updatePlayer(player: await commitBeginTurn(
-        playerIndex: index,
-        player: player,
-        numberCalled: 0,
-        previousError: nil
-      ))
-      try! await checkIntegrity()
-      await render(self, false)
-//        }
+          let newPlayer = await self.commitBeginTurn(
+            playerIndex: index,
+            player: player,
+            numberCalled: 0,
+            previousError: nil
+          )
+          await self.updatePlayer(player: newPlayer)
+          try! await self.checkIntegrity()
+          await self.render(self, false)
+        }
 //      }
-    }
+//    }
   }
 
   func turn() async {
@@ -406,7 +411,6 @@ public actor Game {
 
     shuffle()
     deel()
-//    printState()
     await render(self, true)
     await beginRound()
 

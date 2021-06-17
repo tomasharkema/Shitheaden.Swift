@@ -45,12 +45,6 @@ actor UserInputAI: GameAi {
         .eraseInLine(.entireLine) + "\(request.possibleTurns())")
     #endif
 
-    let handString = request.handCards.sortNumbers().enumerated()
-      .map { "\($0.offset + 1)\($0.element.description)" }.joined(separator: " ")
-
-    let hand = Position.hand >>> "Hand: \(handString)"
-    await render(hand)
-    await render(Position.input.cliRep)
     let input = await getInput()
 
     let executeTurn: Turn
@@ -156,6 +150,8 @@ actor UserInputAI: GameAi {
     do {
       await render(Position.input.cliRep + ANSIEscapeCode.Erase
         .eraseInLine(.entireLine) + "Selecteer drie kaarten voor je tafelkaarten...")
+      await render(Position.input.down(n: 1).cliRep + ANSIEscapeCode.Erase
+                    .eraseInLine(.entireLine))
 
       let input = await getInput()
       guard let keuze = await parseInput(input: input) else {
