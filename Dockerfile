@@ -1,4 +1,4 @@
-FROM tomasharkema7/swift-5.5 as builder
+FROM tomasharkema7/swift-5.5:1804 as builder
 
 WORKDIR /app
 
@@ -12,7 +12,7 @@ COPY Sources ./Sources
 RUN swift build -v -c release
 
 
-FROM tomasharkema7/swift-5.5
+FROM tomasharkema7/swift-5.5:1804
 
 RUN apt-get update -y && apt-get install -y git curl libatomic1 libxml2 netcat-openbsd lsof perl && rm -rf /var/lib/apt/lists/*
 
