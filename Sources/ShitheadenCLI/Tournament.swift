@@ -85,7 +85,13 @@
       let playedGames: [Game] = await withTaskGroup(of: [Game].self) { g in
         for idx in 1 ... roundsPerGame {
           let unlock = await roundEaser.wait()
+          if Task.isCancelled {
+            return []
+          }
           g.async {
+            if Task.isCancelled {
+              return []
+            }
             let players: [Player] = ai.enumerated().map { index, element in
               let (ai, name) = element
               return Player(
@@ -125,7 +131,13 @@
             for (index3, ai3) in AIs.enumerated() {
               for (index4, ai4) in AIs.enumerated() {
                 let unlock = await easer.wait()
+                if Task.isCancelled {
+                  return ([:], [:])
+                }
                 g.async {
+                  if Task.isCancelled {
+                    return ([:], [:])
+                  }
                   let potjeIndex: String = [index1, index2, index3, index4].map { "\($0)" }
                     .joined(separator: ",")
                   let duration = StopWatch()
