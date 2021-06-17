@@ -5,6 +5,8 @@
 //  Created by Tomas Harkema on 17/06/2021.
 //
 
+import Dispatch
+
 class MaxConcurrentJobs {
   let spawn: Int
   let jobs: Jobs
@@ -14,12 +16,12 @@ class MaxConcurrentJobs {
     self.jobs = Jobs(spawn: spawn)
   }
 
-  func wait() async -> () -> Void {
-    let fun: () -> Void = {
+  func wait() async -> @Sendable () async -> Void {
+    let fun: @Sendable () async -> Void = {
       print("========== CONTINUE FUN")
-      asyncDetached {
+//      asyncDetached {
         await self.jobs.cont()
-      }
+//      }
     }
 
     await print("========== START!!!!!!!!", jobs.current, spawn)
@@ -33,8 +35,10 @@ class MaxConcurrentJobs {
     await print("========== WAIT", jobs.current, spawn)
 
     await withCheckedContinuation { r in
-      asyncDetached {
-        await self.jobs.insert(r: r)
+      DispatchQueue.global().async { // fix to not be needed?
+        async {
+          await self.jobs.insert(r: r)
+        }
       }
     }
 
@@ -54,19 +58,20 @@ extension MaxConcurrentJobs {
     }
 
 
-func cont() {
-  print("========== CONTINUE FUN OJOO \(current) \(tasks.count)")
-  current -= 1
-  print("========== CONTINUE FUN OJOO less \(current) \(tasks.count)")
-  if let task = tasks.first {
-    asyncDetached {
-      task.resume()
+  func cont() {
+    print("========== CONTINUE FUN OJOO \(current) \(tasks.count)")
+    current -= 1
+    print("========== CONTINUE FUN OJOO less \(current) \(tasks.count)")
+    if let task = tasks.first {
+      asyncDetached {
+        task.resume()
+      }
+      tasks.removeFirst()
     }
-    tasks.removeFirst()
   }
-}
 
     func hasPlace() -> Bool {
+      print("HAS PLACE")
       if current < spawn {
         current += 1
         return true
@@ -76,6 +81,7 @@ func cont() {
     }
 
     func insert(r: CheckedContinuation<Void, Never>) {
+      print("INSERT")
       tasks.append(r)
     }
   }

@@ -102,7 +102,7 @@
             print(
               " END: \(gameId) \(idx) / \(self.roundsPerGame) winner: \(await game.winner?.ai.algoName ?? "")"
             )
-            unlock()
+            await unlock()
             return [game]
           }
         }
@@ -155,7 +155,7 @@
                     "\(potjeIndex) \(winnings) : \(aisPrint)\ntime: \(watch.getLap()) - \(duration.getLap())"
                   )
                   print("UNLOCK!!!!!")
-                  unlock()
+                  await unlock()
                   return await (winnings, res.winningsFrom())
                 }
               }
