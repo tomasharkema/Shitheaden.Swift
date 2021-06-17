@@ -57,7 +57,7 @@ public extension Array where Element == Card {
 }
 
 extension Card {
-  var order: Int {
+  public var order: Int {
     number.order
   }
 }

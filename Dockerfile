@@ -1,6 +1,4 @@
-FROM docker.harkema.io/swift-5.5:1804 as builder
-
-#FROM docker.harkema.io/swift-main:1804 as builder
+FROM tomasharkema7/swift-5.5 as builder
 
 WORKDIR /app
 
@@ -14,8 +12,7 @@ COPY Sources ./Sources
 RUN swift build -v -c release
 
 
-FROM docker.harkema.io/swift-5.5:1804-slim
-#FROM docker.harkema.io/swift-main:1804
+FROM tomasharkema7/swift-5.5
 
 RUN apt-get update -y && apt-get install -y git curl libatomic1 libxml2 netcat-openbsd lsof perl && rm -rf /var/lib/apt/lists/*
 

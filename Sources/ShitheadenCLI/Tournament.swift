@@ -65,35 +65,46 @@ struct PlayedGame {
 class Tournament {
   let roundsPerGame: Int
   let parallelization: Int
+  let easer: Easer
+  let roundEaser: Easer
 
   init(roundsPerGame: Int, parallelization: Int) {
     self.roundsPerGame = roundsPerGame
     self.parallelization = parallelization
+
+    let spawn = max(2, parallelization)
+    print("Spawning \(spawn) threads")
+
+    easer = Easer(spawn: spawn)
+    roundEaser = Easer(spawn: spawn)
   }
 
   func peformanceOfAI(ai: [(GameAi.Type, String)], gameId: String = "0") async -> PlayedGame {
-    var playedGames = [Game]()
+//    var playedGames = [Game]()
 
-    for idx in 1 ... roundsPerGame {
-      let players: [Player] = ai.enumerated().map { index, element in
-        let (ai, name) = element
-        return Player(
-          name: name,
-          position: Position.allCases[index],
-          ai: ai.init()
+    let playedGames: [Game] = await withTaskGroup(of: [Game].self) { g in
+      for idx in 1 ... roundsPerGame {
+        g.async {
+        let players: [Player] = ai.enumerated().map { index, element in
+          let (ai, name) = element
+          return Player(
+            name: name,
+            position: Position.allCases[index],
+            ai: ai.init()
+          )
+        }
+        let game = Game(players: players, slowMode: false, render: { _, _ in })
+
+          print(" START: \(gameId) \(idx) / \(self.roundsPerGame)")
+        await game.startGame()
+        print(
+          " END: \(gameId) \(idx) / \(self.roundsPerGame) winner: \(await game.winner?.ai.algoName ?? "")"
         )
+          return [game]
+        }
       }
-      let game = Game(players: players, slowMode: false, render: { _, _ in })
-
-      print(" START: \(gameId) \(idx) / \(roundsPerGame)")
-      await game.startGame()
-      print(
-        " END: \(gameId) \(idx) / \(roundsPerGame) winner: \(await game.winner?.ai.algoName ?? "")"
-      )
-
-      playedGames.append(game)
+      return await g.reduce([], +)
     }
-
     return PlayedGame(games: playedGames)
   }
 
@@ -104,11 +115,6 @@ class Tournament {
 
     let watch = StopWatch()
     watch.start()
-
-let spawn = max(2, parallelization)
-print("Spawning \(spawn) threads")
-
-    let easer = Easer(spawn: spawn)
 
     let stats = await withTaskGroup(of: ([String: Int], [String: [String: Int]])
       .self) { g -> ([String: Int], [String: [String: Int]]) in
@@ -206,10 +212,13 @@ actor Easer {
   }
 
   private func cont() {
-    print("========== CONTINUE FUN OJOO")
+    print("========== CONTINUE FUN OJOO \(current)")
     self.current -= 1
+    print("========== CONTINUE FUN OJOO less \(current)")
     if let task = self.tasks.first {
+      asyncDetached {
       task.resume()
+      }
       self.tasks.removeFirst()
     }
   }
@@ -217,7 +226,9 @@ actor Easer {
   func wait() async -> () -> () {
     let fun: () -> () = {
       print("========== CONTINUE FUN")
-      self.cont()
+      asyncDetached {
+        await self.cont()
+      }
     }
 
     print("========== START!!!!!!!!", current, spawn)

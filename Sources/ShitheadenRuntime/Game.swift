@@ -339,8 +339,9 @@ public actor Game {
   func sortPlayerLowestCard() {
     guard let player = players
       .min(by: {
-        ($0.handCards.filter { $0.number >= .four }.min { $0 > $1 }!) >
-          ($1.handCards.filter { $0.number >= .four }.min { $0 > $1 }!)
+        (($0.handCards.filter { $0.number >= .four }.min { $0 > $1 })?.order ?? 0)
+        >
+        (($1.handCards.filter { $0.number >= .four }.min { $0 > $1 })?.order ?? 0)
       })
     else {
       return

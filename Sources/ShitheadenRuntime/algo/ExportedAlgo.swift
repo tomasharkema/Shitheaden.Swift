@@ -7,4 +7,4 @@
 
 import ShitheadenShared
 
-public let allAlgos: [GameAi.Type] = [] // [RandomBot.self]
+public let allAlgos: [GameAi.Type] = [] //[RandomBot.self]
