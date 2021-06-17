@@ -14,8 +14,10 @@ import SwiftSocket
 
 @main
 struct Shitheaden: ParsableCommand {
+  #if os(macOS)
   @Flag(help: "Test all the AI's")
   var testAi = false
+#endif
 
   @Flag(help: "Start a server")
   var server = false
@@ -24,19 +26,39 @@ struct Shitheaden: ParsableCommand {
   var parallelization: Int = 8
 
   mutating func run() async throws {
+
+#if os(Linux)
+    await startServer()
+    return
+#endif
+
     print("START!")
     if server {
       await startServer()
-    } else if testAi {
-      await playTournament()
-    } else {
-      await interactive()
+      return
     }
+      #if os(macOS)
+      if testAi {
+      await playTournament()
+      return
+    } 
+    #endif
+      await interactive()
+    
   }
 
+    #if os(macOS)
   private func playTournament() async {
-    await Tournament(roundsPerGame: 10, parallelization: parallelization).playTournament()
+    return await withUnsafeContinuation { d in
+      DispatchQueue.global().async {
+        async {
+          await Tournament(roundsPerGame: 10, parallelization: parallelization).playTournament()
+          d.resume()
+        }
+      }
+    }
   }
+  #endif
 
   private func interactive() async {
     let game = Game(players: [
@@ -60,9 +82,8 @@ struct Shitheaden: ParsableCommand {
         position: .oost,
         ai: CardRankingAlgo()
       ),
-    ], render: { game, clear in
+    ], slowMode: true, render: { (game, clear) in
       await print(Renderer.render(game: game, clear: clear))
-//      Thread.sleep(forTimeInterval: 0.1)
     })
 
     await game.startGame()
@@ -101,7 +122,6 @@ struct Shitheaden: ParsableCommand {
           print("READ!")
           return await client.read()
         } render: { string in
-//          Thread.sleep(forTimeInterval: 0.5)
           _ = await withUnsafeContinuation { c in
             c.resume(returning: client.send(string: string + "\n"))
           }
@@ -122,14 +142,14 @@ struct Shitheaden: ParsableCommand {
         position: .oost,
         ai: CardRankingAlgo()
       ),
-    ], render: {
-//      Thread.sleep(forTimeInterval: 0.5)
-      await client.send(string: Renderer.render(game: $0, clear: $1))
+    ], slowMode: true, render: { (game, clear) in
+      await client.send(string: Renderer.render(game: game, clear: clear))
     })
 
     await game.startGame()
   }
 }
+
 
 actor AtomicBool {
   var value: Bool
@@ -144,6 +164,28 @@ actor AtomicBool {
 }
 
 extension TCPClient {
+
+  func _read(cancel: AtomicBool) async -> String {
+    while bytesAvailable() == 0 {}
+    guard let bytes = bytesAvailable(), await !cancel.value else {
+      print("STRING NOT PARSED")
+      return ""
+    }
+    guard let arr = read(Int(bytes)) else {
+      print("STRING NOT PARSED")
+      return ""
+    }
+    print(arr)
+    let data = Data(arr)
+    print(data)
+    guard let string = String(data: data, encoding: .utf8) else {
+      print("STRING NOT PARSED")
+      return ""
+    }
+    print(string)
+    return string
+  }
+
   func read() async -> String {
     let cancel = AtomicBool(value: false)
 
@@ -152,23 +194,13 @@ extension TCPClient {
         await cancel.set(value: true)
       }
     }, operation: {
-      while bytesAvailable() == 0 {}
-      guard let bytes = bytesAvailable(), await !cancel.value else {
-        print("STRING NOT PARSED")
-        return ""
+      var string = ""
+
+      while !(string.hasSuffix("\n") || string.hasSuffix("\r")), await !cancel.value  {
+        string += await _read(cancel: cancel)
+        print("APPEND: \(string)")
       }
-      guard let arr = read(Int(bytes)) else {
-        print("STRING NOT PARSED")
-        return ""
-      }
-      print(arr)
-      let data = Data(arr)
-      print(data)
-      guard let string = String(data: data, encoding: .utf8) else {
-        print("STRING NOT PARSED")
-        return ""
-      }
-      print(string)
+        print("COMMIT: \(string)")
       return string
     })
   }

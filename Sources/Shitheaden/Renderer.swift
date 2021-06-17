@@ -24,14 +24,22 @@ class Renderer {
       }
     }
 
+    let userPlayer = await game.players.first { $0.ai.isUser }
+    let handString = userPlayer?.handCards.sortNumbers().enumerated()
+      .map { "\($0.offset + 1)\($0.element.description)" }.joined(separator: " ")
+
+    let hand = handString != nil ? Position.hand >>> "Hand: \(handString!)" : ""
+
     let strings: [[String]] = [
       [
         CLI.setBackground(),
         clear ? CLI.clear() : "",
         Position.header.down(n: 1) >>> " Shitheaden",
         await Position.header.down(n: 3) >>> " Deck: \(game.deck.cards.count) kaarten",
-        await Position.header.down(n: 4) >>> " Burnt: \(game.burnt.count) kaarten",
+        await Position.header.down(n: 4) >>> " Burnt: \(game.burnt.suffix(5)) kaarten",
         await Position.tafel >>> game.table.suffix(5).map { $0.description }.joined(separator: " "),
+        await Position.tafel.down(n: 1) >>> "\(game.table.count)",
+        hand
       ],
       playersString,
     ]

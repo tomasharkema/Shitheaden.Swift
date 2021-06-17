@@ -11,10 +11,12 @@ import ShitheadenRuntime
 
 class Keyboard {
   static func getKeyboardInput() async -> String {
-    let keyboard = FileHandle.standardInput
-    async let inputData = keyboard.availableData
-    let strData = await String(data: inputData, encoding: .utf8)!
-
-    return strData.trimmingCharacters(in: .newlines)
+    // let keyboard = FileHandle.standardInput
+    let inputData = readLine()
+    print("READ: '\(inputData)'")
+    guard let line = inputData else {
+      return ""
+    } 
+    return line.trimmingCharacters(in: .newlines)
   }
 }

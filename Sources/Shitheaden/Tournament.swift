@@ -6,10 +6,13 @@
 //  Copyright © 2015 Tomas Harkema. All rights reserved.
 //
 
+#if os(macOS)
+
 import CustomAlgo
 import Dispatch
 import ShitheadenRuntime
 import ShitheadenShared
+import Foundation
 
 struct PlayedGame {
   let games: [Game]
@@ -80,7 +83,7 @@ class Tournament {
           ai: ai.init()
         )
       }
-      let game = Game(players: players, render: { _, _ in })
+      let game = Game(players: players, slowMode: false, render: { _, _ in })
 
       print(" START: \(gameId) \(idx) / \(roundsPerGame)")
       await game.startGame()
@@ -102,17 +105,18 @@ class Tournament {
     let watch = StopWatch()
     watch.start()
 
-    let semaphore = DispatchSemaphore(value: parallelization)
+let spawn = max(2, parallelization)
+print("Spawning \(spawn) threads")
+
+    let easer = Easer(spawn: spawn)
 
     let stats = await withTaskGroup(of: ([String: Int], [String: [String: Int]])
       .self) { g -> ([String: Int], [String: [String: Int]]) in
-//      g.async {
-//        var result = [([String : Int],  [String: [String: Int]] )]()
       for (index1, ai1) in AIs.enumerated() {
         for (index2, ai2) in AIs.enumerated() {
           for (index3, ai3) in AIs.enumerated() {
             for (index4, ai4) in AIs.enumerated() {
-              semaphore.wait()
+              let unlock = await easer.wait()
               g.async {
                 let potjeIndex: String = [index1, index2, index3, index4].map { "\($0)" }
                   .joined(separator: ",")
@@ -141,7 +145,7 @@ class Tournament {
                 print(
                   "\(potjeIndex) \(winnings) : \(aisPrint)\ntime: \(watch.getLap()) - \(duration.getLap())"
                 )
-                semaphore.signal()
+                await unlock()
                 return await (winnings, res.winningsFrom())
               }
             }
@@ -185,5 +189,46 @@ class Tournament {
     })
 
     print("Tijd: \(watch.getLap())\n")
+  }
+}
+
+#endif
+
+actor Easer {
+  let spawn: Int
+  var current: Int = 0
+
+  var tasks = [UnsafeContinuation<Void, Never>]()
+
+  init(spawn: Int) {
+    self.spawn = spawn
+  }
+
+  private func cont() {
+    self.current -= 1
+    if let task = self.tasks.first {
+      task.resume()
+      self.tasks.removeFirst()
+    }
+  }
+
+  func wait() async -> @Sendable () async -> () {
+    let fun: @Sendable () async -> () = {
+      await self.cont()
+    }
+
+    print(current, spawn)
+
+    if current < spawn {
+      current += 1
+
+      return fun
+    }
+
+    await withUnsafeContinuation { r in
+      tasks.append(r)
+    }
+
+    return await wait()
   }
 }

@@ -21,7 +21,7 @@ public actor RandomBot: GameAi {
   }
 
   public func move(request: TurnRequest, previousError _: PlayerError?) async -> Turn {
-    let p = Array(request.possibleTurns())
+    let p = Array(request._possibleTurns())
     if p.isEmpty {
       return .pass
     } else {

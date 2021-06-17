@@ -33,7 +33,7 @@ let package = Package(
         .target(name: "ShitheadenRuntime"),
         .target(name: "CustomAlgo"),
         .product(name: "ArgumentParser", package: "swift-argument-parser"),
-        .product(name: "SwiftSocket", package: "SwiftSocket"),
+        .product(name: "SwiftSocket", package: "SwiftSocket"),//, condition: .when(platforms: [.macOS, .macCatalyst])),
         .product(name: "ANSIEscapeCode", package: "ANSIEscapeCode"),
 //        .product(name: "NIOSSH", package: "swift-nio-ssh"),
       ],

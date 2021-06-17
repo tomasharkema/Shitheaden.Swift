@@ -17,10 +17,12 @@ public actor Game {
   var turns = [(String, Turn)]()
   let render: (Game, Bool) async -> Void
   let rules = Rules.all
+  var slowMode = false
 
-  public init(players: [Player], render: @escaping (Game, Bool) async -> Void) {
+  public init(players: [Player], slowMode: Bool, render: @escaping (Game, Bool) async -> Void) {
     self.players = players
     self.render = render
+    self.slowMode = slowMode
   }
 
   var lastCard: Card? {
@@ -69,7 +71,7 @@ public actor Game {
 
     player.sortCards()
 
-    let req = TurnRequest(
+    let req = await TurnRequest(
       handCards: player.handCards,
       openTableCards: player.openTableCards,
       lastTableCard: table.lastCard,
@@ -123,12 +125,23 @@ public actor Game {
       amountOfDeckCards: deck.cards.count
     )
 
+    await render(self, true)
+
+    if slowMode {
+    let userPlayer = await players.first { $0.ai.isUser }
+    if await !(userPlayer?.done ?? true) {
+      await delay(for: .now() + 0.5)
+    }
+    }
+
     let turn = await player.ai.move(request: req, previousError: previousError)
 
     do {
       try turn.verify()
+      await render(self, true)
     } catch {
       if !type(of: player.ai).algoName.contains("UserInputAI") {
+        #if DEBUG
         print(
           "NO POSSIBLE",
           numberCalled,
@@ -139,6 +152,7 @@ public actor Game {
         )
 
         assertionFailure("This is not possible \(type(of: player.ai))")
+        #endif
       }
       return await commitTurn(
         playerIndex: playerIndex,
@@ -149,17 +163,18 @@ public actor Game {
       )
     }
 
-    guard req.possibleTurns().contains(turn) else {
+    guard req._possibleTurns().contains(turn) else {
       if !type(of: player.ai).algoName.contains("UserInputAI") {
+        #if DEBUG
         print(
           "NO POSSIBLE",
           numberCalled,
           await player.ai.algoName,
           player.phase,
           turn,
-          req.possibleTurns()
+          req._possibleTurns()
         )
-
+        #endif
         assertionFailure("This is not possible \(type(of: player.ai))")
       }
       return await commitTurn(
@@ -174,7 +189,6 @@ public actor Game {
 
     switch turn {
     case let .closedCardIndex(index):
-
       if player.phase == .tableClosed {
         let previousTable = table
         let card = player.closedTableCards[index - 1]
@@ -188,6 +202,10 @@ public actor Game {
         {
           player.handCards.append(contentsOf: table)
           table = []
+          await render(self, true)
+          if rules.contains(.againAfterPass) {
+            return await commitTurn(playerIndex: playerIndex, player: player, numberCalled: numberCalled + 1, previousError: previousError ?? PlayerError(text: "Je dichte kaart was \(lastApplied)... Je mag opnieuw!"))
+          }
         }
       } else {
 //        throw PlayerError(text: "Can not throw closedCardIndex")
@@ -227,6 +245,8 @@ public actor Game {
 
     turns += [(player.name, turn)]
 
+    await render(self, true)
+
     if turn == .pass, rules.contains(.againAfterPass), !player.done, !done {
 //      printState()
       await render(self, true)
@@ -240,9 +260,9 @@ public actor Game {
     if lastCard?.number == .ten {
       burnt += table
       table = []
-//      printState()
 
       await render(self, true)
+
       if rules.contains(.againAfterGoodBehavior), !player.done, !done {
         return await commitTurn(
           playerIndex: playerIndex,
@@ -263,6 +283,7 @@ public actor Game {
     }).0 == 4 {
       burnt.append(contentsOf: table)
       table = []
+      await render(self, true)
       if rules.contains(.againAfterGoodBehavior), !player.done, !done {
         return await commitTurn(
           playerIndex: playerIndex,
@@ -285,9 +306,9 @@ public actor Game {
   }
 
   func beginRound() async {
-    await withTaskGroup(of: Void.self) { g in
-      for (index, player) in players.enumerated() {
-        g.async {
+//    await withTaskGroup(of: Void.self) { g in
+      for (index, player) in await players.enumerated() {
+//        g.async {
           await self.updatePlayer(player: await self.commitBeginTurn(
             playerIndex: index,
             player: player,
@@ -296,8 +317,8 @@ public actor Game {
           ))
           try! await self.checkIntegrity()
           await self.render(self, false)
-        }
-      }
+//        }
+//      }
     }
   }
 
@@ -307,8 +328,8 @@ public actor Game {
         players[index] = await commitTurn(playerIndex: index, player: player,
                                           numberCalled: 0, previousError: nil)
         try! checkIntegrity()
+        await render(self, true)
       }
-      await render(self, true)
     }
     if !done {
       return await turn()
@@ -371,7 +392,7 @@ public actor Game {
     }
   }
 
-  func startRound() async {
+  public func startGame() async {
     resetBeurten()
 
     await render(self, true)
@@ -382,21 +403,9 @@ public actor Game {
     await render(self, true)
     await beginRound()
 
-    // begin with user with lowest card
     sortPlayerLowestCard()
 
     await turn()
-
-//    finishRound()
-//    printEndState(render: render)
-  }
-
-  private func startGameRec() async {
-    await startRound()
-  }
-
-  public func startGame() async {
-    await startGameRec()
   }
 
   func checkIntegrity() throws {
@@ -453,5 +462,12 @@ public actor Game {
     }
 
 //     #endif
+  }
+}
+
+
+extension GameAi {
+  nonisolated public var isUser: Bool {
+    return algoName.contains("UserInputAI")
   }
 }

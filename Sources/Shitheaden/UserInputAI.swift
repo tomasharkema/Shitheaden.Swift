@@ -41,18 +41,11 @@ actor UserInputAI: GameAi {
     return inputs.map { $0! }
   }
 
-  private func printHand(request: TurnRequest) async {
-    let handString = request.handCards.enumerated()
-      .map { "\($0.offset + 1)\($0.element.description)" }.joined(separator: " ")
-
-    await render(Position.hand >>> "Hand: \(handString)")
-  }
-
   private func getBeurtFromUser(request: TurnRequest) async throws -> Turn {
-    await printHand(request: request)
 //    #if DEBUG
 //    await render(Position.input.down(n: 5).cliRep + ANSIEscapeCode.Erase.eraseInLine(.entireLine) + "\(request.possibleTurns())")
 //    #endif
+    await render(Position.input.cliRep)
     let input = await getInput()
 
     let executeTurn: Turn
@@ -100,7 +93,7 @@ actor UserInputAI: GameAi {
     return executeTurn
   }
 
-  func execute(request: TurnRequest) async -> Turn? {
+  func execute(request: TurnRequest) async throws -> Turn {
     switch request.phase {
     case .hand:
       await render(Position.input.cliRep + ANSIEscapeCode.Erase.eraseInLine(.entireLine) +
@@ -113,13 +106,13 @@ actor UserInputAI: GameAi {
         "Speel een kaart van je dichte stapel")
     }
 
-    do {
+//    do {
       return try await getBeurtFromUser(request: request)
-    } catch {
-      await render(Position.input
-        .down(n: -2) >>> ((error as? PlayerError)?.text ?? error.localizedDescription))
-      return nil
-    }
+//    } catch {
+//      await render(Position.input
+//        .down(n: -2) >>> ((error as? PlayerError)?.text ?? error.localizedDescription))
+//      return nil
+//    }
   }
 
   func move(request: TurnRequest, previousError: PlayerError?) async -> Turn {
@@ -127,12 +120,16 @@ actor UserInputAI: GameAi {
       await render(Position.input
         .down(n: -2) >>> previousError.text)
     }
-
-    if let res = await execute(request: request) {
-      return res
-    } else {
+    do {
+      return try await execute(request: request)
+    } catch {
       return await move(request: request, previousError: previousError)
     }
+//    if let res = await execute(request: request) {
+//      return try await execute(request: request)
+//    } else {
+//      return await move(request: request, previousError: previousError)
+//    }
   }
 
   func getInput() async -> String {
@@ -152,8 +149,6 @@ actor UserInputAI: GameAi {
     }
 
     do {
-      await printHand(request: request)
-
       await render(Position.input.cliRep + ANSIEscapeCode.Erase
         .eraseInLine(.entireLine) + "Selecteer drie kaarten voor je tafelkaarten...")
 
