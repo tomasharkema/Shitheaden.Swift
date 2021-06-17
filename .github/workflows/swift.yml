@@ -8,12 +8,12 @@ on:
 
 jobs:
   build:
-
-    runs-on: macos-latest
+    runs-on: ubuntu-18.04
+#     runs-on: macos-latest
 
     steps:
     - uses: actions/checkout@v2
     - name: Build
-      run: swift build -v
-    - name: Run tests
-      run: swift test -v
+      run: docker build . -t tomasharkema7/shitheaden
+    - name: Deploy
+      run: docker push tomasharkema7/shitheaden
