@@ -11,11 +11,16 @@ let websocketResponse = """
 <html>
   <head>
     <meta charset="utf-8">
-    <title>Swift NIO WebSocket Test Page</title>
+    <title>Shitheaden</title>
   </head>
   <body>
+
     <h1>WebSocket Stream</h1>
     <div id="websocket-stream"></div>
+    <form name="myForm" id="former">
+        <input name="fname" "type="text" id="command"/>
+    </form>
+
     <script>
         var wsconnection = new WebSocket(location.href.replace("http", "ws") + "/websocket");
         wsconnection.onmessage = function (msg) {
@@ -24,6 +29,13 @@ let websocketResponse = """
             var textDiv = document.getElementById("websocket-stream");
             textDiv.insertBefore(element, null);
         };
+
+        function validateForm(e) {
+          e.preventDefault();
+          wsconnection.send(document.forms["myForm"]["fname"].value + "\\n");
+          return false;
+        };
+document.getElementById("former").addEventListener('submit', validateForm);
     </script>
   </body>
 </html>
@@ -161,7 +173,8 @@ private final class WebSocketTimeHandler: ChannelInboundHandler {
                 self.handleData = nil
               }
             }
-          } render: { _ in }
+          } render: {
+            send("{\"error\":\"\($0)\"}") }
         ),
         Player(
           name: "West (Unfair)",
