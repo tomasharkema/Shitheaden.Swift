@@ -17,7 +17,7 @@ let websocketResponse = """
     <h1>WebSocket Stream</h1>
     <div id="websocket-stream"></div>
     <script>
-        var wsconnection = new WebSocket("ws://localhost:3338/websocket");
+        var wsconnection = new WebSocket("wss://shitheaden-api.harkema.io/websocket");
         wsconnection.onmessage = function (msg) {
             var element = document.createElement("p");
             element.innerHTML = msg.data;
