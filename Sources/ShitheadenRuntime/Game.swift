@@ -9,17 +9,26 @@
 import Foundation
 import ShitheadenShared
 
+public struct GameSnaphot: Equatable {
+  public let deck: Deck
+  public let players: [Player]
+  public let table: Table
+  public let burnt: [Card]
+
+  public static let empty = GameSnaphot(deck: Deck(cards: []), players: [], table: [], burnt: [])
+}
+
 public actor Game {
   public private(set) var deck = Deck(cards: [])
   public var players = [Player]()
   public private(set) var table = Table()
   public private(set) var burnt = [Card]()
   var turns = [(String, Turn)]()
-  let render: (Game, Bool) async -> Void
+  let render: (GameSnaphot, Bool) async -> Void
   let rules = Rules.all
   var slowMode = false
 
-  public init(players: [Player], slowMode: Bool, render: @escaping (Game, Bool) async -> Void) {
+  public init(players: [Player], slowMode: Bool, render: @escaping (GameSnaphot, Bool) async -> Void) {
     self.players = players
     self.render = render
     self.slowMode = slowMode
@@ -39,6 +48,10 @@ public actor Game {
 
   public var winner: Player? {
     done ? players.max { $0.turns.count < $1.turns.count } : nil
+  }
+
+  func getSnapshot() -> GameSnaphot {
+    return GameSnaphot(deck: deck, players: players, table: table, burnt: burnt)
   }
 
   func shuffle() {
@@ -125,7 +138,7 @@ public actor Game {
       amountOfDeckCards: deck.cards.count
     )
 
-    await render(self, true)
+    await render(getSnapshot(), true)
 
     if slowMode {
       let userPlayer = await players.first { $0.ai.isUser }
@@ -138,7 +151,7 @@ public actor Game {
 
     do {
       try turn.verify()
-      await render(self, true)
+      await render(getSnapshot(), true)
     } catch {
       if !type(of: player.ai).algoName.contains("UserInputAI") {
         #if DEBUG
@@ -203,7 +216,7 @@ public actor Game {
           player.handCards.append(contentsOf: table)
           table = []
           updatePlayer(player: player)
-          await render(self, true)
+          await render(getSnapshot(), true)
           if rules.contains(.againAfterPass) {
             return await commitTurn(
               playerIndex: playerIndex,
@@ -252,11 +265,11 @@ public actor Game {
 
     turns += [(player.name, turn)]
 
-    await render(self, true)
+    await render(getSnapshot(), true)
 
     if turn == .pass, rules.contains(.againAfterPass), !player.done, !done {
 //      printState()
-      await render(self, true)
+      await render(getSnapshot(), true)
       updatePlayer(player: player)
       return await commitTurn(
         playerIndex: playerIndex,
@@ -269,7 +282,7 @@ public actor Game {
       burnt += table
       table = []
 
-      await render(self, true)
+      await render(getSnapshot(), true)
       updatePlayer(player: player)
 
       if rules.contains(.againAfterGoodBehavior), !player.done, !done {
@@ -292,7 +305,7 @@ public actor Game {
     }).0 == 4 {
       burnt.append(contentsOf: table)
       table = []
-      await render(self, true)
+      await render(getSnapshot(), true)
       updatePlayer(player: player)
       if rules.contains(.againAfterGoodBehavior), !player.done, !done {
         return await commitTurn(
@@ -327,7 +340,7 @@ public actor Game {
           )
           await self.updatePlayer(player: newPlayer)
           try! await self.checkIntegrity()
-          await self.render(self, false)
+          await self.render(getSnapshot(), false)
         }
 //      }
 //    }
@@ -339,7 +352,7 @@ public actor Game {
         players[index] = await commitTurn(playerIndex: index, player: player,
                                           numberCalled: 0, previousError: nil)
         try! checkIntegrity()
-        await render(self, true)
+        await render(getSnapshot(), true)
       }
     }
     if !done {
@@ -407,11 +420,11 @@ public actor Game {
   public func startGame() async {
     resetBeurten()
 
-    await render(self, true)
+    await render(getSnapshot(), true)
 
     shuffle()
     deel()
-    await render(self, true)
+    await render(getSnapshot(), true)
     await beginRound()
 
     sortPlayerLowestCard()

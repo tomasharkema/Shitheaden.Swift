@@ -10,7 +10,7 @@ import ShitheadenRuntime
 import ShitheadenShared
 
 class Renderer {
-  static func render(game: Game, clear: Bool) async -> String {
+  static func render(game: GameSnaphot, clear: Bool) async -> String {
     let playersString: [String] = await game.players.flatMap { player -> [String] in
       if !player.done {
         return [

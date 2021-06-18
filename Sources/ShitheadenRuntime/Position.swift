@@ -8,7 +8,7 @@
 
 // TODO: x,y coords belong to CLI module
 
-public struct Position {
+public struct Position: Equatable {
   public static let header = Position(x: 0, y: 0)
   public static let tafel = Position(x: 50, y: 10)
   public static let status = Position(x: 100, y: 10)
