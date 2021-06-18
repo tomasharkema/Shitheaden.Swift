@@ -12,7 +12,7 @@ jobs:
 
     steps:
       - name: Compile
-        run: xcodebuild -scheme ShitheadenApp -configuration Release -project ShitheadenApp.xcodeproj archive
+        run: xcodebuild -scheme ShitheadenApp -configuration Release -project ShitheadenApp.xcodeproj archive -archivePath ./Shitheaden.xcarchive
   swift:
     runs-on: ubuntu-18.04
 
