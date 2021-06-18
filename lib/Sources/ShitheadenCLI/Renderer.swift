@@ -24,7 +24,7 @@ extension TurnRequest {
   }
 }
 
-class Renderer {
+enum Renderer {
   static func render(game: GameSnaphot, clear: Bool) async -> String {
     let playersString: [String] = await game.players.flatMap { player -> [String] in
       if !player.done {
@@ -52,7 +52,8 @@ class Renderer {
         RenderPosition.header.down(n: 1) >>> " Shitheaden",
         await RenderPosition.header.down(n: 3) >>> " Deck: \(game.deck.cards.count) kaarten",
         await RenderPosition.header.down(n: 4) >>> " Burnt: \(game.burnt.suffix(5)) kaarten",
-        await RenderPosition.tafel >>> game.table.suffix(5).map { $0.description }.joined(separator: " "),
+        await RenderPosition.tafel >>> game.table.suffix(5).map { $0.description }
+          .joined(separator: " "),
         await RenderPosition.tafel.down(n: 1) >>> "\(game.table.count)",
         hand,
       ],

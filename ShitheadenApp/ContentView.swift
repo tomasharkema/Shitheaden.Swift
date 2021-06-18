@@ -26,7 +26,7 @@ enum RenderCard: Equatable, Hashable {
 
   var card: Card? {
     switch self {
-    case .card(let card):
+    case let .card(card):
       return card
     case .hidden:
       return nil
@@ -42,8 +42,8 @@ struct ContentView: View {
     VStack {
       if let card = card.card {
         HStack {
-  //      Text(card.symbol.string)
-        Spacer()
+          //      Text(card.symbol.string)
+          Spacer()
           Text(card.number.string)
             .font(.subheadline.monospaced())
         }
@@ -53,7 +53,8 @@ struct ContentView: View {
       }
     }
     .shadow(radius: 2)
-    .foregroundColor(card.card?.symbol == .harten || card.card?.symbol == .ruiten ? Color.red : Color.black)
+    .foregroundColor(card.card?.symbol == .harten || card.card?.symbol == .ruiten ? Color
+      .red : Color.black)
     .padding(5)
     .frame(width: 40, height: 50)
     .background(Color.white)
@@ -69,14 +70,14 @@ struct ContentView: View {
   func cards(count: Int, orientation: Orientation) -> some View {
     switch orientation {
     case .horizontal:
-      HStack {
-        ForEach(0..<count) { c in
+      HStack(spacing: -10) {
+        ForEach(0 ..< count) { c in
           card(.hidden).id("closedh\(c)")
         }.id("closedh\(count)")
       }
     case .vertical:
-      VStack {
-        ForEach(0..<count) { c in
+      VStack(spacing: -10) {
+        ForEach(0 ..< count) { c in
           card(.hidden).id("closedv\(c)")
         }.id("closedv\(count)")
       }
@@ -87,14 +88,14 @@ struct ContentView: View {
   func cards(cards: [Card], orientation: Orientation) -> some View {
     switch orientation {
     case .horizontal:
-      HStack {
+      HStack(spacing: -10) {
         ForEach(cards) { c in
           card(RenderCard(c))
         }
       }
     case .vertical:
 
-      VStack {
+      VStack(spacing: -10) {
         ForEach(cards) { c in
           card(RenderCard(c))
         }
@@ -105,28 +106,36 @@ struct ContentView: View {
   @ViewBuilder
   func playerView(player: TurnRequest, orientation: Orientation) -> some View {
     if !player.done {
-    VStack {
-//      Text("\(player.name) (\(player.handCards.count))").font(.title3.bold().smallCaps())
-
-      switch orientation {
-      case .horizontal:
-        VStack {
-          cards(cards: player.openTableCards, orientation: orientation)
-          cards(count: player.numberOfClosedTableCards, orientation: orientation)
-            .foregroundColor(.white)
+      VStack {
+        switch orientation {
+        case .horizontal:
+          HStack {
+            cards(count: player.numberOfClosedTableCards, orientation: orientation)
+              .foregroundColor(.white)
+              .overlay(cards(cards: player.openTableCards, orientation: orientation)
+                .offset(x: 5, y: -5))
+            if !player.algoName.isUser {
+              stack(count: player.handCards.count, offset: 2)
+            }
+          }
+        case .vertical:
+          VStack {
+            cards(count: player.numberOfClosedTableCards, orientation: orientation)
+              .foregroundColor(.white)
+              .overlay(cards(cards: player.openTableCards, orientation: orientation)
+                .offset(x: 5, y: -5))
+            if !player.algoName.isUser {
+              stack(count: player.handCards.count, offset: 2)
+            }
+          }
         }
-      case .vertical:
-        HStack {
-          cards(cards: player.openTableCards, orientation: orientation)
-          cards(count: player.numberOfClosedTableCards, orientation: orientation)
-            .foregroundColor(.white)
-        }
-      }
 
-    }.padding()
-      .background(player.id == game.gameSnaphot?.playerOnTurn ? Color.green.opacity(1) : Color.green
-        .opacity(0.3)).cornerRadius(5)
-    }}
+      }.padding()
+        .background(player.id == game.gameSnaphot?.playerOnTurn ? Color.green.opacity(1) : Color
+          .green
+          .opacity(0.3)).cornerRadius(5)
+    }
+  }
 
   @ViewBuilder
   func table(snapshot: GameSnaphot) -> some View {
@@ -148,7 +157,7 @@ struct ContentView: View {
   @ViewBuilder
   func stack(count: Int, offset: CGFloat, alignment: Alignment = Alignment.center) -> some View {
     ZStack(alignment: alignment) {
-      ForEach(0..<count) { el in
+      ForEach(0 ..< count) { el in
         card(.hidden)
           .offset(x: CGFloat(el) * offset, y: CGFloat(-el) * offset)
           .zIndex(Double(10 - el))
@@ -161,74 +170,109 @@ struct ContentView: View {
   func localPlayer() -> some View {
     VStack {
       if let error = game.error {
-        Text(error).bold().foregroundColor(Color.red)
+        Text(error).bold().foregroundColor(Color.red).onAppear {
+          let impactHeavy = UIImpactFeedbackGenerator(style: .heavy)
+          impactHeavy.impactOccurred()
+        }
       }
 
       HStack {
-        ScrollView(.horizontal) {
+        if let localCountOfClosedCards = game.localCountOfClosedCards,
+           game.localPhase == .tableClosed
+        {
           HStack {
-            ForEach(game.localCards) { c in
-              StatedButton(action: { selected in
-                game.select(c, selected: selected, deleteNotSameNumber: game.moveHandler != nil)
+            ForEach(0 ..< localCountOfClosedCards) { i in
+              Button(action: {
+                game.playClosedCard(i)
               }, label: {
-                card(RenderCard(c))
-              }, isSelected: game.selectedCards.contains(c))
-            }
-          }.padding()
-        }
+                card(RenderCard.hidden)
+              }).buttonStyle(PlainButtonStyle())
 
-        Spacer()
-        if game.isOnSet {
-        if game.selectedCards.count > 0 {
+            }.id("localCountOfClosedCards\(localCountOfClosedCards)")
+          }
+        } else {
+          ScrollView(.horizontal) {
+            HStack(spacing: -10) {
+              ForEach(game.localCards) { c in
+                StatedButton(action: { selected in
+                  game.select(c, selected: selected, deleteNotSameNumber: game.moveHandler != nil)
+                }, label: {
+                  card(RenderCard(c))
+                }, isSelected: game.selectedCards.contains(c)).buttonStyle(PlainButtonStyle())
+              }
+            }.padding()
+          }
+
+          Spacer()
+
           Button(action: {
             game.play()
           }, label: {
-            Text("SPEEL!")
+            if game.selectedCards.count > 0 {
+              Text("SPEEL!")
+            } else if game.canPass {
+              Text("PAS!")
+            } else {
+              Text("SPEEL!").disabled(true)
+            }
           })
-        } else if game.canPass {
-          Button(action: {
-            game.play()
-          }, label: {
-            Text("PAS!")
-          })
-        }
+            .disabled(!game.isOnSet)
+            .onChange(of: game.isOnSet, perform: {
+              if $0 {
+                let impactHeavy = UIImpactFeedbackGenerator(style: .light)
+                impactHeavy.impactOccurred()
+              }
+            })
         }
       }
-
     }.padding().background(Color.white)
   }
 
   @ViewBuilder
   func game(snapshot: GameSnaphot) -> some View {
-    VStack {
-    VStack {
-      playerView(
-        player: snapshot.players.first { $0.position == .noord }!,
-        orientation: .horizontal
-      )
-      Spacer()
-      HStack {
-        playerView(player: snapshot.players.first { $0.position == .west }!, orientation: .vertical)
+    VStack(spacing: 0) {
+      VStack {
+        playerView(
+          player: snapshot.players.first { $0.position == .noord }!,
+          orientation: .horizontal
+        )
+        Spacer()
+        HStack {
+          playerView(
+            player: snapshot.players.first { $0.position == .west }!,
+            orientation: .vertical
+          )
+          Spacer()
+
+          Spacer()
+
+          playerView(
+            player: snapshot.players.first { $0.position == .oost }!,
+            orientation: .vertical
+          )
+        }
         Spacer()
 
         Spacer()
-
-        playerView(player: snapshot.players.first { $0.position == .oost }!, orientation: .vertical)
+        playerView(
+          player: snapshot.players.first { $0.position == .zuid }!,
+          orientation: .horizontal
+        )
       }
-      Spacer()
-
-      Spacer()
-      playerView(player: snapshot.players.first { $0.position == .zuid }!, orientation: .horizontal)
-    }
-    .padding()
-    .background(Color.blue).overlay(
-      table(snapshot: snapshot) // .padding(20).background(Color.green).cornerRadius(10)
-    )
-    .overlay(stack(count: snapshot.deck.cards.count, offset: 2, alignment: Alignment.topLeading).padding(), alignment: Alignment.topLeading)
-    .overlay(
-      stack(count: snapshot.burnt.count, offset: 2, alignment: Alignment.topTrailing).padding(),
-      alignment: Alignment.topTrailing)
-    localPlayer()
+      .padding()
+      .background(Color.blue).overlay(
+        table(snapshot: snapshot) // .padding(20).background(Color.green).cornerRadius(10)
+      )
+      .overlay(
+        stack(count: snapshot.deck.cards.count, offset: 2, alignment: Alignment.topLeading)
+          .padding(),
+        alignment: Alignment.topLeading
+      )
+      .overlay(
+        stack(count: snapshot.burnt.count, offset: 2, alignment: Alignment.topTrailing).padding(),
+        alignment: Alignment.topTrailing
+      )
+      localPlayer()
     }
   }
 
@@ -241,15 +285,15 @@ struct ContentView: View {
       }
     }
     #if os(iOS)
-    .task {
-      await game.start()
-    }
-    #else
-    .onAppear {
-      async {
+      .task {
         await game.start()
       }
-    }
+    #else
+      .onAppear {
+        async {
+          await game.start()
+        }
+      }
     #endif
   }
 }
@@ -284,13 +328,12 @@ struct StatedButton<Label>: View where Label: View {
     Button(action: {
 //      self.isSelected = !self.isSelected
       self.action?(!self.isSelected)
-      print("isSelected now is \(!self.isSelected ? "true" : "false")")
     }) {
       label?()
         .overlay(Rectangle().foregroundColor(.clear)
-                        .border(isSelected ? Color.green : Color.clear, width: 5).cornerRadius(10))
+          .border(isSelected ? Color.green : Color.clear, width: 5).cornerRadius(10))
         .animation(.linear, value: isSelected)
-    }
+    }.buttonStyle(PlainButtonStyle())
   }
 }
 

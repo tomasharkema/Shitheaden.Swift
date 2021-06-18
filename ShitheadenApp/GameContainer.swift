@@ -65,11 +65,19 @@ class GameContainer: ObservableObject {
   @Published var error: String?
   @Published var selectedCards = Set<Card>()
   @Published var localCards = [Card]()
+  @Published var localPhase: Phase?
+  @Published var localCountOfClosedCards: Int?
   @Published var isOnSet = false
   @Published var canPass = false
 
   private(set) var beginMoveHandler: (((Card, Card, Card)) -> Void)?
   private(set) var moveHandler: ((Turn) -> Void)?
+
+  func reset() async {
+    appInput = nil
+    game = nil
+    await start()
+  }
 
   func start() async {
     guard appInput == nil, game == nil else {
@@ -77,19 +85,20 @@ class GameContainer: ObservableObject {
     }
 
     let appInput = AppInputUserInputAI(beginMoveHandler: { h in
-      async {await MainActor.run {
+      async { await MainActor.run {
         self.isOnSet = true
         self.canPass = false
         self.beginMoveHandler = h
       }}
     }, moveHandler: { h in
-      async {await MainActor.run {
+      async { await MainActor.run {
         self.isOnSet = true
         self.canPass = true
         self.moveHandler = h
       }}
-    }, errorHandler: {
-      self.error = $0
+    }, errorHandler: { e in async { await MainActor.run {
+      self.error = e
+    }}
     })
     self.appInput = appInput
     let game = Game(players: [
@@ -115,12 +124,14 @@ class GameContainer: ObservableObject {
       ),
     ], slowMode: true, render: { game, _ in
       let localPlayer = game.players.first { $0.position == .zuid }!
+      self.localPhase = localPlayer.phase
       if !localPlayer.handCards.isEmpty {
         self.localCards = localPlayer.handCards.sortNumbers()
       } else if !localPlayer.openTableCards.isEmpty {
         self.localCards = localPlayer.openTableCards.sortNumbers()
       } else {
         // closed cards!
+        self.localCountOfClosedCards = localPlayer.numberOfClosedTableCards
         self.localCards = []
       }
 
@@ -133,8 +144,7 @@ class GameContainer: ObservableObject {
 
   func select(_ card: Card, selected: Bool, deleteNotSameNumber: Bool) {
     if selected {
-
-      if deleteNotSameNumber, selectedCards.contains(where: {$0.number != card.number}) {
+      if deleteNotSameNumber, selectedCards.contains(where: { $0.number != card.number }) {
         selectedCards = [card]
       } else {
         selectedCards.insert(card)
@@ -153,25 +163,30 @@ class GameContainer: ObservableObject {
         error = "Select drie kaarten!"
         return
       }
-
+      error = nil
       beginMoveHandler((
         selectedCards.first!,
         selectedCards.dropFirst().first!,
         selectedCards.dropFirst().dropFirst().first!
       ))
-      self.isOnSet = false
+      isOnSet = false
       self.beginMoveHandler = nil
     } else if let moveHandler = moveHandler {
+      error = nil
       if selectedCards.count > 0 {
-        moveHandler(Turn.play(Set(selectedCards)))
+        moveHandler(.play(Set(selectedCards)))
       } else {
-        moveHandler(Turn.pass)
+        moveHandler(.pass)
       }
-      self.isOnSet = false
+      isOnSet = false
       self.moveHandler = nil
     } else {
       return
     }
     selectedCards = []
+  }
+
+  func playClosedCard(_ i: Int) {
+    moveHandler?(.closedCardIndex(i + 1))
   }
 }

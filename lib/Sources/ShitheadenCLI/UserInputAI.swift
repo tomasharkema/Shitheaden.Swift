@@ -41,7 +41,7 @@ actor UserInputAI: GameAi {
 
   private func getBeurtFromUser(request: TurnRequest) async throws -> Turn {
     #if DEBUG
-    await render(RenderPosition.input.down(n: 5).cliRep + ANSIEscapeCode.Erase
+      await render(RenderPosition.input.down(n: 5).cliRep + ANSIEscapeCode.Erase
         .eraseInLine(.entireLine) + "\(request.possibleTurns())")
     #endif
 

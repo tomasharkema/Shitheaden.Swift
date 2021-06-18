@@ -4,8 +4,10 @@
 //
 //  Created by Tomas Harkema on 16/06/2021.
 //
-
-import Foundation
+#if os(Linux)
+#else
+  import Foundation
+#endif
 import ShitheadenShared
 
 extension Turn {
@@ -20,7 +22,7 @@ extension Turn {
       return "\(cardsJoined) spelen"
 
     case .pass:
-      return "Je kan niet passen..."
+      return "passen"
 
     case .closedCardIndex:
       return ""

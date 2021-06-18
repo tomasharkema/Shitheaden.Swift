@@ -39,10 +39,10 @@ extension TurnRequest {
   }
 
   var closedTable: String {
-    return (0..<numberOfClosedTableCards).map { _ in "0" }.joined(separator: " ")
+    return (0 ..< numberOfClosedTableCards).map { _ in "0" }.joined(separator: " ")
   }
 
   var closedTableShowed: String {
-    return (0..<numberOfClosedTableCards).map { $0.description }.joined(separator: " ")
+    return (0 ..< numberOfClosedTableCards).map { $0.description }.joined(separator: " ")
   }
 }

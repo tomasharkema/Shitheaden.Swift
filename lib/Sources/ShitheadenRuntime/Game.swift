@@ -145,7 +145,7 @@ public actor Game {
     player.sortCards()
 
     let req = TurnRequest(
-      id: player.id,name: player.name,
+      id: player.id, name: player.name,
       handCards: player.handCards,
       openTableCards: player.openTableCards,
       lastTableCard: table.lastCard,
