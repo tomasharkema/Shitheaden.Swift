@@ -24,14 +24,14 @@ enum CLI {
   static func setBackground() -> String { return "\u{1B}[\(CLI.TextColor);\(CLI.Background);m"
   }
 
-//  static func print(pos: Position, string: String) {
+//  static func print(pos: RenderPosition, string: String) {
 //    if shouldPrintGlbl {
 //      Swift.print("\u{001B}[\(CLI.TextColor);\(CLI.Background);m\(pos.cliRep)\(string)")
 //    }
 //  }
 }
 
-func >>> (lhs: Position, rhs: String) -> String {
+func >>> (lhs: RenderPosition, rhs: String) -> String {
 //  CLI.print(pos: lhs, string: rhs)
   return "\u{001B}[\(CLI.TextColor);\(CLI.Background);m\(lhs.cliRep)\(rhs)"
 }
@@ -42,7 +42,7 @@ func >>> (color: Color, string: String) -> String {
 
 infix operator >>>
 
-public extension Position {
+public extension RenderPosition {
   var cliRep: String {
     return "\u{1B}[\(y);\(x)H"
   }

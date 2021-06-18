@@ -31,7 +31,7 @@ actor UserInputAI: GameAi {
       Int($0.trimmingCharacters(in: .whitespacesAndNewlines))
     }
     if inputs.contains(nil) {
-      await render(Position.input.down(n: 1).cliRep + ANSIEscapeCode.Erase
+      await render(RenderPosition.input.down(n: 1).cliRep + ANSIEscapeCode.Erase
         .eraseInLine(.entireLine) + "Je moet p of een aantal cijfers invullen...")
       return nil
     }
@@ -41,7 +41,7 @@ actor UserInputAI: GameAi {
 
   private func getBeurtFromUser(request: TurnRequest) async throws -> Turn {
     #if DEBUG
-      await render(Position.input.down(n: 5).cliRep + ANSIEscapeCode.Erase
+    await render(RenderPosition.input.down(n: 5).cliRep + ANSIEscapeCode.Erase
         .eraseInLine(.entireLine) + "\(request.possibleTurns())")
     #endif
 
@@ -95,20 +95,20 @@ actor UserInputAI: GameAi {
   func execute(request: TurnRequest) async throws -> Turn {
     switch request.phase {
     case .hand:
-      await render(Position.input.cliRep + ANSIEscapeCode.Erase.eraseInLine(.entireLine) +
+      await render(RenderPosition.input.cliRep + ANSIEscapeCode.Erase.eraseInLine(.entireLine) +
         "Speel een kaart uit je hand")
     case .tableOpen:
-      await render(Position.input.cliRep + ANSIEscapeCode.Erase.eraseInLine(.entireLine) +
+      await render(RenderPosition.input.cliRep + ANSIEscapeCode.Erase.eraseInLine(.entireLine) +
         "Speel een kaart van tafel")
     case .tableClosed:
-      await render(Position.input.cliRep + ANSIEscapeCode.Erase.eraseInLine(.entireLine) +
+      await render(RenderPosition.input.cliRep + ANSIEscapeCode.Erase.eraseInLine(.entireLine) +
         "Speel een kaart van je dichte stapel")
     }
 
 //    do {
     return try await getBeurtFromUser(request: request)
 //    } catch {
-//      await render(Position.input
+//      await render(RenderPosition.input
 //        .down(n: -2) >>> ((error as? PlayerError)?.text ?? error.localizedDescription))
 //      return nil
 //    }
@@ -116,7 +116,7 @@ actor UserInputAI: GameAi {
 
   func move(request: TurnRequest, previousError: PlayerError?) async -> Turn {
     if let previousError = previousError {
-      await render(Position.input
+      await render(RenderPosition.input
         .down(n: -2) >>> previousError.text)
     }
     do {
@@ -133,7 +133,7 @@ actor UserInputAI: GameAi {
 
   func getInput() async -> String {
     await render(ANSIEscapeCode.Cursor.showCursor + ANSIEscapeCode.Cursor.position(
-      row: Position.input.y + 1,
+      row: RenderPosition.input.y + 1,
       column: 0
     ) + ANSIEscapeCode.Erase.eraseInLine(.entireLine))
     let request = await reader().trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
@@ -143,15 +143,15 @@ actor UserInputAI: GameAi {
 
   func beginMove(request: TurnRequest, previousError: PlayerError?) async -> (Card, Card, Card) {
     if let previousError = previousError {
-      await render(Position.input
+      await render(RenderPosition.input
         .down(n: -2).cliRep + ANSIEscapeCode.Erase.eraseInLine(.entireLine) + previousError.text)
     }
 
     do {
-      await render(Position.input.cliRep + ANSIEscapeCode.Erase
+      await render(RenderPosition.input.cliRep + ANSIEscapeCode.Erase
         .eraseInLine(.entireLine) + "Selecteer drie kaarten voor je tafelkaarten...")
-      await render(Position.input.down(n: 1).cliRep + ANSIEscapeCode.Erase
-                    .eraseInLine(.entireLine))
+      await render(RenderPosition.input.down(n: 1).cliRep + ANSIEscapeCode.Erase
+        .eraseInLine(.entireLine))
 
       let input = await getInput()
       guard let keuze = await parseInput(input: input) else {

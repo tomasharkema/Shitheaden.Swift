@@ -6,8 +6,8 @@ RUN apt-get update -y && apt-get install -y git curl libatomic1 libxml2 netcat-o
 
 # RUN swift build --product NIOSSH
 
-COPY Package.swift ./Package.swift
-COPY Sources ./Sources
+COPY lib/Package.swift ./Package.swift
+COPY lib/Sources ./Sources
 
 RUN swift build -v -c release
 

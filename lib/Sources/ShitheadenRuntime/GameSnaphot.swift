@@ -1,0 +1,17 @@
+//
+//  GameSnaphot.swift
+//
+//
+//  Created by Tomas Harkema on 18/06/2021.
+//
+
+import Foundation
+import ShitheadenShared
+
+public struct GameSnaphot: Equatable {
+  public let deck: Deck
+  public let players: [TurnRequest]
+  public let table: Table
+  public let burnt: [Card]
+  public let playerOnTurn: UUID
+}

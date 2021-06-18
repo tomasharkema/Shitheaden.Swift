@@ -4,8 +4,11 @@
 import PackageDescription
 
 let package = Package(
-  name: "Shitheaden", platforms: [
+  name: "Shitheaden",
+  platforms: [
     .macOS(.v10_15),
+    .iOS(.v13),
+    .tvOS(.v13),
   ],
   products: [
     .executable(name: "shitheaden", targets: ["shitheaden"]),

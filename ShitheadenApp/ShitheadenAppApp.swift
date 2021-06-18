@@ -1,0 +1,17 @@
+//
+//  ShitheadenAppApp.swift
+//  ShitheadenApp
+//
+//  Created by Tomas Harkema on 18/06/2021.
+//
+
+import SwiftUI
+
+@main
+struct ShitheadenAppApp: App {
+  var body: some Scene {
+    WindowGroup {
+      ContentView()
+    }
+  }
+}

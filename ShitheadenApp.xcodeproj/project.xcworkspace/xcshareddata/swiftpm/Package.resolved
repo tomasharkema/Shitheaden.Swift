@@ -1,0 +1,34 @@
+{
+  "object": {
+    "pins": [
+      {
+        "package": "ANSIEscapeCode",
+        "repositoryURL": "https://github.com/flintprocessor/ANSIEscapeCode",
+        "state": {
+          "branch": "master",
+          "revision": "892f5f3067ea4c029af05cb45efb3b6a3be2f838",
+          "version": null
+        }
+      },
+      {
+        "package": "swift-argument-parser",
+        "repositoryURL": "https://github.com/tomasharkema/swift-argument-parser.git",
+        "state": {
+          "branch": "swift-5.5-async",
+          "revision": "1c92828d434a87dea33d63e7276848e108617010",
+          "version": null
+        }
+      },
+      {
+        "package": "SwiftSocket",
+        "repositoryURL": "https://github.com/tomasharkema/SwiftSocket",
+        "state": {
+          "branch": "master",
+          "revision": "12ffe22de640ed35c59819d275b6680eb85f8c3d",
+          "version": null
+        }
+      }
+    ]
+  },
+  "version": 1
+}

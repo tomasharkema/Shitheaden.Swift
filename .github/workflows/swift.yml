@@ -2,22 +2,22 @@ name: Swift
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   build:
     runs-on: ubuntu-18.04
-#     runs-on: macos-latest
+    #     runs-on: macos-latest
 
     steps:
-    - uses: actions/checkout@v2
-    - uses: docker/login-action@v1
-      with:
-        username: ${{ secrets.DOCKER_HUB_USERNAME }}
-        password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-    - name: Build
-      run: docker build . -t tomasharkema7/shitheaden
-    - name: Deploy
-      run: docker push tomasharkema7/shitheaden
+      - uses: actions/checkout@v2
+      - uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+      - name: Build
+        run: docker build . -t tomasharkema7/shitheaden
+      - name: Deploy
+        run: docker push tomasharkema7/shitheaden

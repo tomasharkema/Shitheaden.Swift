@@ -9,15 +9,6 @@
 import Foundation
 import ShitheadenShared
 
-public struct GameSnaphot: Equatable {
-  public let deck: Deck
-  public let players: [Player]
-  public let table: Table
-  public let burnt: [Card]
-
-  public static let empty = GameSnaphot(deck: Deck(cards: []), players: [], table: [], burnt: [])
-}
-
 public actor Game {
   public private(set) var deck = Deck(cards: [])
   public var players = [Player]()
@@ -28,7 +19,13 @@ public actor Game {
   let rules = Rules.all
   var slowMode = false
 
-  public init(players: [Player], slowMode: Bool, render: @escaping (GameSnaphot, Bool) async -> Void) {
+  var playerOnTurn: UUID?
+
+  public init(
+    players: [Player],
+    slowMode: Bool,
+    render: @escaping (GameSnaphot, Bool) async -> Void
+  ) {
     self.players = players
     self.render = render
     self.slowMode = slowMode
@@ -51,7 +48,21 @@ public actor Game {
   }
 
   func getSnapshot() -> GameSnaphot {
-    return GameSnaphot(deck: deck, players: players, table: table, burnt: burnt)
+    return GameSnaphot(deck: deck, players: players.map {
+      TurnRequest(
+        id: $0.id, name: $0.name,
+        handCards: $0.handCards,
+        openTableCards: $0.openTableCards,
+        lastTableCard: table.lastCard,
+        numberOfClosedTableCards: $0.closedTableCards.count,
+        phase: $0.phase,
+        amountOfTableCards: table.count,
+        amountOfDeckCards: deck.cards.count,
+        algoName: $0.ai.algoName,
+        done: $0.done,
+        position: $0.position
+      )
+    }, table: table, burnt: burnt, playerOnTurn: playerOnTurn ?? UUID())
   }
 
   func shuffle() {
@@ -84,16 +95,21 @@ public actor Game {
 
     player.sortCards()
 
-    let req = await TurnRequest(
+    let req = TurnRequest(
+      id: player.id, name: player.name,
       handCards: player.handCards,
       openTableCards: player.openTableCards,
       lastTableCard: table.lastCard,
       numberOfClosedTableCards: player.closedTableCards.count,
       phase: player.phase,
       amountOfTableCards: table.count,
-      amountOfDeckCards: deck.cards.count
+      amountOfDeckCards: deck.cards.count,
+      algoName: player.ai.algoName,
+      done: player.done,
+      position: player.position
     )
 
+    playerOnTurn = player.id
     let (card1, card2, card3) = await player.ai
       .beginMove(request: req, previousError: previousError)
 
@@ -129,24 +145,29 @@ public actor Game {
     player.sortCards()
 
     let req = TurnRequest(
+      id: player.id,name: player.name,
       handCards: player.handCards,
       openTableCards: player.openTableCards,
       lastTableCard: table.lastCard,
       numberOfClosedTableCards: player.closedTableCards.count,
       phase: player.phase,
       amountOfTableCards: table.count,
-      amountOfDeckCards: deck.cards.count
+      amountOfDeckCards: deck.cards.count,
+      algoName: player.ai.algoName,
+      done: player.done,
+      position: player.position
     )
 
     await render(getSnapshot(), true)
 
     if slowMode {
-      let userPlayer = await players.first { $0.ai.isUser }
-      if await !(userPlayer?.done ?? true) {
+      let userPlayer = players.first { $0.ai.algoName.isUser }
+      if !(userPlayer?.done ?? true) {
         await delay(for: .now() + 0.5)
       }
     }
 
+    playerOnTurn = player.id
     let turn = await player.ai.move(request: req, previousError: previousError)
 
     do {
@@ -158,7 +179,7 @@ public actor Game {
           print(
             "NO POSSIBLE",
             numberCalled,
-            await player.ai.algoName,
+            player.ai.algoName,
             player.phase,
             turn,
             req.possibleTurns()
@@ -182,7 +203,7 @@ public actor Game {
           print(
             "NO POSSIBLE",
             numberCalled,
-            await player.ai.algoName,
+            player.ai.algoName,
             player.phase,
             turn,
             req._possibleTurns()
@@ -330,18 +351,18 @@ public actor Game {
 
   func beginRound() async {
 //    await withTaskGroup(of: Void.self) { g in
-      for (index, player) in players.enumerated() {
+    for (index, player) in players.enumerated() {
 //        g.async {
-          let newPlayer = await self.commitBeginTurn(
-            playerIndex: index,
-            player: player,
-            numberCalled: 0,
-            previousError: nil
-          )
-          await self.updatePlayer(player: newPlayer)
-          try! await self.checkIntegrity()
-          await self.render(getSnapshot(), false)
-        }
+      let newPlayer = await commitBeginTurn(
+        playerIndex: index,
+        player: player,
+        numberCalled: 0,
+        previousError: nil
+      )
+      updatePlayer(player: newPlayer)
+      try! checkIntegrity()
+      await render(getSnapshot(), false)
+    }
 //      }
 //    }
   }
@@ -489,8 +510,8 @@ public actor Game {
   }
 }
 
-public extension GameAi {
+public extension String {
   nonisolated var isUser: Bool {
-    return algoName.contains("UserInputAI")
+    return contains("UserInputAI")
   }
 }

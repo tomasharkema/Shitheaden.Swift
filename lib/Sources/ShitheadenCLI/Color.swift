@@ -33,16 +33,16 @@ extension Card: CustomStringConvertible {
   }
 }
 
-extension Player {
+extension TurnRequest {
   var showedTable: String {
     return openTableCards.map { $0.description }.joined(separator: " ")
   }
 
   var closedTable: String {
-    return closedTableCards.map { _ in "0" }.joined(separator: " ")
+    return (0..<numberOfClosedTableCards).map { _ in "0" }.joined(separator: " ")
   }
 
   var closedTableShowed: String {
-    return closedTableCards.map { $0.description }.joined(separator: " ")
+    return (0..<numberOfClosedTableCards).map { $0.description }.joined(separator: " ")
   }
 }

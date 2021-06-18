@@ -17,10 +17,10 @@ public struct Player: CustomStringConvertible, Equatable, Hashable {
   public let id = UUID()
   public let name: String
   public internal(set) var turns: [Turn]
-  public let position: Position
+  public let position: ShitheadenShared.Position
   public let ai: GameAi
 
-  public init(name: String, position: Position, ai: GameAi) {
+  public init(name: String, position: ShitheadenShared.Position, ai: GameAi) {
     handCards = []
     openTableCards = []
     closedTableCards = []
@@ -45,7 +45,7 @@ public struct Player: CustomStringConvertible, Equatable, Hashable {
   }
 
   public func hash(into hasher: inout Hasher) {
-    hasher.combine(name)
+    hasher.combine(id)
   }
 
   public var latestState: String {
