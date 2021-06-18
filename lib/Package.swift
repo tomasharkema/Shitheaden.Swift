@@ -13,12 +13,15 @@ let package = Package(
   products: [
     .executable(name: "shitheaden", targets: ["shitheaden"]),
     .library(name: "ShitheadenRuntime", type: .static, targets: ["ShitheadenRuntime"]),
+    .library(name: "ShitheadenRuntimeDynamic", type: .dynamic, targets: ["ShitheadenRuntime"]),
     .library(
       name: "ShitheadenShared",
       type: .static,
-      targets: ["ShitheadenShared"] // , "ShitheadenSharedTests"]
+      targets: ["ShitheadenShared"]
     ),
+    .library(name: "ShitheadenSharedDynamic", type: .dynamic, targets: ["ShitheadenRuntime"]),
     .library(name: "CustomAlgo", type: .static, targets: ["CustomAlgo"]),
+    .library(name: "CustomAlgoDynamic", type: .dynamic, targets: ["CustomAlgo"]),
   ],
   dependencies: [
     .package(
@@ -55,33 +58,38 @@ let package = Package(
     .target(
       name: "ShitheadenRuntime",
       dependencies: ["ShitheadenShared"],
-      swiftSettings: [.unsafeFlags([
-        "-Xfrontend",
-        "-enable-experimental-concurrency",
-        "-Xfrontend", "-disable-availability-checking",
-      ]),
-      .define("DEBUG", .when(configuration: .debug))]
+      swiftSettings: [
+        .unsafeFlags([
+          "-Xfrontend",
+          "-enable-experimental-concurrency",
+          "-Xfrontend", "-disable-availability-checking",
+        ]),
+        .define("DEBUG", .when(configuration: .debug)),
+      ]
     ),
-
     .target(
       name: "ShitheadenShared",
       dependencies: [],
-      swiftSettings: [.unsafeFlags([
-        "-Xfrontend",
-        "-enable-experimental-concurrency",
-        "-Xfrontend", "-disable-availability-checking",
-      ])]
+      swiftSettings: [
+        .unsafeFlags([
+          "-Xfrontend",
+          "-enable-experimental-concurrency",
+          "-Xfrontend", "-disable-availability-checking",
+        ]),
+      ]
     ),
     .target(
       name: "CustomAlgo",
       dependencies: [
         .target(name: "ShitheadenShared"),
       ],
-      swiftSettings: [.unsafeFlags([
-        "-Xfrontend",
-        "-enable-experimental-concurrency",
-        "-Xfrontend", "-disable-availability-checking",
-      ])]
+      swiftSettings: [
+        .unsafeFlags([
+          "-Xfrontend",
+          "-enable-experimental-concurrency",
+          "-Xfrontend", "-disable-availability-checking",
+        ]),
+      ]
     ),
   ]
 )

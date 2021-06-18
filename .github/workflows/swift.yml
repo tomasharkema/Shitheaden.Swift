@@ -11,6 +11,7 @@ jobs:
     runs-on: macos-latest
 
     steps:
+      - uses: actions/checkout@v2
       - name: Compile
         run: xcodebuild -scheme ShitheadenApp -configuration Release -project ShitheadenApp.xcodeproj archive -archivePath ./Shitheaden.xcarchive
   swift:

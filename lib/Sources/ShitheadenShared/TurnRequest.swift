@@ -7,13 +7,6 @@
 
 import Foundation
 
-public enum Position: CaseIterable {
-  case noord
-  case oost
-  case zuid
-  case west
-}
-
 public struct TurnRequest: Equatable {
   public let id: UUID
   public let name: String
@@ -28,7 +21,8 @@ public struct TurnRequest: Equatable {
   public let done: Bool
   public let position: Position
 
-  public init(id: UUID, name: String,
+  public init(
+    id: UUID, name: String,
               handCards: [Card],
               openTableCards: [Card],
               lastTableCard: Card?,
