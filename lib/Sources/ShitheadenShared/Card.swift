@@ -6,7 +6,7 @@
 //  Copyright © 2015 Tomas Harkema. All rights reserved.
 //
 
-public struct Card: Equatable, Hashable {
+public struct Card: Equatable, Hashable, Codable {
   public let symbol: Symbol
   public let number: Number
 

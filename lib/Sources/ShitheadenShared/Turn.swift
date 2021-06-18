@@ -6,7 +6,7 @@
 //  Copyright © 2015 Tomas Harkema. All rights reserved.
 //
 
-public enum Turn: Equatable, Hashable {
+public enum Turn: Equatable, Hashable, Codable {
   case play(Set<Card>)
   case pass
   case closedCardIndex(Int)

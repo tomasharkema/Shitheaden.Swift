@@ -29,7 +29,7 @@ let package = Package(
       branch: "swift-5.5-async"
     ),
     .package(url: "https://github.com/tomasharkema/SwiftSocket", branch: "master"),
-//        .package( url: "https://github.com/apple/swift-nio-ssh", from: "0.2.1")
+    .package(url: "https://github.com/apple/swift-nio", from: "2.29.0"),
     .package(url: "https://github.com/flintprocessor/ANSIEscapeCode", branch: "master"),
   ],
   targets: [
@@ -43,6 +43,9 @@ let package = Package(
         // , condition: .when(platforms: [.macOS, .macCatalyst])),
         .product(name: "ANSIEscapeCode", package: "ANSIEscapeCode"),
 //        .product(name: "NIOSSH", package: "swift-nio-ssh"),
+        .product(name: "NIO", package: "swift-nio"),
+        .product(name: "NIOHTTP1", package: "swift-nio"),
+        .product(name: "NIOWebSocket", package: "swift-nio"),
       ],
       path: "./Sources/ShitheadenCLI",
       swiftSettings: [

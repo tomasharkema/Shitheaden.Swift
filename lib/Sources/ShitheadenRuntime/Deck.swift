@@ -8,7 +8,7 @@
 
 import ShitheadenShared
 
-public struct Deck: Equatable {
+public struct Deck: Equatable, Codable {
   public private(set) var cards: [Card]
 
   mutating func draw() -> Card? {

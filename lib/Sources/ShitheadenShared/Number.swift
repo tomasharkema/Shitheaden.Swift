@@ -6,7 +6,7 @@
 //  Copyright © 2015 Tomas Harkema. All rights reserved.
 //
 
-public enum Number: CaseIterable, Equatable, Hashable {
+public enum Number: CaseIterable, Equatable, Hashable, Codable {
   case aas
   case heer
   case vrouw

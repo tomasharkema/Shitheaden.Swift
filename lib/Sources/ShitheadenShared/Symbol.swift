@@ -6,7 +6,7 @@
 //  Copyright © 2015 Tomas Harkema. All rights reserved.
 //
 
-public enum Symbol: CaseIterable, Equatable {
+public enum Symbol: CaseIterable, Equatable, Codable {
   case ruiten
   case schoppen
   case klaver

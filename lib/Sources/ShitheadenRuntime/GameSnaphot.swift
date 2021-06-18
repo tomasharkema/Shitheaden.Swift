@@ -8,7 +8,7 @@
 import Foundation
 import ShitheadenShared
 
-public struct GameSnaphot: Equatable {
+public struct GameSnaphot: Equatable, Codable {
   public let deck: Deck
   public let players: [TurnRequest]
   public let table: Table

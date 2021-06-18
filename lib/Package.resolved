@@ -20,6 +20,15 @@
         }
       },
       {
+        "package": "swift-nio",
+        "repositoryURL": "https://github.com/apple/swift-nio",
+        "state": {
+          "branch": null,
+          "revision": "d161bf658780b209c185994528e7e24376cf7283",
+          "version": "2.29.0"
+        }
+      },
+      {
         "package": "SwiftSocket",
         "repositoryURL": "https://github.com/tomasharkema/SwiftSocket",
         "state": {

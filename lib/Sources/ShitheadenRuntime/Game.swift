@@ -508,6 +508,10 @@ public actor Game {
 
     #endif
   }
+
+  deinit {
+    print("DEINIT")
+  }
 }
 
 public extension String {

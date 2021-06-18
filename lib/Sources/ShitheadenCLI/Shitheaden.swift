@@ -31,7 +31,7 @@ struct Shitheaden: ParsableCommand {
       return
     #endif
 
-    print("START!")
+    print("START! \(server)")
     if server {
       await startServer()
       return
@@ -92,21 +92,36 @@ struct Shitheaden: ParsableCommand {
 //  }
 
   private func startServer() async {
-    let server = TCPServer(address: "0.0.0.0", port: 3333)
-    switch server.listen() {
-    case .success:
-      while true {
-        if let client = server.accept() {
-          asyncDetached { [client] in
-            await echoService(client: client)
-          }
-        } else {
-          print("accept error")
-        }
+    async {
+      do {
+        print("START! websocket")
+        let server = Server()
+        try await server.server()
+      } catch {
+        print(error)
       }
-    case let .failure(error):
-      print(error)
     }
+
+    async {
+      print("START! telnet")
+      let server = TCPServer(address: "0.0.0.0", port: 3333)
+      switch server.listen() {
+      case .success:
+        while true {
+          if let client = server.accept() {
+            asyncDetached { [client] in
+              await echoService(client: client)
+            }
+          } else {
+            print("accept error")
+          }
+        }
+      case let .failure(error):
+        print(error)
+      }
+    }
+
+    return await withUnsafeContinuation { _ in }
   }
 
   private func echoService(client: TCPClient) async {

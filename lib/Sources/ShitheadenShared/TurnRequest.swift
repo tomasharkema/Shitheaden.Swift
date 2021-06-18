@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct TurnRequest: Equatable {
+public struct TurnRequest: Equatable, Codable {
   public let id: UUID
   public let name: String
   public let handCards: [Card]

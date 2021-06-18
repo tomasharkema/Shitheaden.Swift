@@ -31,8 +31,7 @@ actor UserInputAI: GameAi {
       Int($0.trimmingCharacters(in: .whitespacesAndNewlines))
     }
     if inputs.contains(nil) {
-      await render(RenderPosition.input.down(n: 1).cliRep + ANSIEscapeCode.Erase
-        .eraseInLine(.entireLine) + "Je moet p of een aantal cijfers invullen...")
+      await render(RenderPosition.input.down(n: 1).cliRep + "Je moet p of een aantal cijfers invullen...")
       return nil
     }
 
@@ -41,8 +40,7 @@ actor UserInputAI: GameAi {
 
   private func getBeurtFromUser(request: TurnRequest) async throws -> Turn {
     #if DEBUG
-      await render(RenderPosition.input.down(n: 5).cliRep + ANSIEscapeCode.Erase
-        .eraseInLine(.entireLine) + "\(request.possibleTurns())")
+      await render(RenderPosition.input.down(n: 5).cliRep + "\(request.possibleTurns())")
     #endif
 
     let input = await getInput()
@@ -95,13 +93,13 @@ actor UserInputAI: GameAi {
   func execute(request: TurnRequest) async throws -> Turn {
     switch request.phase {
     case .hand:
-      await render(RenderPosition.input.cliRep + ANSIEscapeCode.Erase.eraseInLine(.entireLine) +
+      await render(RenderPosition.input.cliRep  +
         "Speel een kaart uit je hand")
     case .tableOpen:
-      await render(RenderPosition.input.cliRep + ANSIEscapeCode.Erase.eraseInLine(.entireLine) +
+      await render(RenderPosition.input.cliRep  +
         "Speel een kaart van tafel")
     case .tableClosed:
-      await render(RenderPosition.input.cliRep + ANSIEscapeCode.Erase.eraseInLine(.entireLine) +
+      await render(RenderPosition.input.cliRep  +
         "Speel een kaart van je dichte stapel")
     }
 
@@ -135,7 +133,7 @@ actor UserInputAI: GameAi {
     await render(ANSIEscapeCode.Cursor.showCursor + ANSIEscapeCode.Cursor.position(
       row: RenderPosition.input.y + 1,
       column: 0
-    ) + ANSIEscapeCode.Erase.eraseInLine(.entireLine))
+    ) )
     let request = await reader().trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
     await render(ANSIEscapeCode.Cursor.hideCursor)
     return request
@@ -144,14 +142,12 @@ actor UserInputAI: GameAi {
   func beginMove(request: TurnRequest, previousError: PlayerError?) async -> (Card, Card, Card) {
     if let previousError = previousError {
       await render(RenderPosition.input
-        .down(n: -2).cliRep + ANSIEscapeCode.Erase.eraseInLine(.entireLine) + previousError.text)
+        .down(n: -2).cliRep  + previousError.text)
     }
 
     do {
-      await render(RenderPosition.input.cliRep + ANSIEscapeCode.Erase
-        .eraseInLine(.entireLine) + "Selecteer drie kaarten voor je tafelkaarten...")
-      await render(RenderPosition.input.down(n: 1).cliRep + ANSIEscapeCode.Erase
-        .eraseInLine(.entireLine))
+      await render(RenderPosition.input.cliRep + "Selecteer drie kaarten voor je tafelkaarten...")
+      await render(RenderPosition.input.down(n: 1).cliRep)
 
       let input = await getInput()
       guard let keuze = await parseInput(input: input) else {
