@@ -7,9 +7,14 @@ on:
     branches: [main]
 
 jobs:
-  build:
+  app:
+    runs-on: macos-latest
+
+    steps:
+      - name: Compile
+        run: xcodebuild -scheme ShitheadenApp -configuration Release
+  swift:
     runs-on: ubuntu-18.04
-    #     runs-on: macos-latest
 
     steps:
       - uses: actions/checkout@v2
