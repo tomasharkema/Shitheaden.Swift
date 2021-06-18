@@ -23,16 +23,16 @@ public struct TurnRequest: Equatable {
 
   public init(
     id: UUID, name: String,
-              handCards: [Card],
-              openTableCards: [Card],
-              lastTableCard: Card?,
-              numberOfClosedTableCards: Int,
-              phase: Phase,
-              amountOfTableCards: Int,
-              amountOfDeckCards: Int,
-              algoName: String,
-              done: Bool, position: Position)
-  {
+    handCards: [Card],
+    openTableCards: [Card],
+    lastTableCard: Card?,
+    numberOfClosedTableCards: Int,
+    phase: Phase,
+    amountOfTableCards: Int,
+    amountOfDeckCards: Int,
+    algoName: String,
+    done: Bool, position: Position
+  ) {
     self.id = id
     self.name = name
     self.handCards = handCards
