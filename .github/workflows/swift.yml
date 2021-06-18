@@ -14,6 +14,12 @@ jobs:
       - uses: actions/checkout@v2
       - name: Compile
         run: xcodebuild -scheme ShitheadenApp -configuration Release -project ShitheadenApp.xcodeproj archive -archivePath ./Shitheaden.xcarchive
+      - name: Store build artifact
+        uses: actions/upload-artifact@v1
+        with:
+          name: archive
+          path: ./Shitheaden.xcarchive
+
   swift:
     runs-on: ubuntu-18.04
 
