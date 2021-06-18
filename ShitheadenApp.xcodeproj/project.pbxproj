@@ -18,7 +18,6 @@
 
 /* Begin PBXFileReference section */
 		C33A6C0C267CA87400FCF8C5 /* GameContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameContainer.swift; sourceTree = "<group>"; };
-		C33A6C14267CD00100FCF8C5 /* libShitheadenRuntime.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libShitheadenRuntime.a; sourceTree = "<group>"; };
 		C3812A52267C816400397E65 /* ShitheadenApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ShitheadenApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C3812A55267C816400397E65 /* ShitheadenAppApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShitheadenAppApp.swift; sourceTree = "<group>"; };
 		C3812A57267C816400397E65 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -65,7 +64,6 @@
 				C3FFA11C267CA6C3007972BA /* ShitheadenApp.entitlements */,
 				C3812A55267C816400397E65 /* ShitheadenAppApp.swift */,
 				C3812A57267C816400397E65 /* ContentView.swift */,
-				C33A6C14267CD00100FCF8C5 /* libShitheadenRuntime.a */,
 				C3812A59267C816500397E65 /* Assets.xcassets */,
 				C3812A5B267C816500397E65 /* Preview Content */,
 				C33A6C0C267CA87400FCF8C5 /* GameContainer.swift */,
