@@ -123,7 +123,9 @@ class GameContainer: ObservableObject {
         ai: CardRankingAlgo()
       ),
     ], slowMode: true, render: { game, _ in
-      let localPlayer = game.players.first { $0.position == .zuid }!
+      guard let localPlayer = game.players.flatMap { $0.player }.first else {
+        return
+      }
       self.localPhase = localPlayer.phase
       if !localPlayer.handCards.isEmpty {
         self.localCards = localPlayer.handCards.sortNumbers()

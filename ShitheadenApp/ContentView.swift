@@ -104,7 +104,7 @@ struct ContentView: View {
   }
 
   @ViewBuilder
-  func playerView(player: TurnRequest, orientation: Orientation) -> some View {
+  func playerView(player: ObscuredPlayerResult, orientation: Orientation) -> some View {
     if !player.done {
       VStack {
         switch orientation {
@@ -115,7 +115,7 @@ struct ContentView: View {
               .overlay(cards(cards: player.openTableCards, orientation: orientation)
                 .offset(x: 5, y: -5))
             if !player.algoName.isUser {
-              stack(count: player.handCards.count, offset: 2)
+              stack(count: player.numberOfHandCards, offset: 2)
             }
           }
         case .vertical:
@@ -125,7 +125,7 @@ struct ContentView: View {
               .overlay(cards(cards: player.openTableCards, orientation: orientation)
                 .offset(x: 5, y: -5))
             if !player.algoName.isUser {
-              stack(count: player.handCards.count, offset: 2)
+              stack(count: player.numberOfHandCards, offset: 2)
             }
           }
         }
@@ -232,10 +232,12 @@ struct ContentView: View {
   func game(snapshot: GameSnaphot) -> some View {
     VStack(spacing: 0) {
       VStack {
-        playerView(
-          player: snapshot.players.first { $0.position == .noord }!,
-          orientation: .horizontal
-        )
+        if let player = snapshot.players.first { $0.position == .noord } {
+          playerView(
+            player: player,
+            orientation: .horizontal
+          )
+        }
         Spacer()
         HStack {
           playerView(

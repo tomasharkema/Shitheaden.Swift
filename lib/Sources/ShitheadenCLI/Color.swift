@@ -34,15 +34,24 @@ extension Card: CustomStringConvertible {
 }
 
 extension TurnRequest {
-  var showedTable: String {
-    return openTableCards.map { $0.description }.joined(separator: " ")
-  }
-
   var closedTable: String {
     return (0 ..< numberOfClosedTableCards).map { _ in "0" }.joined(separator: " ")
   }
 
   var closedTableShowed: String {
     return (0 ..< numberOfClosedTableCards).map { $0.description }.joined(separator: " ")
+  }
+}
+
+extension ObscuredPlayerResult {
+  var showedTable: String {
+    let openTableCards: [Card]
+    switch self {
+    case .player(let turnRequest):
+      openTableCards = turnRequest.openTableCards
+    case .obscured(let obsucredTurnRequest):
+      openTableCards = obsucredTurnRequest.openTableCards
+    }
+    return openTableCards.map { $0.description }.joined(separator: " ")
   }
 }

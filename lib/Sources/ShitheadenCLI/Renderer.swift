@@ -9,7 +9,7 @@ import Foundation
 import ShitheadenRuntime
 import ShitheadenShared
 
-extension TurnRequest {
+extension ObscuredPlayerResult {
   var renderPosition: RenderPosition {
     switch position {
     case .noord:
@@ -29,7 +29,7 @@ enum Renderer {
     let playersString: [String] = await game.players.flatMap { player -> [String] in
       if !player.done {
         return [
-          player.renderPosition >>> "\(player.name) \(player.handCards.count) kaarten",
+          player.renderPosition >>> "\(player.name) \(player.numberOfHandCards) kaarten",
 //          player.renderPosition.down(n: 1) >>> player.latestState,
           player.renderPosition.down(n: 2) >>> player.showedTable,
           player.renderPosition.down(n: 3) >>> "\(player.numberOfClosedTableCards)",
@@ -39,7 +39,7 @@ enum Renderer {
       }
     }
 
-    let userPlayer = await game.players.first { $0.algoName.isUser }
+    let userPlayer = await game.players.flatMap { $0.player }.first
     let handString = userPlayer?.handCards.sortNumbers().enumerated()
       .map { "\($0.offset + 1)\($0.element.description)" }.joined(separator: " ")
 

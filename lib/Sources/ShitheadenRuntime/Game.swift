@@ -49,19 +49,33 @@ public actor Game {
 
   func getSnapshot() -> GameSnaphot {
     return GameSnaphot(deck: deck, players: players.map {
-      TurnRequest(
-        id: $0.id, name: $0.name,
-        handCards: $0.handCards,
-        openTableCards: $0.openTableCards,
-        lastTableCard: table.lastCard,
-        numberOfClosedTableCards: $0.closedTableCards.count,
-        phase: $0.phase,
-        amountOfTableCards: table.count,
-        amountOfDeckCards: deck.cards.count,
-        algoName: $0.ai.algoName,
-        done: $0.done,
-        position: $0.position
-      )
+      if $0.ai.algoName.isUser {
+        return .player(TurnRequest(
+          id: $0.id, name: $0.name,
+          handCards: $0.handCards,
+          openTableCards: $0.openTableCards,
+          lastTableCard: table.lastCard,
+          numberOfClosedTableCards: $0.closedTableCards.count,
+          phase: $0.phase,
+          amountOfTableCards: table.count,
+          amountOfDeckCards: deck.cards.count,
+          algoName: $0.ai.algoName,
+          done: $0.done,
+          position: $0.position
+        ))
+      } else {
+        return .obscured(ObsucredTurnRequest(          id: $0.id, name: $0.name,
+                                                       numberOfHandCards: $0.handCards.count,
+                                                       openTableCards: $0.openTableCards,
+                                                       lastTableCard: table.lastCard,
+                                                       numberOfClosedTableCards: $0.closedTableCards.count,
+                                                       phase: $0.phase,
+                                                       amountOfTableCards: table.count,
+                                                       amountOfDeckCards: deck.cards.count,
+                                                       algoName: $0.ai.algoName,
+                                                       done: $0.done,
+                                                       position: $0.position))
+      }
     }, table: table, burnt: burnt, playerOnTurn: playerOnTurn ?? UUID())
   }
 
@@ -396,29 +410,6 @@ public actor Game {
     }
     let newPlayers = players.shifted(by: -place)
     players = newPlayers
-  }
-
-  func pickLosers() -> Set<Player> {
-    var losers = Set<Player>()
-
-    for player in players {
-      if !player.done {
-//        if losers.count == 0 {
-        losers.insert(player)
-//        } else {
-//          for loser in losers {
-//            if player.points < loser.points {
-//              losers.removeAll()
-//              losers.insert(player)
-//            } else if player.points == loser.points {
-//              losers.insert(player)
-//            }
-//          }
-//        }
-      }
-    }
-
-    return losers
   }
 
   func pickDonePlayers() -> [Player] {

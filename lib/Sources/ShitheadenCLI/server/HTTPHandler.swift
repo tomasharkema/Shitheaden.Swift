@@ -31,7 +31,7 @@ private let websocketResponse = """
         var wsconnection = new WebSocket(location.href.replace("http", "ws") + "/websocket");
         wsconnection.onmessage = function (msg) {
             var element = document.createElement("p");
-            element.innerHTML = msg.data;
+            element.innerHTML = "<code>" + msg.data + "</code>";
             var textDiv = document.getElementById("websocket-stream");
             textDiv.insertBefore(element, null);
         };

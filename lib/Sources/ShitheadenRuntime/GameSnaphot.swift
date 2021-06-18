@@ -10,7 +10,7 @@ import ShitheadenShared
 
 public struct GameSnaphot: Equatable, Codable {
   public let deck: Deck
-  public let players: [TurnRequest]
+  public let players: [ObscuredPlayerResult]
   public let table: Table
   public let burnt: [Card]
   public let playerOnTurn: UUID
