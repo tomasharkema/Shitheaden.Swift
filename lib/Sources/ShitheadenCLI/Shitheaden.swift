@@ -25,6 +25,9 @@ struct Shitheaden: ParsableCommand {
   @Option(name: .shortAndLong, help: "The number of parallelization")
   var parallelization: Int = 8
 
+  @Option(name: .shortAndLong, help: "The number of rounds")
+  var rounds: Int = 10
+
   mutating func run() async throws {
     #if os(Linux)
       await startServer()
@@ -50,7 +53,7 @@ struct Shitheaden: ParsableCommand {
       return await withUnsafeContinuation { d in
         DispatchQueue.global().async {
           async {
-            await Tournament(roundsPerGame: 100, parallelization: parallelization).playTournament()
+            await Tournament(roundsPerGame: rounds, parallelization: parallelization).playTournament()
             d.resume()
           }
         }
