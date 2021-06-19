@@ -11,6 +11,10 @@ public actor CardRankingAlgoWithUnfairPassing: GameAi {
   private let old = CardRankingAlgo()
   public required init() {}
 
+  public func render(snapshot: GameSnapshot, clear: Bool) async {
+    
+  }
+
   public func beginMove(request: TurnRequest,
                         previousError: PlayerError?) async -> (Card, Card, Card)
   {

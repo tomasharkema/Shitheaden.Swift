@@ -11,6 +11,67 @@ import NIO
 import NIOHTTP1
 import NIOWebSocket
 import ShitheadenRuntime
+import ShitheadenShared
+
+actor UserInputAIJson: GameAi {
+  let id: UUID
+  let reader: (() async -> String)
+  let renderHandler: ((GameSnapshot) async -> Void)
+
+  required init() {
+    fatalError()
+    id = UUID()
+//    reader = {
+//      await Keyboard.getKeyboardInput()
+//    }
+//    renderHandler = { print($0) }
+  }
+
+  init(
+    id: UUID,
+    reader: @escaping (() async -> String),
+    renderHandler: @escaping ((GameSnapshot) async -> Void)
+  ) {
+    self.id = id
+    self.reader = reader
+    self.renderHandler = renderHandler
+  }
+
+  func render(snapshot: GameSnapshot, clear: Bool) async {
+    await self.renderHandler(snapshot)
+  }
+
+  private func unwrap<T: Decodable>() async throws -> T {
+    let string = await reader()
+
+    guard let data = string.data(using: .utf8) else {
+      throw PlayerError(text: "data not parsable")
+    }
+
+    return try JSONDecoder().decode(T.self, from: data)
+  }
+
+  func beginMove(request: TurnRequest, previousError: PlayerError?) async -> (Card, Card, Card) {
+    do {
+    let data: [Card] = try await unwrap()
+    guard data.count == 3 else {
+      throw PlayerError(text: "no 3 choices")
+    }
+
+    return (data[0], data[1], data[2])
+    } catch {
+      print(error)
+      return await beginMove(request: request, previousError: previousError)
+    }
+  }
+
+  func move(request: TurnRequest, previousError: PlayerError?) async -> Turn {do {
+    return try await unwrap() } catch {
+      print(error)
+      return await move(request: request, previousError: previousError)
+    }
+  }
+}
 
 final class WebSocketTimeHandler: ChannelInboundHandler {
   typealias InboundIn = WebSocketFrame
@@ -101,22 +162,20 @@ final class WebSocketTimeHandler: ChannelInboundHandler {
         Player(
           name: "Zuid (JIJ)",
           position: .zuid,
-          ai: UserInputAI(id: id) {
-            print("READ!")
-            return await withUnsafeContinuation { g in
-              send(.action(.requestTurn))
-              self.handleData = {
-                g.resume(returning: $0)
-                self.handleData = nil
-              }
-            }
-          } render: {
-            send(.error(.text($0)))
+          ai: UserInputAIJson(id: id) {
+        print("READ!")
+        return await withUnsafeContinuation { g in
+          send(.action(.requestTurn))
+          self.handleData = {
+            g.resume(returning: $0)
+            self.handleData = nil
           }
+        }
+      } renderHandler: {
+        send(.render($0))
+      }
         ),
-      ], slowMode: true, localUserUUID: id, render: { game, _ in
-        send(.render(game))
-      })
+      ], slowMode: true)
       self.game = game
       await game.startGame()
     }

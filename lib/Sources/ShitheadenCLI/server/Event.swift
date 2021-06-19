@@ -6,6 +6,7 @@
 //
 
 import ShitheadenRuntime
+import ShitheadenShared
 
 enum ServerError: Equatable, Codable {
   case text(String)
@@ -14,7 +15,7 @@ enum ServerError: Equatable, Codable {
 enum Event: Equatable, Codable {
   case error(ServerError)
   case action(Action)
-  case render(GameSnaphot)
+  case render(GameSnapshot)
 }
 
 enum Action: Equatable, Codable {

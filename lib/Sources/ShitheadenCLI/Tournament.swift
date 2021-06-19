@@ -32,7 +32,7 @@
     }
 
     func peformanceOfAI(ai: [(GameAi.Type, String)], gameId: String = "0") async -> PlayedGame {
-      let playedGames: [GameSnaphot] = await withTaskGroup(of: [GameSnaphot].self) { g in
+      let playedGames: [GameSnapshot] = await withTaskGroup(of: [GameSnapshot].self) { g in
         for idx in 1 ... roundsPerGame {
           let unlock = await roundEaser.wait()
           if Task.isCancelled {
@@ -52,9 +52,7 @@
             }
             let game = Game(
               players: players,
-              slowMode: false,
-              localUserUUID: nil,
-              render: { _, _ in }
+              slowMode: false
             )
 
             print(" START: \(gameId) \(idx) / \(self.roundsPerGame)")
@@ -63,7 +61,7 @@
               " END: \(gameId) \(idx) / \(self.roundsPerGame) winner: \(snapshot.winner?.algoName ?? "")"
             )
             await unlock()
-            return await [game.getSnapshot()]
+            return await [game.getSnapshot(for: nil)]
           }
         }
         return await g.reduce([], +)

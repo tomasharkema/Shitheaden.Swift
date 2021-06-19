@@ -14,14 +14,14 @@ import ShitheadenShared
 actor UserInputAI: GameAi {
   let id: UUID
   let reader: () async -> String
-  let render: (String) async -> Void
+  let renderHandler: (String) async -> Void
 
   required init() {
     id = UUID()
     reader = {
       await Keyboard.getKeyboardInput()
     }
-    render = { print($0) }
+    renderHandler = { print($0) }
   }
 
   init(
@@ -31,17 +31,21 @@ actor UserInputAI: GameAi {
     reader = {
       await Keyboard.getKeyboardInput()
     }
-    render = { print($0) }
+    renderHandler = { print($0) }
   }
 
   init(
     id: UUID,
     reader: @escaping (() async -> String),
-    render: @escaping ((String) async -> Void)
+    renderHandler: @escaping ((String) async -> Void)
   ) {
     self.id = id
     self.reader = reader
-    self.render = render
+    self.renderHandler = renderHandler
+  }
+
+  func render(snapshot: GameSnapshot, clear: Bool) async {
+    await self.renderHandler(Renderer.render(game: snapshot, clear: clear))
   }
 
   private func parseInput(input: String) async -> [Int]? {
@@ -49,7 +53,7 @@ actor UserInputAI: GameAi {
       Int($0.trimmingCharacters(in: .whitespacesAndNewlines))
     }
     if inputs.contains(nil) {
-      await render(RenderPosition.input.down(n: 1)
+      await renderHandler(RenderPosition.input.down(n: 1)
         .cliRep + "Je moet p of een aantal cijfers invullen...")
       return nil
     }
@@ -59,7 +63,7 @@ actor UserInputAI: GameAi {
 
   private func getBeurtFromUser(request: TurnRequest) async throws -> Turn {
     #if DEBUG
-      await render(RenderPosition.input.down(n: 5).cliRep + "\(request.possibleTurns())")
+      await renderHandler(RenderPosition.input.down(n: 5).cliRep + "\(request.possibleTurns())")
     #endif
 
     let input = await getInput()
@@ -112,13 +116,13 @@ actor UserInputAI: GameAi {
   func execute(request: TurnRequest) async throws -> Turn {
     switch request.phase {
     case .hand:
-      await render(RenderPosition.input.cliRep +
+      await renderHandler(RenderPosition.input.cliRep +
         "Speel een kaart uit je hand")
     case .tableOpen:
-      await render(RenderPosition.input.cliRep +
+      await renderHandler(RenderPosition.input.cliRep +
         "Speel een kaart van tafel")
     case .tableClosed:
-      await render(RenderPosition.input.cliRep +
+      await renderHandler(RenderPosition.input.cliRep +
         "Speel een kaart van je dichte stapel")
     }
 
@@ -133,7 +137,7 @@ actor UserInputAI: GameAi {
 
   func move(request: TurnRequest, previousError: PlayerError?) async -> Turn {
     if let previousError = previousError {
-      await render(RenderPosition.input
+      await renderHandler(RenderPosition.input
         .down(n: -2) >>> previousError.text)
     }
     do {
@@ -149,24 +153,24 @@ actor UserInputAI: GameAi {
   }
 
   func getInput() async -> String {
-    await render(ANSIEscapeCode.Cursor.showCursor + ANSIEscapeCode.Cursor.position(
+    await renderHandler(ANSIEscapeCode.Cursor.showCursor + ANSIEscapeCode.Cursor.position(
       row: RenderPosition.input.y + 1,
       column: 0
     ))
     let request = await reader().trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
-    await render(ANSIEscapeCode.Cursor.hideCursor)
+    await renderHandler(ANSIEscapeCode.Cursor.hideCursor)
     return request
   }
 
   func beginMove(request: TurnRequest, previousError: PlayerError?) async -> (Card, Card, Card) {
     if let previousError = previousError {
-      await render(RenderPosition.input
+      await renderHandler(RenderPosition.input
         .down(n: -2).cliRep + previousError.text)
     }
 
     do {
-      await render(RenderPosition.input.cliRep + "Selecteer drie kaarten voor je tafelkaarten...")
-      await render(RenderPosition.input.down(n: 1).cliRep)
+      await renderHandler(RenderPosition.input.cliRep + "Selecteer drie kaarten voor je tafelkaarten...")
+      await renderHandler(RenderPosition.input.down(n: 1).cliRep)
 
       let input = await getInput()
       guard let keuze = await parseInput(input: input) else {

@@ -45,14 +45,13 @@ import ShitheadenShared
  }
  */
 
-
 struct PlayedGame {
-  let games: [GameSnaphot]
+  let games: [GameSnapshot]
 
   func winnigs() async -> [String: Int] {
     var playerAndScores = [String: Int]()
-    let winners: [(GameSnaphot, ObscuredPlayerResult)] =
-      await withTaskGroup(of: [(GameSnaphot, ObscuredPlayerResult)].self) { group in
+    let winners: [(GameSnapshot, ObscuredPlayerResult)] =
+      await withTaskGroup(of: [(GameSnapshot, ObscuredPlayerResult)].self) { group in
         for game in games {
           group.async(priority: .background) {
             if let winner = game.winner {
@@ -73,8 +72,8 @@ struct PlayedGame {
   }
 
   func winningsFrom() async -> [String: [String: Int]] {
-    let winners: [(GameSnaphot, [ObscuredPlayerResult], ObscuredPlayerResult, String)] =
-      await withTaskGroup(of: [(GameSnaphot, [ObscuredPlayerResult], ObscuredPlayerResult, String)]
+    let winners: [(GameSnapshot, [ObscuredPlayerResult], ObscuredPlayerResult, String)] =
+      await withTaskGroup(of: [(GameSnapshot, [ObscuredPlayerResult], ObscuredPlayerResult, String)]
         .self) { group in
         for game in games {
           group.async(priority: .background) {

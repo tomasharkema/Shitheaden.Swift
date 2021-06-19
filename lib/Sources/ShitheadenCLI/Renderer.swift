@@ -25,7 +25,7 @@ extension ObscuredPlayerResult {
 }
 
 enum Renderer {
-  static func render(game: GameSnaphot, clear: Bool) async -> String {
+  static func render(game: GameSnapshot, clear: Bool) async -> String {
     let playersString: [String] = game.players.flatMap { player -> [String] in
       if !player.done {
         return [

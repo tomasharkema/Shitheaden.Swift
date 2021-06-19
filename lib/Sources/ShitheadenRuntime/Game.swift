@@ -15,21 +15,15 @@ public final actor Game {
   private(set) var table = Table()
   private(set) var burnt = [Card]()
   var turns = [(String, Turn)]()
-  let render: (GameSnaphot, Bool) async -> Void
   let rules = Rules.all
   var slowMode = false
-  let localUserUUID: UUID?
   var playerOnTurn: UUID?
 
   public init(
     players: [Player],
-    slowMode: Bool,
-    localUserUUID: UUID?,
-    render: @escaping (GameSnaphot, Bool) async -> Void
+    slowMode: Bool
   ) {
     self.players = players
-    self.localUserUUID = localUserUUID
-    self.render = render
     self.slowMode = slowMode
   }
 
@@ -82,11 +76,11 @@ public final actor Game {
     }
   }
 
-  public func getSnapshot() -> GameSnaphot {
-    return GameSnaphot(
+  public func getSnapshot(for uuid: UUID?) -> GameSnapshot {
+    return GameSnapshot(
       numberOfDeckCards: deck.cards.count,
       players: players.map {
-        getPlayerSnapshot($0.id != localUserUUID, player: $0)
+        getPlayerSnapshot($0.id != uuid, player: $0)
       },
       latestTableCards: table.suffix(5), numberOfTableCards: table.count,
       numberOfBurntCards: burnt.count,
@@ -161,6 +155,12 @@ public final actor Game {
     return player
   }
 
+  private func sendRender() async {
+    for player in players {
+      await player.ai.render(snapshot: getSnapshot(for: player.id), clear: true)
+    }
+  }
+
   func commitTurn(
     playerIndex: Int,
     player oldP: Player,
@@ -188,7 +188,7 @@ public final actor Game {
       position: player.position
     )
 
-    await render(getSnapshot(), true)
+    await sendRender()
 
     if slowMode {
       let userPlayer = players.first { $0.ai.algoName.isUser }
@@ -202,7 +202,7 @@ public final actor Game {
 
     do {
       try turn.verify()
-      await render(getSnapshot(), true)
+      await sendRender()
     } catch {
       if !type(of: player.ai).algoName.contains("UserInputAI") {
         #if DEBUG
@@ -268,7 +268,7 @@ public final actor Game {
           player.handCards.append(contentsOf: table)
           table = []
           updatePlayer(player: player)
-          await render(getSnapshot(), true)
+          await sendRender()
           if rules.contains(.againAfterPass) {
             return await commitTurn(
               playerIndex: playerIndex,
@@ -317,11 +317,11 @@ public final actor Game {
 
     turns += [(player.name, turn)]
 
-    await render(getSnapshot(), true)
+    await sendRender()
 
     if turn == .pass, rules.contains(.againAfterPass), !player.done, !done {
 //      printState()
-      await render(getSnapshot(), true)
+      await sendRender()
       updatePlayer(player: player)
       return await commitTurn(
         playerIndex: playerIndex,
@@ -334,7 +334,7 @@ public final actor Game {
       burnt += table
       table = []
 
-      await render(getSnapshot(), true)
+      await sendRender()
       updatePlayer(player: player)
 
       if rules.contains(.againAfterGoodBehavior), !player.done, !done {
@@ -357,7 +357,7 @@ public final actor Game {
     }).0 == 4 {
       burnt.append(contentsOf: table)
       table = []
-      await render(getSnapshot(), true)
+      await sendRender()
       updatePlayer(player: player)
       if rules.contains(.againAfterGoodBehavior), !player.done, !done {
         return await commitTurn(
@@ -392,7 +392,7 @@ public final actor Game {
       )
       updatePlayer(player: newPlayer)
       try! checkIntegrity()
-      await render(getSnapshot(), false)
+      await sendRender()
     }
 //      }
 //    }
@@ -406,11 +406,11 @@ public final actor Game {
           numberCalled: 0, previousError: nil
         )
         try! checkIntegrity()
-        await render(getSnapshot(), true)
+        await sendRender()
       }
     }
     if n > 1000 {
-      print("ERROR! GAME REACHED MAXIMUM OF 1000 TURNS! \(getSnapshot())")
+      print("ERROR! GAME REACHED MAXIMUM OF 1000 TURNS! \(getSnapshot(for: nil))")
       return
     }
 
@@ -453,21 +453,21 @@ public final actor Game {
     }
   }
 
-  public func startGame() async -> GameSnaphot {
+  public func startGame() async -> GameSnapshot {
     resetBeurten()
 
-    await render(getSnapshot(), true)
+    await sendRender()
 
     shuffle()
     deel()
-    await render(getSnapshot(), true)
+    await sendRender()
     await beginRound()
 
     sortPlayerLowestCard()
 
     await turn()
 
-    return getSnapshot()
+    return getSnapshot(for: nil)
   }
 
   func checkIntegrity() throws {
