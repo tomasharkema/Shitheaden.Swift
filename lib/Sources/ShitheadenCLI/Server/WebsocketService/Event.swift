@@ -10,6 +10,7 @@ import ShitheadenShared
 
 enum ServerError: Equatable, Codable {
   case text(String)
+  case playerError(PlayerError)
 }
 
 enum Event: Equatable, Codable {

@@ -25,7 +25,8 @@ extension ObscuredPlayerResult {
 }
 
 enum Renderer {
-  static func render(game: GameSnapshot, clear: Bool) async -> String {
+  static func render(game: GameSnapshot, error: PlayerError?) async -> String {
+
     let playersString: [String] = game.players.flatMap { player -> [String] in
       if !player.done {
         return [
@@ -45,10 +46,34 @@ enum Renderer {
 
     let hand = handString != nil ? RenderPosition.hand >>> "Hand: \(handString!)" : ""
 
+
+    let status: String
+    if let userPlayer = userPlayer, game.playerOnTurn == userPlayer.id {
+    switch userPlayer.phase {
+    case .hand:
+       status = (RenderPosition.input.cliRep +
+                          "Speel een kaart uit je hand")
+    case .tableOpen:
+       status = (RenderPosition.input.cliRep +
+                          "Speel een kaart van tafel")
+    case .tableClosed:
+       status = (RenderPosition.input.cliRep +
+                          "Speel een kaart van je dichte stapel")
+    }
+    } else {
+      status = ""
+    }
+
+    let error = error.map {
+      return RenderPosition.input.down(n: 1)
+        .cliRep + $0.text
+    } ?? "" //?? RenderPosition.input.down(n: 1)
+//      .cliRep + "                                          "
+    
     let strings: [[String]] = [
       [
         CLI.setBackground(),
-        clear ? CLI.clear() : "",
+        CLI.clear(),
         RenderPosition.header.down(n: 1) >>> " Shitheaden",
         RenderPosition.header.down(n: 3) >>> " Deck: \(game.numberOfDeckCards) kaarten",
         RenderPosition.header.down(n: 4) >>> " Burnt: \(game.numberOfBurntCards) kaarten",
@@ -56,6 +81,8 @@ enum Renderer {
           .joined(separator: " "),
         RenderPosition.tafel.down(n: 1) >>> "\(game.numberOfTableCards)",
         hand,
+        status,
+        error
       ],
       playersString,
     ]

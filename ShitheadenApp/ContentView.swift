@@ -131,14 +131,14 @@ struct ContentView: View {
         }
 
       }.padding()
-        .background(player.id == game.gameSnaphot?.playerOnTurn ? Color.green.opacity(1) : Color
+        .background(player.id == game.gameSnapshot?.playerOnTurn ? Color.green.opacity(1) : Color
           .green
           .opacity(0.3)).cornerRadius(5)
     }
   }
 
   @ViewBuilder
-  func table(snapshot: GameSnaphot) -> some View {
+  func table(snapshot: GameSnapshot) -> some View {
     let d = Array(snapshot.latestTableCards.reversed())
     stack(cards: d, offset: 15).zIndex(15)
     stack(count: max(0, snapshot.numberOfTableCards - snapshot.latestTableCards.count), offset: 1)
@@ -237,7 +237,7 @@ struct ContentView: View {
   }
 
   @ViewBuilder
-  func game(snapshot: GameSnaphot) -> some View {
+  func game(snapshot: GameSnapshot) -> some View {
     VStack(spacing: 0) {
       VStack {
         if let player = snapshot.players.first { $0.position == .noord } {
@@ -289,7 +289,7 @@ struct ContentView: View {
 
   var body: some View {
     VStack {
-      if let snapshot = game.gameSnaphot {
+      if let snapshot = game.gameSnapshot {
         game(snapshot: snapshot)
           .transition(.move(edge: .top))
           .animation(.linear, value: snapshot)

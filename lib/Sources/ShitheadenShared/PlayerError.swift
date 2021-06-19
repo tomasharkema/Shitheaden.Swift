@@ -5,7 +5,7 @@
 //  Created by Tomas Harkema on 15/06/2021.
 //
 
-public struct PlayerError: Error {
+public struct PlayerError: Error, Codable, Equatable {
   public let text: String
 
   public init(text: String) {

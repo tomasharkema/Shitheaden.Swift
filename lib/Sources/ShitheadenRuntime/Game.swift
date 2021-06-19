@@ -110,9 +110,9 @@ public final actor Game {
   }
 
   func commitBeginTurn(
-    playerIndex _: Int,
+    playerIndex: Int,
     player oldP: Player,
-    numberCalled _: Int,
+    numberCalled: Int,
     previousError: PlayerError?
   ) async -> Player {
     var player = oldP
@@ -134,8 +134,12 @@ public final actor Game {
     )
 
     playerOnTurn = player.id
-    let (card1, card2, card3) = await player.ai
-      .beginMove(request: req, previousError: previousError)
+
+    await sendRender(error: previousError)
+
+    do {
+      let (card1, card2, card3) = try await player.ai.beginMove(request: req, previousError: previousError)
+
 
     // verify turn
     if [card1, card2, card3].contains(where: {
@@ -153,11 +157,23 @@ public final actor Game {
     player.openTableCards.append(card3)
 
     return player
+    } catch {
+
+      await sendRender(error: (error as? PlayerError) ?? previousError)
+
+      return await commitBeginTurn(
+        playerIndex: playerIndex,
+        player: oldP,
+        numberCalled: numberCalled,
+        previousError: (error as? PlayerError) ?? previousError
+      )
+    }
   }
 
-  private func sendRender() async {
+  private func sendRender(error: PlayerError?) async {
     for player in players {
-      await player.ai.render(snapshot: getSnapshot(for: player.id), clear: true)
+      let error = player.id == playerOnTurn ? error : nil
+      await player.ai.render(snapshot: getSnapshot(for: player.id), error: error)
     }
   }
 
@@ -187,9 +203,6 @@ public final actor Game {
       done: player.done,
       position: player.position
     )
-
-    await sendRender()
-
     if slowMode {
       let userPlayer = players.first { $0.ai.algoName.isUser }
       if !(userPlayer?.done ?? true) {
@@ -198,12 +211,18 @@ public final actor Game {
     }
 
     playerOnTurn = player.id
-    let turn = await player.ai.move(request: req, previousError: previousError)
+
+    await sendRender(error: previousError)
+
+    do {
+
+      let turn = try await player.ai.move(request: req, previousError: previousError)
 
     do {
       try turn.verify()
-      await sendRender()
+      await sendRender(error: previousError)
     } catch {
+
       if !type(of: player.ai).algoName.contains("UserInputAI") {
         #if DEBUG
           print(
@@ -218,6 +237,8 @@ public final actor Game {
           assertionFailure("This is not possible \(type(of: player.ai))")
         #endif
       }
+      await sendRender(error: error as? PlayerError ??
+                       PlayerError(text: "\(turn.explain) is niet mogelijk..."))
       return await commitTurn(
         playerIndex: playerIndex,
         player: player,
@@ -268,7 +289,7 @@ public final actor Game {
           player.handCards.append(contentsOf: table)
           table = []
           updatePlayer(player: player)
-          await sendRender()
+          await sendRender(error: previousError)
           if rules.contains(.againAfterPass) {
             return await commitTurn(
               playerIndex: playerIndex,
@@ -317,11 +338,11 @@ public final actor Game {
 
     turns += [(player.name, turn)]
 
-    await sendRender()
+    await sendRender(error: previousError)
 
     if turn == .pass, rules.contains(.againAfterPass), !player.done, !done {
 //      printState()
-      await sendRender()
+      await sendRender(error: previousError)
       updatePlayer(player: player)
       return await commitTurn(
         playerIndex: playerIndex,
@@ -334,7 +355,7 @@ public final actor Game {
       burnt += table
       table = []
 
-      await sendRender()
+      await sendRender(error: previousError)
       updatePlayer(player: player)
 
       if rules.contains(.againAfterGoodBehavior), !player.done, !done {
@@ -357,7 +378,7 @@ public final actor Game {
     }).0 == 4 {
       burnt.append(contentsOf: table)
       table = []
-      await sendRender()
+      await sendRender(error: previousError)
       updatePlayer(player: player)
       if rules.contains(.againAfterGoodBehavior), !player.done, !done {
         return await commitTurn(
@@ -367,8 +388,18 @@ public final actor Game {
         )
       }
     }
-
     return player
+
+    } catch {
+      await sendRender(error: error as? PlayerError ?? previousError)
+
+      return await commitTurn(
+        playerIndex: playerIndex,
+        player: player,
+        numberCalled: numberCalled + 1,
+        previousError: error as? PlayerError
+      )
+    }
   }
 
   private func updatePlayer(player: Player) {
@@ -392,7 +423,7 @@ public final actor Game {
       )
       updatePlayer(player: newPlayer)
       try! checkIntegrity()
-      await sendRender()
+      await sendRender(error: nil)
     }
 //      }
 //    }
@@ -406,7 +437,7 @@ public final actor Game {
           numberCalled: 0, previousError: nil
         )
         try! checkIntegrity()
-        await sendRender()
+        await sendRender(error: nil)
       }
     }
     if n > 1000 {
@@ -456,11 +487,11 @@ public final actor Game {
   public func startGame() async -> GameSnapshot {
     resetBeurten()
 
-    await sendRender()
+    await sendRender(error: nil)
 
     shuffle()
     deel()
-    await sendRender()
+    await sendRender(error: nil)
     await beginRound()
 
     sortPlayerLowestCard()

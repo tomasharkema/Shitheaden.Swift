@@ -11,7 +11,7 @@ public actor CardRankingAlgo: GameAi {
   private var passes = 0
   public required init() {}
 
-  public func render(snapshot: GameSnapshot, clear: Bool) async {
+  public func render(snapshot: GameSnapshot, error: PlayerError?) async {
     
   }
 

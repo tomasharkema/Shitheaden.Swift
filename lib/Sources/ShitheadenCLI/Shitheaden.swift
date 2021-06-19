@@ -10,6 +10,7 @@ import ArgumentParser
 import CustomAlgo
 import Foundation
 import ShitheadenRuntime
+import ANSIEscapeCode
 
 @main
 struct Shitheaden: ParsableCommand {
@@ -101,7 +102,28 @@ struct Shitheaden: ParsableCommand {
           id: id,
           name: "Zuid (JIJ)",
           position: .zuid,
-          ai: UserInputAI(id: id)
+//          ai: UserInputAI(id: id)
+          ai: UserInputAIJson(id: id, reader: {
+
+      print(ANSIEscapeCode.Cursor.showCursor + ANSIEscapeCode.Cursor.position(
+        row: RenderPosition.input.y + 1,
+        column: 0
+      ))
+      let input = await Keyboard.getKeyboardInput()
+      let inputs = input.split(separator: ",").map {
+        Int($0.trimmingCharacters(in: .whitespacesAndNewlines))
+      }
+      if inputs.contains(nil) {
+        //      await renderHandler(RenderPosition.input.down(n: 1)
+        //                            .cliRep + "Je moet p of een aantal cijfers invullen...")
+        //      throw PlayerError(text: "Je moet p of een aantal cijfers invullen...")
+        return .string(input)
+      }
+
+      return .cards(inputs.map { $0! })
+    }, renderHandler: { (game, error) in
+      print(await Renderer.render(game: game, error: error))
+    })
         ),
       ], slowMode: true
 //      , localUserUUID: id, render: { game, clear in
