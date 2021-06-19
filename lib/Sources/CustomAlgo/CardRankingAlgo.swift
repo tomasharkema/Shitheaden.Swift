@@ -67,37 +67,6 @@ extension Turn {
 }
 
 extension Number {
-  var rank: Int {
-    switch self {
-    case .aas:
-      return 14
-    case .heer:
-      return 13
-    case .vrouw:
-      return 12
-    case .boer:
-      return 11
-    case .ten:
-      return 10
-    case .nine:
-      return 9
-    case .eight:
-      return 8
-    case .seven:
-      return 7
-    case .six:
-      return 6
-    case .five:
-      return 5
-    case .four:
-      return 4
-    case .three:
-      return 3
-    case .two:
-      return 2
-    }
-  }
-
   var importanceScore: Int {
     switch self {
     case .ten:
@@ -108,7 +77,7 @@ extension Number {
       return 0
 
     default:
-      return rank
+      return order
     }
   }
 }

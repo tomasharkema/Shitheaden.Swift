@@ -9,16 +9,16 @@
 import Foundation
 import ShitheadenShared
 
-public actor Game {
-  public private(set) var deck = Deck(cards: [])
-  public var players = [Player]()
-  public private(set) var table = Table()
-  public private(set) var burnt = [Card]()
+public final actor Game {
+  private(set) var deck = Deck(cards: [])
+  var players = [Player]()
+  private(set) var table = Table()
+  private(set) var burnt = [Card]()
   var turns = [(String, Turn)]()
   let render: (GameSnaphot, Bool) async -> Void
   let rules = Rules.all
   var slowMode = false
-  public let localUserUUID: UUID?
+  let localUserUUID: UUID?
   var playerOnTurn: UUID?
 
   public init(
@@ -256,7 +256,8 @@ public actor Game {
 
         table += [card]
 
-        if let lastTable = previousTable.last, let lastApplied = table.last,
+        if let lastTable = previousTable.filter({ $0.number != .three }).last,
+           let lastApplied = table.filter({ $0.number != .three }).last,
            !lastTable.afters.contains(lastApplied)
         {
           player.handCards.append(contentsOf: table)

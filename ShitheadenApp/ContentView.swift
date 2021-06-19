@@ -140,7 +140,9 @@ struct ContentView: View {
   @ViewBuilder
   func table(snapshot: GameSnaphot) -> some View {
     let d = Array(snapshot.latestTableCards.reversed())
-    stack(cards: d, offset: 15)
+    stack(cards: d, offset: 15).zIndex(15)
+    stack(count: max(0, snapshot.numberOfTableCards - snapshot.latestTableCards.count), offset: 1)
+      .offset(x: 75, y: -75).zIndex(10)
   }
 
   @ViewBuilder
@@ -183,7 +185,9 @@ struct ContentView: View {
           HStack {
             ForEach(0 ..< localCountOfClosedCards) { i in
               Button(action: {
-                game.playClosedCard(i)
+                async {
+                  await game.playClosedCard(i)
+                }
               }, label: {
                 card(RenderCard.hidden)
               }).buttonStyle(PlainButtonStyle())
@@ -193,7 +197,7 @@ struct ContentView: View {
         } else {
           ScrollView(.horizontal) {
             HStack(spacing: -10) {
-              ForEach(game.localCards) { c in
+              ForEach(game.localCards.reversed()) { c in
                 StatedButton(
                   action: { selected in
                     game.select(c, selected: selected, deleteNotSameNumber: game.moveHandler != nil)
@@ -208,7 +212,9 @@ struct ContentView: View {
           Spacer()
 
           Button(action: {
-            game.play()
+            async {
+              await game.play()
+            }
           }, label: {
             if game.selectedCards.count > 0 {
               Text("SPEEL!")

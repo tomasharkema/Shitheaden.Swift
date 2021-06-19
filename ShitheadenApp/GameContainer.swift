@@ -12,9 +12,9 @@ import ShitheadenShared
 import SwiftUI
 
 actor AppInputUserInputAI: GameAi {
-  let beginMoveHandler: (@escaping ((Card, Card, Card)) -> Void) -> Void
-  let moveHandler: (@escaping (Turn) -> Void) -> Void
-  let errorHandler: (String) -> Void
+  let beginMoveHandler: (@escaping ((Card, Card, Card)) async -> Void) async -> Void
+  let moveHandler: (@escaping (Turn) async -> Void) async -> Void
+  let errorHandler: (String) async -> Void
 
   required init() {
     beginMoveHandler = { _ in }
@@ -23,9 +23,9 @@ actor AppInputUserInputAI: GameAi {
   }
 
   init(
-    beginMoveHandler: @escaping (@escaping ((Card, Card, Card)) -> Void) -> Void,
-    moveHandler: @escaping (@escaping (Turn) -> Void) -> Void,
-    errorHandler: @escaping (String) -> Void
+    beginMoveHandler: @escaping (@escaping ((Card, Card, Card)) async -> Void) async -> Void,
+    moveHandler: @escaping (@escaping (Turn) async -> Void) async -> Void,
+    errorHandler: @escaping (String) async -> Void
   ) {
     self.beginMoveHandler = beginMoveHandler
     self.moveHandler = moveHandler
@@ -34,24 +34,28 @@ actor AppInputUserInputAI: GameAi {
 
   func beginMove(request _: TurnRequest, previousError: PlayerError?) async -> (Card, Card, Card) {
     if let e = previousError {
-      errorHandler(e.text)
+      await errorHandler(e.text)
     }
 
     return await withUnsafeContinuation { g in
-      beginMoveHandler {
-        g.resume(returning: $0)
+      async {
+        await beginMoveHandler {
+          g.resume(returning: $0)
+        }
       }
     }
   }
 
   func move(request _: TurnRequest, previousError: PlayerError?) async -> Turn {
     if let e = previousError {
-      errorHandler(e.text)
+      await errorHandler(e.text)
     }
 
     return await withUnsafeContinuation { g in
-      moveHandler {
-        g.resume(returning: $0)
+      async {
+        await moveHandler {
+          g.resume(returning: $0)
+        }
       }
     }
   }
@@ -70,8 +74,8 @@ class GameContainer: ObservableObject {
   @Published var isOnSet = false
   @Published var canPass = false
 
-  private(set) var beginMoveHandler: (((Card, Card, Card)) -> Void)?
-  private(set) var moveHandler: ((Turn) -> Void)?
+  private(set) var beginMoveHandler: (((Card, Card, Card)) async -> Void)?
+  private(set) var moveHandler: ((Turn) async -> Void)?
 
   func reset() async {
     appInput = nil
@@ -84,22 +88,25 @@ class GameContainer: ObservableObject {
       return
     }
     let id = UUID()
-    let appInput = AppInputUserInputAI(beginMoveHandler: { h in
-      async { await MainActor.run {
-        self.isOnSet = true
-        self.canPass = false
-        self.beginMoveHandler = h
-      }}
-    }, moveHandler: { h in
-      async { await MainActor.run {
-        self.isOnSet = true
-        self.canPass = true
-        self.moveHandler = h
-      }}
-    }, errorHandler: { e in async { await MainActor.run {
-      self.error = e
-    }}
-    })
+    let appInput = AppInputUserInputAI(
+      beginMoveHandler: { h in
+        await MainActor.run {
+          self.isOnSet = true
+          self.canPass = false
+          self.beginMoveHandler = h
+        }
+      }, moveHandler: { h in
+        await MainActor.run {
+          self.isOnSet = true
+          self.canPass = true
+          self.moveHandler = h
+        }
+      }, errorHandler: { e in
+        await MainActor.run {
+          self.error = e
+        }
+      }
+    )
     self.appInput = appInput
     let game = Game(players: [
       Player(
@@ -159,14 +166,14 @@ class GameContainer: ObservableObject {
     }
   }
 
-  func play() {
+  func play() async {
     if let beginMoveHandler = beginMoveHandler {
       guard selectedCards.count == 3 else {
         error = "Select drie kaarten!"
         return
       }
       error = nil
-      beginMoveHandler((
+      await beginMoveHandler((
         selectedCards.first!,
         selectedCards.dropFirst().first!,
         selectedCards.dropFirst().dropFirst().first!
@@ -176,9 +183,9 @@ class GameContainer: ObservableObject {
     } else if let moveHandler = moveHandler {
       error = nil
       if selectedCards.count > 0 {
-        moveHandler(.play(Set(selectedCards)))
+        await moveHandler(.play(Set(selectedCards)))
       } else {
-        moveHandler(.pass)
+        await moveHandler(.pass)
       }
       isOnSet = false
       self.moveHandler = nil
@@ -188,7 +195,7 @@ class GameContainer: ObservableObject {
     selectedCards = []
   }
 
-  func playClosedCard(_ i: Int) {
-    moveHandler?(.closedCardIndex(i + 1))
+  func playClosedCard(_ i: Int) async {
+    await moveHandler?(.closedCardIndex(i + 1))
   }
 }

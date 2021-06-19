@@ -73,7 +73,21 @@ extension Number {
     .heer,
     .aas
   )
-  private static let ThreeAfter: Set<Number> = Set()
+  private static let ThreeAfter: Set<Number> = Set(
+    arrayLiteral: .two,
+    .three,
+    .four,
+    .five,
+    .six,
+    .seven,
+    .eight,
+    .nine,
+    .ten,
+    .boer,
+    .vrouw,
+    .heer,
+    .aas
+  )
   private static let FourAfter: Set<Number> = Set(
     arrayLiteral: .two,
     .three,
@@ -116,12 +130,18 @@ extension Number {
     .heer,
     .aas
   )
-  private static let SevenAfter: Set<Number> = Set(arrayLiteral: .two, .three, .four, .five, .six,
-                                                   .seven, .ten)
-  private static let EightAfter: Set<Number> = Set(arrayLiteral: .two, .three, .eight, .nine, .ten,
-                                                   .boer, .vrouw, .heer, .aas)
-  private static let NineAfter: Set<Number> = Set(arrayLiteral: .two, .three, .nine, .ten, .boer,
-                                                  .vrouw, .heer, .aas)
+  private static let SevenAfter: Set<Number> = Set(
+    arrayLiteral: .two, .three, .four, .five, .six,
+    .seven, .ten
+  )
+  private static let EightAfter: Set<Number> = Set(
+    arrayLiteral: .two, .three, .eight, .nine, .ten,
+    .boer, .vrouw, .heer, .aas
+  )
+  private static let NineAfter: Set<Number> = Set(
+    arrayLiteral: .two, .three, .nine, .ten, .boer,
+    .vrouw, .heer, .aas
+  )
   private static let TenAfter: Set<Number> = Set(
     arrayLiteral: .two,
     .three,
@@ -137,12 +157,20 @@ extension Number {
     .heer,
     .aas
   )
-  private static let BoerAfter: Set<Number> = Set(arrayLiteral: .two, .three, .ten, .boer, .vrouw,
-                                                  .heer, .aas)
-  private static let VrouwAfter: Set<Number> = Set(arrayLiteral: .two, .three, .ten, .vrouw, .heer,
-                                                   .aas)
-  private static let HeerAfter: Set<Number> = Set(arrayLiteral: .two, .three, .ten, .heer, .aas)
-  private static let AasAfter: Set<Number> = Set(arrayLiteral: .two, .three, .ten, .aas)
+  private static let BoerAfter: Set<Number> = Set(
+    arrayLiteral: .two, .three, .ten, .boer, .vrouw,
+    .heer, .aas
+  )
+  private static let VrouwAfter: Set<Number> = Set(
+    arrayLiteral: .two, .three, .ten, .vrouw, .heer,
+    .aas
+  )
+  private static let HeerAfter: Set<Number> = Set(
+    arrayLiteral: .two, .three, .ten, .heer, .aas
+  )
+  private static let AasAfter: Set<Number> = Set(
+    arrayLiteral: .two, .three, .ten, .aas
+  )
 
   public var afters: Set<Number> {
     // staticly is way quicker
@@ -192,7 +220,7 @@ extension Number {
   }
 }
 
-extension Number {
+public extension Number {
   var order: Int {
     switch self {
     case .two:
@@ -201,12 +229,18 @@ extension Number {
       return 3
     case .four:
       return 4
-    case .five: return 5
-    case .six: return 6
-    case .seven: return 7
-    case .eight: return 8
-    case .nine: return 9
-    case .ten: return 10
+    case .five:
+      return 5
+    case .six:
+      return 6
+    case .seven:
+      return 7
+    case .eight:
+      return 8
+    case .nine:
+      return 9
+    case .ten:
+      return 10
     case .boer:
       return 11
     case .vrouw:
