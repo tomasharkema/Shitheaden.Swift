@@ -9,9 +9,10 @@ import Foundation
 import ShitheadenShared
 
 public struct GameSnaphot: Equatable, Codable {
-  public let deck: Deck
+  public let numberOfDeckCards: Int
   public let players: [ObscuredPlayerResult]
-  public let table: Table
-  public let burnt: [Card]
+  public let latestTableCards: [Card]
+  public let numberOfTableCards: Int
+  public let numberOfBurntCards: Int
   public let playerOnTurn: UUID
 }

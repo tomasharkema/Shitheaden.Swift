@@ -1,6 +1,6 @@
 //
 //  HTTPHandler.swift
-//  
+//
 //
 //  Created by Tomas Harkema on 18/06/2021.
 //

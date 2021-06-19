@@ -59,30 +59,34 @@ struct Shitheaden: ParsableCommand {
   #endif
 
   private func interactive() async {
-    let game = Game(players: [
-      Player(
-        name: "Zuid (JIJ)",
-        position: .zuid,
-        ai: UserInputAI()
-      ),
-      Player(
-        name: "West (Unfair)",
-        position: .west,
-        ai: CardRankingAlgoWithUnfairPassing()
-      ),
-      Player(
-        name: "Noord",
-        position: .noord,
-        ai: CardRankingAlgo()
-      ),
-      Player(
-        name: "Oost",
-        position: .oost,
-        ai: CardRankingAlgo()
-      ),
-    ], slowMode: true, render: { game, clear in
-      await print(Renderer.render(game: game, clear: clear))
-    })
+    let id = UUID()
+    let game = Game(
+      players: [
+        Player(
+          name: "West (Unfair)",
+          position: .west,
+          ai: CardRankingAlgoWithUnfairPassing()
+        ),
+        Player(
+          name: "Noord",
+          position: .noord,
+          ai: CardRankingAlgo()
+        ),
+        Player(
+          name: "Oost",
+          position: .oost,
+          ai: CardRankingAlgo()
+        ),
+        Player(
+          id: id,
+          name: "Zuid (JIJ)",
+          position: .zuid,
+          ai: UserInputAI(id: id)
+        ),
+      ], slowMode: true, localUserUUID: id, render: { game, clear in
+        await print(Renderer.render(game: game, clear: clear))
+      }
+    )
 
     await game.startGame()
   }
@@ -126,38 +130,41 @@ struct Shitheaden: ParsableCommand {
 
   private func echoService(client: TCPClient) async {
     print("Newclient from:\(client.address)[\(client.port)] \(Thread.isMainThread)")
-
-    let game = Game(players: [
-      Player(
-        name: "Zuid (JIJ)",
-        position: .zuid,
-        ai: UserInputAI {
-          print("READ!")
-          return await client.read()
-        } render: { string in
-          async {
-            client.send(string: string)
+    let userId = UUID()
+    let game = Game(
+      players: [
+        Player(
+          name: "West (Unfair)",
+          position: .west,
+          ai: CardRankingAlgoWithUnfairPassing()
+        ),
+        Player(
+          name: "Noord",
+          position: .noord,
+          ai: CardRankingAlgo()
+        ),
+        Player(
+          name: "Oost",
+          position: .oost,
+          ai: CardRankingAlgo()
+        ),
+        Player(
+          id: userId,
+          name: "Zuid (JIJ)",
+          position: .zuid,
+          ai: UserInputAI(id: userId) {
+            print("READ!")
+            return await client.read()
+          } render: { string in
+            //            async {
+            _ = client.send(string: string)
+            //            }
           }
-        }
-      ),
-      Player(
-        name: "West (Unfair)",
-        position: .west,
-        ai: CardRankingAlgoWithUnfairPassing()
-      ),
-      Player(
-        name: "Noord",
-        position: .noord,
-        ai: CardRankingAlgo()
-      ),
-      Player(
-        name: "Oost",
-        position: .oost,
-        ai: CardRankingAlgo()
-      ),
-    ], slowMode: true, render: { game, clear in
-      await client.send(string: Renderer.render(game: game, clear: clear))
-    })
+        ),
+      ], slowMode: true, localUserUUID: userId, render: { game, clear in
+        _ = await client.send(string: Renderer.render(game: game, clear: clear))
+      }
+    )
 
     await game.startGame()
   }

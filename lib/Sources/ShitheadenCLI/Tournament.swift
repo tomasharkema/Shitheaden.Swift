@@ -49,7 +49,7 @@
 
       var playerAndScores = [String: [String: Int]]()
 
-      for (game, players, winner, _) in winners {
+      for (_, players, _, _) in winners {
         for winner in players {
           var arr = [String: Int]()
           arr = playerAndScores[winner.ai.algoName] ?? [:]
@@ -100,7 +100,12 @@
                 ai: ai.init()
               )
             }
-            let game = Game(players: players, slowMode: false, render: { _, _ in })
+            let game = Game(
+              players: players,
+              slowMode: false,
+              localUserUUID: nil,
+              render: { _, _ in }
+            )
 
             print(" START: \(gameId) \(idx) / \(self.roundsPerGame)")
             await game.startGame()

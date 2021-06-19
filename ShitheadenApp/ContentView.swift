@@ -139,7 +139,7 @@ struct ContentView: View {
 
   @ViewBuilder
   func table(snapshot: GameSnaphot) -> some View {
-    let d = Array(snapshot.table.suffix(5).reversed())
+    let d = Array(snapshot.latestTableCards.reversed())
     stack(cards: d, offset: 15)
   }
 
@@ -194,11 +194,13 @@ struct ContentView: View {
           ScrollView(.horizontal) {
             HStack(spacing: -10) {
               ForEach(game.localCards) { c in
-                StatedButton(action: { selected in
-                  game.select(c, selected: selected, deleteNotSameNumber: game.moveHandler != nil)
-                }, label: {
-                  card(RenderCard(c))
-                }, isSelected: game.selectedCards.contains(c)).buttonStyle(PlainButtonStyle())
+                StatedButton(
+                  action: { selected in
+                    game.select(c, selected: selected, deleteNotSameNumber: game.moveHandler != nil)
+                  }, label: {
+                    card(RenderCard(c))
+                  }, isSelected: game.selectedCards.contains(c)
+                ).buttonStyle(PlainButtonStyle())
               }
             }.padding()
           }
@@ -266,12 +268,13 @@ struct ContentView: View {
         table(snapshot: snapshot) // .padding(20).background(Color.green).cornerRadius(10)
       )
       .overlay(
-        stack(count: snapshot.deck.cards.count, offset: 2, alignment: Alignment.topLeading)
+        stack(count: snapshot.numberOfDeckCards, offset: 2, alignment: Alignment.topLeading)
           .padding(),
         alignment: Alignment.topLeading
       )
       .overlay(
-        stack(count: snapshot.burnt.count, offset: 2, alignment: Alignment.topTrailing).padding(),
+        stack(count: snapshot.numberOfBurntCards, offset: 2, alignment: Alignment.topTrailing)
+          .padding(),
         alignment: Alignment.topTrailing
       )
       localPlayer()

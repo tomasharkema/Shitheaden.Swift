@@ -14,13 +14,14 @@ public struct Player: CustomStringConvertible, Equatable, Hashable {
   public internal(set) var openTableCards: [Card]
   public internal(set) var closedTableCards: [Card]
 
-  public let id = UUID()
+  public let id: UUID
   public let name: String
   public internal(set) var turns: [Turn]
   public let position: ShitheadenShared.Position
   public let ai: GameAi
 
-  public init(name: String, position: ShitheadenShared.Position, ai: GameAi) {
+  public init(id: UUID = UUID(), name: String, position: ShitheadenShared.Position, ai: GameAi) {
+    self.id = id
     handCards = []
     openTableCards = []
     closedTableCards = []

@@ -18,15 +18,17 @@ public actor Game {
   let render: (GameSnaphot, Bool) async -> Void
   let rules = Rules.all
   var slowMode = false
-
+  public let localUserUUID: UUID?
   var playerOnTurn: UUID?
 
   public init(
     players: [Player],
     slowMode: Bool,
+    localUserUUID: UUID?,
     render: @escaping (GameSnaphot, Bool) async -> Void
   ) {
     self.players = players
+    self.localUserUUID = localUserUUID
     self.render = render
     self.slowMode = slowMode
   }
@@ -48,35 +50,44 @@ public actor Game {
   }
 
   func getSnapshot() -> GameSnaphot {
-    return GameSnaphot(deck: deck, players: players.map {
-      if $0.ai.algoName.isUser {
-        return .player(TurnRequest(
-          id: $0.id, name: $0.name,
-          handCards: $0.handCards,
-          openTableCards: $0.openTableCards,
-          lastTableCard: table.lastCard,
-          numberOfClosedTableCards: $0.closedTableCards.count,
-          phase: $0.phase,
-          amountOfTableCards: table.count,
-          amountOfDeckCards: deck.cards.count,
-          algoName: $0.ai.algoName,
-          done: $0.done,
-          position: $0.position
-        ))
-      } else {
-        return .obscured(ObsucredTurnRequest(          id: $0.id, name: $0.name,
-                                                       numberOfHandCards: $0.handCards.count,
-                                                       openTableCards: $0.openTableCards,
-                                                       lastTableCard: table.lastCard,
-                                                       numberOfClosedTableCards: $0.closedTableCards.count,
-                                                       phase: $0.phase,
-                                                       amountOfTableCards: table.count,
-                                                       amountOfDeckCards: deck.cards.count,
-                                                       algoName: $0.ai.algoName,
-                                                       done: $0.done,
-                                                       position: $0.position))
-      }
-    }, table: table, burnt: burnt, playerOnTurn: playerOnTurn ?? UUID())
+    return GameSnaphot(
+      numberOfDeckCards: deck.cards.count,
+      players: players.map {
+        if $0.id == localUserUUID {
+          return .player(TurnRequest(
+            id: $0.id, name: $0.name,
+            handCards: $0.handCards,
+            openTableCards: $0.openTableCards,
+            lastTableCard: table.lastCard,
+            numberOfClosedTableCards: $0.closedTableCards.count,
+            phase: $0.phase,
+            amountOfTableCards: table.count,
+            amountOfDeckCards: deck.cards.count,
+            algoName: $0.ai.algoName,
+            done: $0.done,
+            position: $0.position
+          ))
+        } else {
+          return .obscured(ObsucredTurnRequest(
+            id: $0.id, name: $0.name,
+            numberOfHandCards: $0.handCards.count,
+            openTableCards: $0.openTableCards,
+            lastTableCard: table.lastCard,
+            numberOfClosedTableCards: $0.closedTableCards
+              .count,
+            phase: $0.phase,
+            amountOfTableCards: table.count,
+            amountOfDeckCards: deck.cards.count,
+            algoName: $0.ai.algoName,
+            done: $0.done,
+            position: $0.position
+          ))
+        }
+      },
+      latestTableCards: table.suffix(5), numberOfTableCards: table.count,
+      numberOfBurntCards: burnt.count,
+      playerOnTurn: playerOnTurn ?? UUID()
+    )
   }
 
   func shuffle() {
@@ -356,7 +367,7 @@ public actor Game {
 
   private func updatePlayer(player: Player) {
     guard let index = players.firstIndex(where: { player.id == $0.id }) else {
-      fatalError()
+      assertionFailure("User not found!")
       return
     }
 
@@ -373,8 +384,8 @@ public actor Game {
         numberCalled: 0,
         previousError: nil
       )
-      updatePlayer(player: newPlayer)
-      try! checkIntegrity()
+      await updatePlayer(player: newPlayer)
+      try! await checkIntegrity()
       await render(getSnapshot(), false)
     }
 //      }
@@ -384,8 +395,10 @@ public actor Game {
   func turn() async {
     for (index, player) in players.enumerated() {
       if !player.done {
-        players[index] = await commitTurn(playerIndex: index, player: player,
-                                          numberCalled: 0, previousError: nil)
+        players[index] = await commitTurn(
+          playerIndex: index, player: player,
+          numberCalled: 0, previousError: nil
+        )
         try! checkIntegrity()
         await render(getSnapshot(), true)
       }

@@ -13,10 +13,10 @@ class Keyboard {
   static func getKeyboardInput() async -> String {
     // let keyboard = FileHandle.standardInput
     let inputData = readLine()
-    print("READ: '\(inputData)'")
     guard let line = inputData else {
       return ""
     }
+    print("READ: '\(line)'")
     return line.trimmingCharacters(in: .newlines)
   }
 }

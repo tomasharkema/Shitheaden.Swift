@@ -12,16 +12,34 @@ import ShitheadenRuntime
 import ShitheadenShared
 
 actor UserInputAI: GameAi {
+  let id: UUID
   let reader: () async -> String
   let render: (String) async -> Void
+
   required init() {
+    id = UUID()
     reader = {
       await Keyboard.getKeyboardInput()
     }
     render = { print($0) }
   }
 
-  init(reader: @escaping (() async -> String), render: @escaping ((String) async -> Void)) {
+  init(
+    id: UUID
+  ) {
+    self.id = id
+    reader = {
+      await Keyboard.getKeyboardInput()
+    }
+    render = { print($0) }
+  }
+
+  init(
+    id: UUID,
+    reader: @escaping (() async -> String),
+    render: @escaping ((String) async -> Void)
+  ) {
+    self.id = id
     self.reader = reader
     self.render = render
   }
@@ -31,7 +49,8 @@ actor UserInputAI: GameAi {
       Int($0.trimmingCharacters(in: .whitespacesAndNewlines))
     }
     if inputs.contains(nil) {
-      await render(RenderPosition.input.down(n: 1).cliRep + "Je moet p of een aantal cijfers invullen...")
+      await render(RenderPosition.input.down(n: 1)
+        .cliRep + "Je moet p of een aantal cijfers invullen...")
       return nil
     }
 
@@ -93,13 +112,13 @@ actor UserInputAI: GameAi {
   func execute(request: TurnRequest) async throws -> Turn {
     switch request.phase {
     case .hand:
-      await render(RenderPosition.input.cliRep  +
+      await render(RenderPosition.input.cliRep +
         "Speel een kaart uit je hand")
     case .tableOpen:
-      await render(RenderPosition.input.cliRep  +
+      await render(RenderPosition.input.cliRep +
         "Speel een kaart van tafel")
     case .tableClosed:
-      await render(RenderPosition.input.cliRep  +
+      await render(RenderPosition.input.cliRep +
         "Speel een kaart van je dichte stapel")
     }
 
@@ -133,7 +152,7 @@ actor UserInputAI: GameAi {
     await render(ANSIEscapeCode.Cursor.showCursor + ANSIEscapeCode.Cursor.position(
       row: RenderPosition.input.y + 1,
       column: 0
-    ) )
+    ))
     let request = await reader().trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
     await render(ANSIEscapeCode.Cursor.hideCursor)
     return request
@@ -142,7 +161,7 @@ actor UserInputAI: GameAi {
   func beginMove(request: TurnRequest, previousError: PlayerError?) async -> (Card, Card, Card) {
     if let previousError = previousError {
       await render(RenderPosition.input
-        .down(n: -2).cliRep  + previousError.text)
+        .down(n: -2).cliRep + previousError.text)
     }
 
     do {

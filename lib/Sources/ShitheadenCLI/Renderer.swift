@@ -26,7 +26,7 @@ extension ObscuredPlayerResult {
 
 enum Renderer {
   static func render(game: GameSnaphot, clear: Bool) async -> String {
-    let playersString: [String] = await game.players.flatMap { player -> [String] in
+    let playersString: [String] = game.players.flatMap { player -> [String] in
       if !player.done {
         return [
           player.renderPosition >>> "\(player.name) \(player.numberOfHandCards) kaarten",
@@ -39,7 +39,7 @@ enum Renderer {
       }
     }
 
-    let userPlayer = await game.players.flatMap { $0.player }.first
+    let userPlayer = game.players.flatMap { $0.player }.first
     let handString = userPlayer?.handCards.sortNumbers().enumerated()
       .map { "\($0.offset + 1)\($0.element.description)" }.joined(separator: " ")
 
@@ -50,11 +50,11 @@ enum Renderer {
         CLI.setBackground(),
         clear ? CLI.clear() : "",
         RenderPosition.header.down(n: 1) >>> " Shitheaden",
-        await RenderPosition.header.down(n: 3) >>> " Deck: \(game.deck.cards.count) kaarten",
-        await RenderPosition.header.down(n: 4) >>> " Burnt: \(game.burnt.suffix(5)) kaarten",
-        await RenderPosition.tafel >>> game.table.suffix(5).map { $0.description }
+        RenderPosition.header.down(n: 3) >>> " Deck: \(game.numberOfDeckCards) kaarten",
+        RenderPosition.header.down(n: 4) >>> " Burnt: \(game.numberOfBurntCards) kaarten",
+        RenderPosition.tafel >>> game.latestTableCards.map { $0.description }
           .joined(separator: " "),
-        await RenderPosition.tafel.down(n: 1) >>> "\(game.table.count)",
+        RenderPosition.tafel.down(n: 1) >>> "\(game.numberOfTableCards)",
         hand,
       ],
       playersString,

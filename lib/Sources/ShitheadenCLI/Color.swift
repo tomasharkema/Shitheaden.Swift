@@ -47,9 +47,9 @@ extension ObscuredPlayerResult {
   var showedTable: String {
     let openTableCards: [Card]
     switch self {
-    case .player(let turnRequest):
+    case let .player(turnRequest):
       openTableCards = turnRequest.openTableCards
-    case .obscured(let obsucredTurnRequest):
+    case let .obscured(obsucredTurnRequest):
       openTableCards = obsucredTurnRequest.openTableCards
     }
     return openTableCards.map { $0.description }.joined(separator: " ")

@@ -1,6 +1,6 @@
 //
 //  WebSocketTimeHandler.swift
-//  
+//
 //
 //  Created by Tomas Harkema on 18/06/2021.
 //
@@ -18,7 +18,7 @@ final class WebSocketTimeHandler: ChannelInboundHandler {
 
   private var awaitingClose: Bool = false
 
-  private var handleData: ((String) -> ())?
+  private var handleData: ((String) -> Void)?
   private var game: Game?
   private var task: Task.Handle<Void, Never>?
 
@@ -71,24 +71,11 @@ final class WebSocketTimeHandler: ChannelInboundHandler {
         }
       }
     }
+
+    let id = UUID()
+
     task = async {
       let game = Game(players: [
-        Player(
-          name: "Zuid (JIJ)",
-          position: .zuid,
-          ai: UserInputAI {
-        print("READ!")
-        return await withUnsafeContinuation { g in
-          send("{\"action\":\"REQUEST_TURN\"}")
-          self.handleData = {
-            g.resume(returning: $0)
-            self.handleData = nil
-          }
-        }
-      } render: {
-        send("{\"error\":\"\($0)\"}")
-      }
-        ),
         Player(
           name: "West (Unfair)",
           position: .west,
@@ -104,7 +91,23 @@ final class WebSocketTimeHandler: ChannelInboundHandler {
           position: .oost,
           ai: CardRankingAlgo()
         ),
-      ], slowMode: true, render: { game, _ in
+        Player(
+          name: "Zuid (JIJ)",
+          position: .zuid,
+          ai: UserInputAI(id: id) {
+            print("READ!")
+            return await withUnsafeContinuation { g in
+              send("{\"action\":\"REQUEST_TURN\"}")
+              self.handleData = {
+                g.resume(returning: $0)
+                self.handleData = nil
+              }
+            }
+          } render: {
+            send("{\"error\":\"\($0)\"}")
+          }
+        ),
+      ], slowMode: true, localUserUUID: id, render: { game, _ in
 
         guard let data = try? JSONEncoder().encode(game),
               let string = String(data: data, encoding: .utf8)

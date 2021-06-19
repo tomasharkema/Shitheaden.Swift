@@ -83,7 +83,7 @@ class GameContainer: ObservableObject {
     guard appInput == nil, game == nil else {
       return
     }
-
+    let id = UUID()
     let appInput = AppInputUserInputAI(beginMoveHandler: { h in
       async { await MainActor.run {
         self.isOnSet = true
@@ -103,11 +103,6 @@ class GameContainer: ObservableObject {
     self.appInput = appInput
     let game = Game(players: [
       Player(
-        name: "Zuid (JIJ)",
-        position: .zuid,
-        ai: appInput
-      ),
-      Player(
         name: "West (Unfair)",
         position: .west,
         ai: CardRankingAlgoWithUnfairPassing()
@@ -122,8 +117,13 @@ class GameContainer: ObservableObject {
         position: .oost,
         ai: CardRankingAlgo()
       ),
-    ], slowMode: true, render: { game, _ in
-      guard let localPlayer = game.players.flatMap { $0.player }.first else {
+      Player(id: id,
+             name: "Zuid (JIJ)",
+             position: .zuid,
+             ai: appInput),
+    ], slowMode: true,
+    localUserUUID: id, render: { game, _ in
+      guard let localPlayer = game.players.compactMap({ $0.player }).first else {
         return
       }
       self.localPhase = localPlayer.phase
