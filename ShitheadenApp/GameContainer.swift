@@ -15,21 +15,31 @@ actor AppInputUserInputAI: GameAi {
   let beginMoveHandler: (@escaping ((Card, Card, Card)) async -> Void) async -> Void
   let moveHandler: (@escaping (Turn) async -> Void) async -> Void
   let errorHandler: (String) async -> Void
+  let renderHandler: (GameSnapshot) async -> Void
 
   required init() {
     beginMoveHandler = { _ in }
     moveHandler = { _ in }
     errorHandler = { _ in }
+    renderHandler = { _ in }
   }
 
   init(
     beginMoveHandler: @escaping (@escaping ((Card, Card, Card)) async -> Void) async -> Void,
     moveHandler: @escaping (@escaping (Turn) async -> Void) async -> Void,
-    errorHandler: @escaping (String) async -> Void
+    errorHandler: @escaping (String) async -> Void,
+    renderHandler:  @escaping (GameSnapshot) async -> Void
   ) {
     self.beginMoveHandler = beginMoveHandler
     self.moveHandler = moveHandler
     self.errorHandler = errorHandler
+    self.renderHandler = renderHandler
+  }
+
+
+  func render(snapshot: GameSnapshot, clear: Bool) async -> Void
+  {
+    await renderHandler(snapshot)
   }
 
   func beginMove(request _: TurnRequest, previousError: PlayerError?) async -> (Card, Card, Card) {
@@ -63,9 +73,9 @@ actor AppInputUserInputAI: GameAi {
 
 @MainActor
 class GameContainer: ObservableObject {
-  var appInput: AppInputUserInputAI?
-  var game: Game?
-  @Published var gameSnaphot: GameSnaphot?
+  private var appInput: AppInputUserInputAI?
+  private var game: Game?
+  @Published var gameSnapshot: GameSnapshot?
   @Published var error: String?
   @Published var selectedCards = Set<Card>()
   @Published var localCards = [Card]()
@@ -105,6 +115,22 @@ class GameContainer: ObservableObject {
         await MainActor.run {
           self.error = e
         }
+      }, renderHandler: { game in
+        guard let localPlayer = game.players.compactMap({ $0.player }).first else {
+          return
+        }
+        self.localPhase = localPlayer.phase
+        if !localPlayer.handCards.isEmpty {
+          self.localCards = localPlayer.handCards.sortNumbers()
+        } else if !localPlayer.openTableCards.isEmpty {
+          self.localCards = localPlayer.openTableCards.sortNumbers()
+        } else {
+          // closed cards!
+          self.localCountOfClosedCards = localPlayer.numberOfClosedTableCards
+          self.localCards = []
+        }
+
+        self.gameSnapshot = game
       }
     )
     self.appInput = appInput
@@ -128,24 +154,7 @@ class GameContainer: ObservableObject {
              name: "Zuid (JIJ)",
              position: .zuid,
              ai: appInput),
-    ], slowMode: true,
-    localUserUUID: id, render: { game, _ in
-      guard let localPlayer = game.players.compactMap({ $0.player }).first else {
-        return
-      }
-      self.localPhase = localPlayer.phase
-      if !localPlayer.handCards.isEmpty {
-        self.localCards = localPlayer.handCards.sortNumbers()
-      } else if !localPlayer.openTableCards.isEmpty {
-        self.localCards = localPlayer.openTableCards.sortNumbers()
-      } else {
-        // closed cards!
-        self.localCountOfClosedCards = localPlayer.numberOfClosedTableCards
-        self.localCards = []
-      }
-
-      self.gameSnaphot = game
-    })
+    ], slowMode: true)
     self.game = game
     await game.startGame()
     print("DONE!")

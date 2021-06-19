@@ -16,7 +16,8 @@ public struct GameSnapshot: Equatable, Codable {
   public let playerOnTurn: UUID
   public let winner: ObscuredPlayerResult?
 
-  public init(numberOfDeckCards: Int, players: [ObscuredPlayerResult], latestTableCards: [Card], numberOfTableCards: Int, numberOfBurntCards: Int, playerOnTurn: UUID, winner: ObscuredPlayerResult?) {
+  public init(
+    numberOfDeckCards: Int, players: [ObscuredPlayerResult], latestTableCards: [Card], numberOfTableCards: Int, numberOfBurntCards: Int, playerOnTurn: UUID, winner: ObscuredPlayerResult?) {
     self.numberOfDeckCards = numberOfDeckCards
     self.players = players
     self.latestTableCards = latestTableCards
@@ -25,5 +26,4 @@ public struct GameSnapshot: Equatable, Codable {
     self.playerOnTurn = playerOnTurn
     self.winner = winner
   }
-
 }

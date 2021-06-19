@@ -11,7 +11,7 @@ import Foundation
 import ShitheadenRuntime
 import ShitheadenShared
 
-actor UserInputAI: GameAi {
+actor _UserInputAI: GameAi {
   let id: UUID
   let reader: () async -> String
   let renderHandler: (String) async -> Void
@@ -44,8 +44,8 @@ actor UserInputAI: GameAi {
     self.renderHandler = renderHandler
   }
 
-  func render(snapshot: GameSnapshot, clear: Bool) async {
-    await self.renderHandler(Renderer.render(game: snapshot, clear: clear))
+  func render(snapshot: GameSnapshot, error: PlayerError?) async -> Void {
+    await self.renderHandler(Renderer.render(game: snapshot, error: error))
   }
 
   private func parseInput(input: String) async -> [Int]? {
@@ -143,12 +143,12 @@ actor UserInputAI: GameAi {
     do {
       return try await execute(request: request)
     } catch {
-      return await move(request: request, previousError: previousError)
+      return await move(request: request, previousError: error as? PlayerError ?? previousError)
     }
 //    if let res = await execute(request: request) {
 //      return try await execute(request: request)
 //    } else {
-//      return await move(request: request, previousError: previousError)
+//      return await move(request: request)
 //    }
   }
 
@@ -162,7 +162,7 @@ actor UserInputAI: GameAi {
     return request
   }
 
-  func beginMove(request: TurnRequest, previousError: PlayerError?) async -> (Card, Card, Card) {
+  func beginMove(request: TurnRequest, previousError: PlayerError?) async throws -> (Card, Card, Card) {
     if let previousError = previousError {
       await renderHandler(RenderPosition.input
         .down(n: -2).cliRep + previousError.text)
@@ -187,7 +187,7 @@ actor UserInputAI: GameAi {
       return (cards[0], cards[1], cards[2])
 
     } catch {
-      return await beginMove(
+      return try  await beginMove(
         request: request,
         previousError: error as? PlayerError ?? previousError
       )
