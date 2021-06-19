@@ -50,7 +50,7 @@ struct Shitheaden: ParsableCommand {
       return await withUnsafeContinuation { d in
         DispatchQueue.global().async {
           async {
-            await Tournament(roundsPerGame: 10, parallelization: parallelization).playTournament()
+            await Tournament(roundsPerGame: 100, parallelization: parallelization).playTournament()
             d.resume()
           }
         }

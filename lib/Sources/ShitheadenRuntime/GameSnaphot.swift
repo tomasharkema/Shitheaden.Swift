@@ -15,4 +15,5 @@ public struct GameSnaphot: Equatable, Codable {
   public let numberOfTableCards: Int
   public let numberOfBurntCards: Int
   public let playerOnTurn: UUID
+  public let winner: ObscuredPlayerResult?
 }

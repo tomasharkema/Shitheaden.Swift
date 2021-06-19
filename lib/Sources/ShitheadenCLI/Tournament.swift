@@ -14,54 +14,6 @@
   import ShitheadenRuntime
   import ShitheadenShared
 
-  struct PlayedGame {
-    let games: [Game]
-
-    func winnigs() async -> [String: Int] {
-      var playerAndScores = [String: Int]()
-      let winners: [(Game, Player)] = await withTaskGroup(of: [(Game, Player)].self) { group in
-        for game in games {
-          group.async(priority: .background) {
-            await [(game, game.winner!)]
-          }
-        }
-        return await group.reduce([], +)
-      }
-
-      for winner in winners {
-        playerAndScores[String(describing: type(of: winner.1.ai))] =
-          (playerAndScores[String(describing: type(of: winner.1.ai))] ?? 0) + 1
-      }
-
-      return playerAndScores
-    }
-
-    func winningsFrom() async -> [String: [String: Int]] {
-      let winners: [(Game, [Player], Player, GameAi)] =
-        await withTaskGroup(of: [(Game, [Player], Player, GameAi)].self) { group in
-          for game in games {
-            group.async(priority: .background) {
-              await [(game, game.players, game.winner!, game.winner!.ai)]
-            }
-          }
-          return await group.reduce([], +)
-        }
-
-      var playerAndScores = [String: [String: Int]]()
-
-      for (_, players, _, _) in winners {
-        for winner in players {
-          var arr = [String: Int]()
-          arr = playerAndScores[winner.ai.algoName] ?? [:]
-          arr[winner.ai.algoName] = (arr[winner.ai.algoName] ?? 0) + 1
-          playerAndScores[winner.ai.algoName] = arr
-        }
-      }
-
-      return playerAndScores
-    }
-  }
-
   class Tournament {
     let roundsPerGame: Int
     let parallelization: Int
@@ -80,9 +32,7 @@
     }
 
     func peformanceOfAI(ai: [(GameAi.Type, String)], gameId: String = "0") async -> PlayedGame {
-//    var playedGames = [Game]()
-
-      let playedGames: [Game] = await withTaskGroup(of: [Game].self) { g in
+      let playedGames: [GameSnaphot] = await withTaskGroup(of: [GameSnaphot].self) { g in
         for idx in 1 ... roundsPerGame {
           let unlock = await roundEaser.wait()
           if Task.isCancelled {
@@ -108,12 +58,12 @@
             )
 
             print(" START: \(gameId) \(idx) / \(self.roundsPerGame)")
-            await game.startGame()
+            let snapshot = await game.startGame()
             print(
-              " END: \(gameId) \(idx) / \(self.roundsPerGame) winner: \(await game.winner?.ai.algoName ?? "")"
+              " END: \(gameId) \(idx) / \(self.roundsPerGame) winner: \(snapshot.winner?.algoName ?? "")"
             )
             await unlock()
-            return [game]
+            return await [game.getSnapshot()]
           }
         }
         return await g.reduce([], +)

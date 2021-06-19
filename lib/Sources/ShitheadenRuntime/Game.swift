@@ -45,48 +45,53 @@ public final actor Game {
     notDonePlayers.count == 1
   }
 
-  public var winner: Player? {
+  var winner: Player? {
     done ? players.max { $0.turns.count < $1.turns.count } : nil
   }
 
-  func getSnapshot() -> GameSnaphot {
+  private func getPlayerSnapshot(_ obscure: Bool, player: Player) -> ObscuredPlayerResult {
+    if obscure {
+      return .obscured(ObsucredTurnRequest(
+        id: player.id, name: player.name,
+        numberOfHandCards: player.handCards.count,
+        openTableCards: player.openTableCards,
+        lastTableCard: table.lastCard,
+        numberOfClosedTableCards: player.closedTableCards
+          .count,
+        phase: player.phase,
+        amountOfTableCards: table.count,
+        amountOfDeckCards: deck.cards.count,
+        algoName: player.ai.algoName,
+        done: player.done,
+        position: player.position
+      ))
+    } else {
+      return .player(TurnRequest(
+        id: player.id, name: player.name,
+        handCards: player.handCards,
+        openTableCards: player.openTableCards,
+        lastTableCard: table.lastCard,
+        numberOfClosedTableCards: player.closedTableCards.count,
+        phase: player.phase,
+        amountOfTableCards: table.count,
+        amountOfDeckCards: deck.cards.count,
+        algoName: player.ai.algoName,
+        done: player.done,
+        position: player.position
+      ))
+    }
+  }
+
+  public func getSnapshot() -> GameSnaphot {
     return GameSnaphot(
       numberOfDeckCards: deck.cards.count,
       players: players.map {
-        if $0.id == localUserUUID {
-          return .player(TurnRequest(
-            id: $0.id, name: $0.name,
-            handCards: $0.handCards,
-            openTableCards: $0.openTableCards,
-            lastTableCard: table.lastCard,
-            numberOfClosedTableCards: $0.closedTableCards.count,
-            phase: $0.phase,
-            amountOfTableCards: table.count,
-            amountOfDeckCards: deck.cards.count,
-            algoName: $0.ai.algoName,
-            done: $0.done,
-            position: $0.position
-          ))
-        } else {
-          return .obscured(ObsucredTurnRequest(
-            id: $0.id, name: $0.name,
-            numberOfHandCards: $0.handCards.count,
-            openTableCards: $0.openTableCards,
-            lastTableCard: table.lastCard,
-            numberOfClosedTableCards: $0.closedTableCards
-              .count,
-            phase: $0.phase,
-            amountOfTableCards: table.count,
-            amountOfDeckCards: deck.cards.count,
-            algoName: $0.ai.algoName,
-            done: $0.done,
-            position: $0.position
-          ))
-        }
+        getPlayerSnapshot($0.id != localUserUUID, player: $0)
       },
       latestTableCards: table.suffix(5), numberOfTableCards: table.count,
       numberOfBurntCards: burnt.count,
-      playerOnTurn: playerOnTurn ?? UUID()
+      playerOnTurn: playerOnTurn ?? UUID(),
+      winner: winner.map { getPlayerSnapshot(false, player: $0) }
     )
   }
 
@@ -385,15 +390,15 @@ public final actor Game {
         numberCalled: 0,
         previousError: nil
       )
-      await updatePlayer(player: newPlayer)
-      try! await checkIntegrity()
+      updatePlayer(player: newPlayer)
+      try! checkIntegrity()
       await render(getSnapshot(), false)
     }
 //      }
 //    }
   }
 
-  func turn() async {
+  func turn(n: Int = 0) async {
     for (index, player) in players.enumerated() {
       if !player.done {
         players[index] = await commitTurn(
@@ -404,8 +409,13 @@ public final actor Game {
         await render(getSnapshot(), true)
       }
     }
+    if n > 1000 {
+      print("ERROR! GAME REACHED MAXIMUM OF 1000 TURNS! \(getSnapshot())")
+      return
+    }
+
     if !done {
-      return await turn()
+      return await turn(n: n + 1)
     }
   }
 
@@ -443,7 +453,7 @@ public final actor Game {
     }
   }
 
-  public func startGame() async {
+  public func startGame() async -> GameSnaphot {
     resetBeurten()
 
     await render(getSnapshot(), true)
@@ -456,6 +466,8 @@ public final actor Game {
     sortPlayerLowestCard()
 
     await turn()
+
+    return getSnapshot()
   }
 
   func checkIntegrity() throws {

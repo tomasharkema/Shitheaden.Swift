@@ -58,12 +58,19 @@ final class WebSocketTimeHandler: ChannelInboundHandler {
     // We can't send if we sent a close message.
     guard !awaitingClose else { return }
 
-    let send = { (string: String) in
+    let send = { (event: Event) in
       context.eventLoop.execute {
         // We can't really check for error here, but it's also not the purpose of the
         // example so let's not worry about it.
+
+        guard let data = try? JSONEncoder().encode(event),
+              let string = String(data: data, encoding: .utf8)
+        else {
+          return
+        }
+
         var buffer = context.channel.allocator.buffer(capacity: string.count)
-        buffer.writeString("\(string)")
+        buffer.writeString(string)
 
         let frame = WebSocketFrame(fin: true, opcode: .text, data: buffer)
         context.writeAndFlush(self.wrapOutboundOut(frame)).whenFailure { (_: Error) in
@@ -97,25 +104,18 @@ final class WebSocketTimeHandler: ChannelInboundHandler {
           ai: UserInputAI(id: id) {
             print("READ!")
             return await withUnsafeContinuation { g in
-              send("{\"action\":\"REQUEST_TURN\"}")
+              send(.action(.requestTurn))
               self.handleData = {
                 g.resume(returning: $0)
                 self.handleData = nil
               }
             }
           } render: {
-            send("{\"error\":\"\($0)\"}")
+            send(.error(.text($0)))
           }
         ),
       ], slowMode: true, localUserUUID: id, render: { game, _ in
-
-        guard let data = try? JSONEncoder().encode(game),
-              let string = String(data: data, encoding: .utf8)
-        else {
-          return
-        }
-
-        send(string)
+        send(.render(game))
       })
       self.game = game
       await game.startGame()

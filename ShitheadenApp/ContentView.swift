@@ -315,7 +315,7 @@ struct ContentView_Previews: PreviewProvider {
   }
 }
 
-extension Player: Identifiable {}
+//extension Player: Identifiable {}
 
 extension Card: Identifiable {
   public var id: Int {
