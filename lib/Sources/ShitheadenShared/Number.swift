@@ -6,6 +6,8 @@
 //  Copyright © 2015 Tomas Harkema. All rights reserved.
 //
 
+import Foundation
+
 public enum Number: CaseIterable, Equatable, Hashable, Codable {
   case aas
   case gold
@@ -24,6 +26,23 @@ public enum Number: CaseIterable, Equatable, Hashable, Codable {
 
   static let specials: [Self] = [.ten, .three, .two]
   static let nonSpecials: [Self] = Number.allCases.filter { !specials.contains($0) }
+
+  public init(from decoder: Decoder) throws {
+    let d = try decoder.singleValueContainer()
+    let s = try d.decode(String.self)
+    
+    guard let n = Number.allCases.first(where: {
+      $0.string == s
+    }) else {
+      throw NSError(domain: "", code: 0, userInfo: nil)
+    }
+    self = n
+  }
+
+  public func encode(to encoder: Encoder) throws {
+    var e = encoder.singleValueContainer()
+    try e.encode(string)
+  }
 
   public var string: String {
     switch self {
