@@ -29,9 +29,12 @@ private let websocketResponse = """
     <div id="websocket-stream"></div>
     <script>
         var wsconnection = new WebSocket(location.href.replace("http", "ws") + "/websocket");
-        wsconnection.onmessage = function (msg) {
+const reader = new FileReader();
+        wsconnection.onmessage = async function (msg) {
             var element = document.createElement("p");
-            element.innerHTML = "<code>" + msg.data + "</code>";
+            const string = await msg.data.text();
+            console.log(string);
+            element.innerHTML = "<code>" + string + "</code>";
             var textDiv = document.getElementById("websocket-stream");
             textDiv.insertBefore(element, null);
         };

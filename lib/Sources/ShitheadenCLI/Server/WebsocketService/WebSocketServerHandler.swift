@@ -45,6 +45,7 @@ final class WebSocketServerHandler: ChannelInboundHandler {
     let frame = unwrapInboundIn(data)
 
     print(frame)
+    print(frame.opcode)
 
     switch frame.opcode {
     case .connectionClose:
@@ -62,7 +63,18 @@ final class WebSocketServerHandler: ChannelInboundHandler {
       handlers[context.name]?._onWrite(sr)
 
 //      handleData?(sr)
-    case .text, .continuation, .pong:
+    case .text:
+
+      var data = frame.unmaskedData
+      let d = data.readString(length: data.readableBytes)!
+      print(d)
+      let sr = try! JSONDecoder().decode(ServerRequest.self, from: d.data(using: .utf8)!)
+      print(sr)
+
+      handlers[context.name]?._onWrite(sr)
+
+
+    case .continuation, .pong:
       // We ignore these frames.
       break
     default:
@@ -202,6 +214,7 @@ class WebsocketClient: Client {
 
   func start() async {
     await send(.requestMultiplayerChoice)
+    
     let choice: ServerRequest? = await read()
     switch choice {
     case let .joinMultiplayer(code):
@@ -211,6 +224,9 @@ class WebsocketClient: Client {
 
     case .multiplayerRequest:
       return await start()
+
+    case .singlePlayer:
+      return await startSinglePlayer()
 
     case .quit:
       for onQuit in onQuit {
@@ -235,6 +251,44 @@ class WebsocketClient: Client {
       await send(.error(error: .gameNotFound(code: code)))
       return await start()
     }
+  }
+
+  private func startSinglePlayer() async {
+    let id = UUID()
+    let game = Game(
+      players: [
+        Player(
+          name: "West (Unfair)",
+          position: .west,
+          ai: CardRankingAlgoWithUnfairPassing()
+        ),
+        Player(
+          name: "Noord",
+          position: .noord,
+          ai: CardRankingAlgo()
+        ),
+        Player(
+          name: "Oost",
+          position: .oost,
+          ai: CardRankingAlgo()
+        ),
+        Player(
+          id: id,
+          name: "Zuid (JIJ)",
+          position: .zuid,
+          ai: UserInputAIJson(id: id, reader: { request in
+      return try await self.read().getMultiplayerRequest()
+          }, renderHandler: {
+            await self.send(.multiplayerEvent(multiplayerEvent: .gameSnapshot(snapshot: $0)))
+            if let error = $1 {
+              await self.send(.multiplayerEvent(multiplayerEvent: .error(error: error)))
+            }
+          })
+        ),
+      ], slowMode: true
+    )
+
+    await game.startGame()
   }
 
   private func startMultiplayer() async {

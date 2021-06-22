@@ -55,6 +55,7 @@ public enum ServerRequest: Equatable, Codable {
   case multiplayerRequest(MultiplayerRequest)
   case startGame
   case quit
+  case singlePlayer
 
   public func getMultiplayerRequest() throws -> MultiplayerRequest {
     switch self {
