@@ -7,6 +7,18 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		C303CC492680B23E00201FEF /* GameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C303CC482680B23E00201FEF /* GameView.swift */; };
+		C303CC4C2680B27E00201FEF /* StatedButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = C303CC4B2680B27E00201FEF /* StatedButton.swift */; };
+		C303CC4E2680B33500201FEF /* AppInputUserInputAI.swift in Sources */ = {isa = PBXBuildFile; fileRef = C303CC4D2680B33500201FEF /* AppInputUserInputAI.swift */; };
+		C303CC522680B4AB00201FEF /* PlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C303CC512680B4AB00201FEF /* PlayerView.swift */; };
+		C303CC542680B64200201FEF /* CardStackView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C303CC532680B64200201FEF /* CardStackView.swift */; };
+		C303CC582680B73D00201FEF /* CardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C303CC572680B73D00201FEF /* CardView.swift */; };
+		C303CC5A2680B7E900201FEF /* TableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C303CC592680B7E900201FEF /* TableView.swift */; };
+		C303CC5C2680B9F400201FEF /* LocalPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C303CC5B2680B9F400201FEF /* LocalPlayerView.swift */; };
+		C303CC5E2680BEC400201FEF /* CardWaverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C303CC5D2680BEC400201FEF /* CardWaverView.swift */; };
+		C303CC602680C23600201FEF /* OrientationStack.swift in Sources */ = {isa = PBXBuildFile; fileRef = C303CC5F2680C23600201FEF /* OrientationStack.swift */; };
+		C303CC622680CE3E00201FEF /* MenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C303CC612680CE3E00201FEF /* MenuView.swift */; };
+		C303CC642680D6C100201FEF /* ConnectingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C303CC632680D6C100201FEF /* ConnectingView.swift */; };
 		C314E6B3267CF97500A50A98 /* ShitheadenRuntime in Frameworks */ = {isa = PBXBuildFile; productRef = C314E6B2267CF97500A50A98 /* ShitheadenRuntime */; };
 		C33A6C0D267CA87400FCF8C5 /* GameContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C33A6C0C267CA87400FCF8C5 /* GameContainer.swift */; };
 		C33A6C17267CD04800FCF8C5 /* CustomAlgo in Frameworks */ = {isa = PBXBuildFile; productRef = C33A6C16267CD04800FCF8C5 /* CustomAlgo */; };
@@ -14,9 +26,22 @@
 		C3812A58267C816400397E65 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3812A57267C816400397E65 /* ContentView.swift */; };
 		C3812A5A267C816500397E65 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C3812A59267C816500397E65 /* Assets.xcassets */; };
 		C3812A5D267C816500397E65 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C3812A5C267C816500397E65 /* Preview Assets.xcassets */; };
+		C39A09572682159C00F011BB /* AlertView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C39A09562682159C00F011BB /* AlertView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		C303CC482680B23E00201FEF /* GameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameView.swift; sourceTree = "<group>"; };
+		C303CC4B2680B27E00201FEF /* StatedButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatedButton.swift; sourceTree = "<group>"; };
+		C303CC4D2680B33500201FEF /* AppInputUserInputAI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppInputUserInputAI.swift; sourceTree = "<group>"; };
+		C303CC512680B4AB00201FEF /* PlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerView.swift; sourceTree = "<group>"; };
+		C303CC532680B64200201FEF /* CardStackView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardStackView.swift; sourceTree = "<group>"; };
+		C303CC572680B73D00201FEF /* CardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardView.swift; sourceTree = "<group>"; };
+		C303CC592680B7E900201FEF /* TableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TableView.swift; sourceTree = "<group>"; };
+		C303CC5B2680B9F400201FEF /* LocalPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalPlayerView.swift; sourceTree = "<group>"; };
+		C303CC5D2680BEC400201FEF /* CardWaverView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardWaverView.swift; sourceTree = "<group>"; };
+		C303CC5F2680C23600201FEF /* OrientationStack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrientationStack.swift; sourceTree = "<group>"; };
+		C303CC612680CE3E00201FEF /* MenuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuView.swift; sourceTree = "<group>"; };
+		C303CC632680D6C100201FEF /* ConnectingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectingView.swift; sourceTree = "<group>"; };
 		C33A6C0C267CA87400FCF8C5 /* GameContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameContainer.swift; sourceTree = "<group>"; };
 		C3812A52267C816400397E65 /* ShitheadenApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ShitheadenApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C3812A55267C816400397E65 /* ShitheadenAppApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShitheadenAppApp.swift; sourceTree = "<group>"; };
@@ -24,6 +49,7 @@
 		C3812A59267C816500397E65 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		C3812A5C267C816500397E65 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		C398B203267CA35D00AAD375 /* lib */ = {isa = PBXFileReference; lastKnownFileType = folder; path = lib; sourceTree = "<group>"; };
+		C39A09562682159C00F011BB /* AlertView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertView.swift; sourceTree = "<group>"; };
 		C3FFA11C267CA6C3007972BA /* ShitheadenApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ShitheadenApp.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -40,6 +66,50 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		C303CC472680B22D00201FEF /* Game */ = {
+			isa = PBXGroup;
+			children = (
+				C303CC502680B41400201FEF /* State */,
+				C303CC4F2680B40C00201FEF /* View */,
+				C303CC4B2680B27E00201FEF /* StatedButton.swift */,
+			);
+			path = Game;
+			sourceTree = "<group>";
+		};
+		C303CC4A2680B27700201FEF /* Menu */ = {
+			isa = PBXGroup;
+			children = (
+				C303CC612680CE3E00201FEF /* MenuView.swift */,
+				C303CC632680D6C100201FEF /* ConnectingView.swift */,
+				C39A09562682159C00F011BB /* AlertView.swift */,
+			);
+			path = Menu;
+			sourceTree = "<group>";
+		};
+		C303CC4F2680B40C00201FEF /* View */ = {
+			isa = PBXGroup;
+			children = (
+				C303CC482680B23E00201FEF /* GameView.swift */,
+				C303CC512680B4AB00201FEF /* PlayerView.swift */,
+				C303CC532680B64200201FEF /* CardStackView.swift */,
+				C303CC572680B73D00201FEF /* CardView.swift */,
+				C303CC592680B7E900201FEF /* TableView.swift */,
+				C303CC5B2680B9F400201FEF /* LocalPlayerView.swift */,
+				C303CC5D2680BEC400201FEF /* CardWaverView.swift */,
+				C303CC5F2680C23600201FEF /* OrientationStack.swift */,
+			);
+			path = View;
+			sourceTree = "<group>";
+		};
+		C303CC502680B41400201FEF /* State */ = {
+			isa = PBXGroup;
+			children = (
+				C303CC4D2680B33500201FEF /* AppInputUserInputAI.swift */,
+				C33A6C0C267CA87400FCF8C5 /* GameContainer.swift */,
+			);
+			path = State;
+			sourceTree = "<group>";
+		};
 		C3812A49267C816400397E65 = {
 			isa = PBXGroup;
 			children = (
@@ -61,12 +131,13 @@
 		C3812A54267C816400397E65 /* ShitheadenApp */ = {
 			isa = PBXGroup;
 			children = (
+				C303CC4A2680B27700201FEF /* Menu */,
+				C303CC472680B22D00201FEF /* Game */,
 				C3FFA11C267CA6C3007972BA /* ShitheadenApp.entitlements */,
 				C3812A55267C816400397E65 /* ShitheadenAppApp.swift */,
 				C3812A57267C816400397E65 /* ContentView.swift */,
 				C3812A59267C816500397E65 /* Assets.xcassets */,
 				C3812A5B267C816500397E65 /* Preview Content */,
-				C33A6C0C267CA87400FCF8C5 /* GameContainer.swift */,
 			);
 			path = ShitheadenApp;
 			sourceTree = "<group>";
@@ -168,8 +239,21 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C303CC4E2680B33500201FEF /* AppInputUserInputAI.swift in Sources */,
+				C303CC542680B64200201FEF /* CardStackView.swift in Sources */,
+				C303CC642680D6C100201FEF /* ConnectingView.swift in Sources */,
 				C33A6C0D267CA87400FCF8C5 /* GameContainer.swift in Sources */,
+				C303CC5C2680B9F400201FEF /* LocalPlayerView.swift in Sources */,
+				C303CC522680B4AB00201FEF /* PlayerView.swift in Sources */,
+				C303CC582680B73D00201FEF /* CardView.swift in Sources */,
 				C3812A58267C816400397E65 /* ContentView.swift in Sources */,
+				C303CC492680B23E00201FEF /* GameView.swift in Sources */,
+				C303CC4C2680B27E00201FEF /* StatedButton.swift in Sources */,
+				C303CC622680CE3E00201FEF /* MenuView.swift in Sources */,
+				C303CC5E2680BEC400201FEF /* CardWaverView.swift in Sources */,
+				C303CC602680C23600201FEF /* OrientationStack.swift in Sources */,
+				C39A09572682159C00F011BB /* AlertView.swift in Sources */,
+				C303CC5A2680B7E900201FEF /* TableView.swift in Sources */,
 				C3812A56267C816400397E65 /* ShitheadenAppApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

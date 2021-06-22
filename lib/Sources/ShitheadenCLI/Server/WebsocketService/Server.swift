@@ -13,6 +13,12 @@ import NIOWebSocket
 import ShitheadenRuntime
 
 actor Server {
+  let games: AtomicDictonary<String, MultiplayerHandler>
+
+  init(games: AtomicDictonary<String, MultiplayerHandler>) {
+    self.games = games
+  }
+
   func server() throws {
     let group = MultiThreadedEventLoopGroup(numberOfThreads: 1)
 
@@ -21,7 +27,7 @@ actor Server {
         channel.eventLoop.makeSucceededFuture(HTTPHeaders())
       },
       upgradePipelineHandler: { (channel: Channel, _: HTTPRequestHead) in
-        channel.pipeline.addHandler(WebSocketTimeHandler())
+        channel.pipeline.addHandler(WebSocketServerHandler(games: self.games))
       }
     )
 

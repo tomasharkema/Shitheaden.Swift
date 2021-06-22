@@ -6,6 +6,7 @@
 //  Copyright © 2015 Tomas Harkema. All rights reserved.
 //
 
+import Foundation
 import ShitheadenShared
 
 public struct Deck: Equatable, Codable {
@@ -24,7 +25,7 @@ public struct Deck: Equatable, Codable {
     var cards = [Card]()
     for symbol in Symbol.allCases {
       for number in Number.allCases {
-        cards.append(Card(symbol: symbol, number: number))
+        cards.append(Card(id: UUID(), symbol: symbol, number: number))
       }
     }
     cards.shuffle()

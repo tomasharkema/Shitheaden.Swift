@@ -8,9 +8,9 @@
 
 public enum Number: CaseIterable, Equatable, Hashable, Codable {
   case aas
-  case heer
-  case vrouw
-  case boer
+  case gold
+  case silver
+  case bronze
   case nine
   case eight
   case seven
@@ -29,11 +29,11 @@ public enum Number: CaseIterable, Equatable, Hashable, Codable {
     switch self {
     case .aas:
       return "A"
-    case .heer:
-      return "H"
-    case .vrouw:
-      return "V"
-    case .boer:
+    case .gold:
+      return "G"
+    case .silver:
+      return "S"
+    case .bronze:
       return "B"
     case .ten:
       return "10"
@@ -68,9 +68,9 @@ extension Number {
     .eight,
     .nine,
     .ten,
-    .boer,
-    .vrouw,
-    .heer,
+    .bronze,
+    .silver,
+    .gold,
     .aas
   )
   private static let ThreeAfter: Set<Number> = Set(
@@ -83,9 +83,9 @@ extension Number {
     .eight,
     .nine,
     .ten,
-    .boer,
-    .vrouw,
-    .heer,
+    .bronze,
+    .silver,
+    .gold,
     .aas
   )
   private static let FourAfter: Set<Number> = Set(
@@ -98,9 +98,9 @@ extension Number {
     .eight,
     .nine,
     .ten,
-    .boer,
-    .vrouw,
-    .heer,
+    .bronze,
+    .silver,
+    .gold,
     .aas
   )
   private static let FiveAfter: Set<Number> = Set(
@@ -112,9 +112,9 @@ extension Number {
     .eight,
     .nine,
     .ten,
-    .boer,
-    .vrouw,
-    .heer,
+    .bronze,
+    .silver,
+    .gold,
     .aas
   )
   private static let SixAfter: Set<Number> = Set(
@@ -125,9 +125,9 @@ extension Number {
     .eight,
     .nine,
     .ten,
-    .boer,
-    .vrouw,
-    .heer,
+    .bronze,
+    .silver,
+    .gold,
     .aas
   )
   private static let SevenAfter: Set<Number> = Set(
@@ -136,11 +136,11 @@ extension Number {
   )
   private static let EightAfter: Set<Number> = Set(
     arrayLiteral: .two, .three, .eight, .nine, .ten,
-    .boer, .vrouw, .heer, .aas
+    .bronze, .silver, .gold, .aas
   )
   private static let NineAfter: Set<Number> = Set(
-    arrayLiteral: .two, .three, .nine, .ten, .boer,
-    .vrouw, .heer, .aas
+    arrayLiteral: .two, .three, .nine, .ten, .bronze,
+    .silver, .gold, .aas
   )
   private static let TenAfter: Set<Number> = Set(
     arrayLiteral: .two,
@@ -152,21 +152,21 @@ extension Number {
     .eight,
     .nine,
     .ten,
-    .boer,
-    .vrouw,
-    .heer,
+    .bronze,
+    .silver,
+    .gold,
     .aas
   )
-  private static let BoerAfter: Set<Number> = Set(
-    arrayLiteral: .two, .three, .ten, .boer, .vrouw,
-    .heer, .aas
+  private static let bronzeAfter: Set<Number> = Set(
+    arrayLiteral: .two, .three, .ten, .bronze, .silver,
+    .gold, .aas
   )
-  private static let VrouwAfter: Set<Number> = Set(
-    arrayLiteral: .two, .three, .ten, .vrouw, .heer,
+  private static let silverAfter: Set<Number> = Set(
+    arrayLiteral: .two, .three, .ten, .silver, .gold,
     .aas
   )
-  private static let HeerAfter: Set<Number> = Set(
-    arrayLiteral: .two, .three, .ten, .heer, .aas
+  private static let goldAfter: Set<Number> = Set(
+    arrayLiteral: .two, .three, .ten, .gold, .aas
   )
   private static let AasAfter: Set<Number> = Set(
     arrayLiteral: .two, .three, .ten, .aas
@@ -193,12 +193,12 @@ extension Number {
       return Number.NineAfter
     case .ten:
       return Number.TenAfter
-    case .boer:
-      return Number.BoerAfter
-    case .vrouw:
-      return Number.VrouwAfter
-    case .heer:
-      return Number.HeerAfter
+    case .bronze:
+      return Number.bronzeAfter
+    case .silver:
+      return Number.silverAfter
+    case .gold:
+      return Number.goldAfter
     case .aas:
       return Number.AasAfter
     }
@@ -241,11 +241,11 @@ public extension Number {
       return 9
     case .ten:
       return 10
-    case .boer:
+    case .bronze:
       return 11
-    case .vrouw:
+    case .silver:
       return 12
-    case .heer:
+    case .gold:
       return 13
     case .aas:
       return 14

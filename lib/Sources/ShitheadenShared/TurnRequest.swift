@@ -10,81 +10,44 @@ import Foundation
 public struct TurnRequest: Equatable, Codable {
   public let id: UUID
   public let name: String
-  public let handCards: [Card]
-  public let openTableCards: [Card]
+  public let handCards: [RenderCard]
+  public let openTableCards: [RenderCard]
   public let lastTableCard: Card?
-  public let numberOfClosedTableCards: Int
+  public let closedCards: [RenderCard]
   public let phase: Phase
-  public let amountOfTableCards: Int
-  public let amountOfDeckCards: Int
+  public let tableCards: [RenderCard]
+  public let deckCards: [RenderCard]
   public let algoName: String
   public let done: Bool
   public let position: Position
+  public let isObscured: Bool
 
   public init(
     id: UUID, name: String,
-    handCards: [Card],
-    openTableCards: [Card],
+    handCards: [RenderCard],
+    openTableCards: [RenderCard],
     lastTableCard: Card?,
-    numberOfClosedTableCards: Int,
+    closedCards: [RenderCard],
     phase: Phase,
-    amountOfTableCards: Int,
-    amountOfDeckCards: Int,
+    tableCards: [RenderCard],
+    deckCards: [RenderCard],
     algoName: String,
-    done: Bool, position: Position
+    done: Bool,
+    position: Position,
+    isObscured: Bool
   ) {
     self.id = id
     self.name = name
     self.handCards = handCards
     self.openTableCards = openTableCards
     self.lastTableCard = lastTableCard
-    self.numberOfClosedTableCards = numberOfClosedTableCards
+    self.closedCards = closedCards
     self.phase = phase
-    self.amountOfTableCards = amountOfTableCards
-    self.amountOfDeckCards = amountOfDeckCards
+    self.tableCards = tableCards
+    self.deckCards = deckCards
     self.algoName = algoName
     self.done = done
     self.position = position
-  }
-}
-
-public struct ObsucredTurnRequest: Equatable, Codable {
-  public let id: UUID
-  public let name: String
-  public let numberOfHandCards: Int
-  public let openTableCards: [Card]
-  public let lastTableCard: Card?
-  public let numberOfClosedTableCards: Int
-  public let phase: Phase
-  public let amountOfTableCards: Int
-  public let amountOfDeckCards: Int
-  public let algoName: String
-  public let done: Bool
-  public let position: Position
-
-  public init(
-    id: UUID, name: String,
-    numberOfHandCards: Int,
-    openTableCards: [Card],
-    lastTableCard: Card?,
-    numberOfClosedTableCards: Int,
-    phase: Phase,
-    amountOfTableCards: Int,
-    amountOfDeckCards: Int,
-    algoName: String,
-    done: Bool, position: Position
-  ) {
-    self.id = id
-    self.name = name
-    self.numberOfHandCards = numberOfHandCards
-    self.openTableCards = openTableCards
-    self.lastTableCard = lastTableCard
-    self.numberOfClosedTableCards = numberOfClosedTableCards
-    self.phase = phase
-    self.amountOfTableCards = amountOfTableCards
-    self.amountOfDeckCards = amountOfDeckCards
-    self.algoName = algoName
-    self.done = done
-    self.position = position
+    self.isObscured = isObscured
   }
 }

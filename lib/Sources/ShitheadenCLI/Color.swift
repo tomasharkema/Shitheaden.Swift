@@ -6,6 +6,7 @@
 //  Copyright © 2015 Tomas Harkema. All rights reserved.
 //
 
+import ANSIEscapeCode
 import ShitheadenRuntime
 import ShitheadenShared
 
@@ -29,29 +30,37 @@ extension Card: CustomStringConvertible {
   public var description: String {
     let color = symbol.color
 
-    return color >>> "\(symbol.string)\(number.string)"
+    return color >>> "\(symbol.string)\(number.ansi)"
   }
 }
 
 extension TurnRequest {
   var closedTable: String {
-    return (0 ..< numberOfClosedTableCards).map { _ in "0" }.joined(separator: " ")
+    return (0 ..< closedCards.count).map { _ in "0" }.joined(separator: " ")
   }
 
   var closedTableShowed: String {
-    return (0 ..< numberOfClosedTableCards).map { $0.description }.joined(separator: " ")
+    return (0 ..< closedCards.count).map { $0.description }.joined(separator: " ")
   }
 }
 
-extension ObscuredPlayerResult {
+extension TurnRequest {
   var showedTable: String {
-    let openTableCards: [Card]
+    return openTableCards.unobscure().map { $0.description }.joined(separator: " ")
+  }
+}
+
+public extension Number {
+  var ansi: String {
     switch self {
-    case let .player(turnRequest):
-      openTableCards = turnRequest.openTableCards
-    case let .obscured(obsucredTurnRequest):
-      openTableCards = obsucredTurnRequest.openTableCards
+    case .gold:
+      return ANSIEscapeCode.Decoration.textColor(.lightYellow) + "G"
+    case .silver:
+      return ANSIEscapeCode.Decoration.textColor(.lightWhite) + "S"
+    case .bronze:
+      return ANSIEscapeCode.Decoration.textColor(.lightRed) + "B"
+    default:
+      return string
     }
-    return openTableCards.map { $0.description }.joined(separator: " ")
   }
 }

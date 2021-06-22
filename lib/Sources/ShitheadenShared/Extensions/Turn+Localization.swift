@@ -4,11 +4,9 @@
 //
 //  Created by Tomas Harkema on 16/06/2021.
 //
-#if os(Linux)
-#else
+#if !os(Linux)
   import Foundation
 #endif
-import ShitheadenShared
 
 extension Turn {
   var explain: String {

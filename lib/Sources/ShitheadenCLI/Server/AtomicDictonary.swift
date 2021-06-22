@@ -1,6 +1,6 @@
 //
 //  AtomicDictonary.swift
-//  
+//
 //
 //  Created by Tomas Harkema on 19/06/2021.
 //

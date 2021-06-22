@@ -5,14 +5,20 @@
 //  Created by Tomas Harkema on 19/06/2021.
 //
 
+import ANSIEscapeCode
 import CustomAlgo
 import Foundation
 import ShitheadenRuntime
 import ShitheadenShared
 import SwiftSocket
-import ANSIEscapeCode
 
 class TelnetServer {
+  let games: AtomicDictonary<String, MultiplayerHandler>
+
+  init(games: AtomicDictonary<String, MultiplayerHandler>) {
+    self.games = games
+  }
+
   func startServer() async {
     async {
       print("START! telnet")
@@ -38,7 +44,7 @@ class TelnetServer {
 
   private func singlePlayer(client: TCPClient) async {
     print("Newclient from:\(client.address)[\(client.port)] \(Thread.isMainThread)")
-    let userId = UUID()
+    let id = UUID()
     let game = Game(
       players: [
         Player(
@@ -57,15 +63,14 @@ class TelnetServer {
           ai: CardRankingAlgo()
         ),
         Player(
-          id: userId,
+          id: id,
           name: "Zuid (JIJ)",
           position: .zuid,
-          ai: UserInputAIJson(id: userId) {
-            print("READ!")
-      return .string(await client.read())
-          } renderHandler: {
-            _ = await client.send(string: Renderer.render(game: $0, error: $1))
-          }
+          ai: UserInputAIJson.cli(id: id, print: {
+            await client.send(string: $0)
+          }, read: {
+            await client.read()
+          })
         ),
       ], slowMode: true
     )
@@ -100,12 +105,13 @@ class TelnetServer {
     return await echoService(client: client)
   }
 
-  private var games = AtomicDictonary<String, MultiplayerHandler>()
-
   private func startMultiplayer(client: TCPClient) async {
     let id = UUID()
     let promise = Promise()
-    let pair = MultiplayerHandler(challenger: (id, client), finshedTask: promise.task)
+    let pair = MultiplayerHandler(
+      challenger: (id, TelnetClient(client: client)),
+      finshedTask: promise.task
+    )
     await games.insert(pair.code, value: pair)
 
     await pair.waitForStart()
@@ -122,7 +128,7 @@ class TelnetServer {
 
     if let game = await games.get(code) {
       let id = UUID()
-      await game.join(id: id, client: client)
+      await game.join(id: id, client: TelnetClient(client: client))
       await game.finished()
     } else {
       client.send(string: """
@@ -133,9 +139,7 @@ class TelnetServer {
       return await echoService(client: client)
     }
   }
-
 }
-
 
 extension TCPClient {
   func _read(cancel: AtomicBool) async -> String {
@@ -181,23 +185,40 @@ extension TCPClient {
   }
 }
 
-extension TCPClient: Client {
-  func send(_ event: MultiplayerEvent) async {
+class TelnetClient: Client {
+  let client: TCPClient
+  var onQuit = [() async -> Void]()
+
+  init(client: TCPClient) {
+    self.client = client
+  }
+
+  func send(_ event: ServerEvent) async {
     switch event {
+    case let .multiplayerEvent(.error(error)):
+      client.send(string: await Renderer.error(error: error))
+
+    case let .multiplayerEvent(.string(string)):
+
+      client.send(string: string)
+
+    case let .multiplayerEvent(.gameSnapshot(snapshot)):
+      client.send(string: await Renderer.render(game: snapshot, error: nil))
+
     case .waiting:
-      send(string: """
+      client.send(string: """
 
       Joined! Wachten tot de game begint...
 
       """)
-    case .joined(let numberOfPlayers):
-      send(string: """
+    case let .joined(numberOfPlayers):
+      client.send(string: """
 
       Aantal spelers: \(numberOfPlayers)
 
       """)
-    case .codeCreate(let code):
-      send(string: """
+    case let .codeCreate(code):
+      client.send(string: """
 
 
       Hier is je code: \(code). Geef deze code aan je vrienden en wacht tot ze joinen!
@@ -205,31 +226,41 @@ extension TCPClient: Client {
 
       """)
 
-    case .string(let string):
-      send(string: string)
     case .start:
-      send(string: """
+      client.send(string: """
 
 
       Start game!
 
       """)
-    case .gameSnapshot(let snapshot, let error):
-      send(string: await Renderer.render(game: snapshot, error: error))
-    case .error(let error):
-      print(error)
+    case let .error(.playerError(error)):
+      client.send(string: await Renderer.error(error: error))
+
+    case .requestMultiplayerChoice:
+      print("START", event)
+    case let .error(error: .text(text: text)):
+      print("START", event)
+    case let .error(error: .gameNotFound(code: code)):
+      print("START", event)
+    case let .multiplayerEvent(multiplayerEvent: .action(action: action)):
+      print("START", event)
+
+    case .quit:
+      for onQuit in onQuit {
+        await onQuit()
+      }
+      return client.close()
     }
   }
 
-  func read() async throws -> MultiplayerRequest {
+  func read() async throws -> ServerRequest {
+    client.send(string: ANSIEscapeCode.Cursor.showCursor + ANSIEscapeCode.Cursor.position(
+      row: RenderPosition.input.y + 2,
+      column: 0
+    ))
 
-    send(string: ANSIEscapeCode.Cursor.showCursor + ANSIEscapeCode.Cursor.position(
-            row: RenderPosition.input.y + 2,
-            column: 0
-          ))
-
-    let input: String = await read()
-    send(string: ANSIEscapeCode.Cursor.hideCursor)
+    let input: String = await client.read()
+    client.send(string: ANSIEscapeCode.Cursor.hideCursor)
     let inputs = input.split(separator: ",").map {
       Int($0.trimmingCharacters(in: .whitespacesAndNewlines))
     }
@@ -237,9 +268,9 @@ extension TCPClient: Client {
 //      await renderHandler(RenderPosition.input.down(n: 1)
 //                            .cliRep + "Je moet p of een aantal cijfers invullen...")
 //      throw PlayerError(text: "Je moet p of een aantal cijfers invullen...")
-      return .string(input)
+      return .multiplayerRequest(.string(input))
     }
 
-    return .cards(inputs.map { $0! })
+    return .multiplayerRequest(.cardIndexes(inputs.map { $0! }))
   }
 }

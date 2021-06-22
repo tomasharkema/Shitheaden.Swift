@@ -60,7 +60,12 @@ let package = Package(
     ),
     .target(
       name: "ShitheadenRuntime",
-      dependencies: ["ShitheadenShared"],
+      dependencies: [
+        .target(name: "ShitheadenShared"),
+        .product(name: "NIO", package: "swift-nio"),
+        .product(name: "NIOHTTP1", package: "swift-nio"),
+        .product(name: "NIOWebSocket", package: "swift-nio"),
+      ],
       swiftSettings: [
         .unsafeFlags([
           "-Xfrontend",

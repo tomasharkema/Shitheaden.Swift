@@ -10,14 +10,16 @@ import ShitheadenShared
 public actor RandomBot: GameAi {
   public required init() {}
 
-  public func render(snapshot: GameSnapshot, error: PlayerError?) async -> Void {}
+  public func render(snapshot _: GameSnapshot, error _: PlayerError?) async {}
 
   public func beginMove(request: TurnRequest,
                         previousError _: PlayerError?) async -> (Card, Card, Card)
   {
-    let first = request.handCards.randomElement()!
-    let second = request.handCards.filter { $0 != first }.randomElement()!
-    let third = request.handCards.filter { $0 != first && $0 != second }.randomElement()!
+    let hand = request.handCards.unobscure()
+
+    let first = hand.randomElement()!
+    let second = hand.filter { $0 != first }.randomElement()!
+    let third = hand.filter { $0 != first && $0 != second }.randomElement()!
 
     return (first, second, third)
   }

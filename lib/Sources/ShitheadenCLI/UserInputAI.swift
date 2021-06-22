@@ -44,8 +44,8 @@ actor _UserInputAI: GameAi {
     self.renderHandler = renderHandler
   }
 
-  func render(snapshot: GameSnapshot, error: PlayerError?) async -> Void {
-    await self.renderHandler(Renderer.render(game: snapshot, error: error))
+  func render(snapshot: GameSnapshot, error: PlayerError?) async {
+    await renderHandler(Renderer.render(game: snapshot, error: error))
   }
 
   private func parseInput(input: String) async -> [Int]? {
@@ -73,41 +73,45 @@ actor _UserInputAI: GameAi {
       executeTurn = .pass
     } else if let keuze = await parseInput(input: input) {
       guard keuze.count > 0 else {
-        throw PlayerError(text: "Je moet meer dan 1 keuze opgeven.")
+        throw PlayerError.openCardsThreeCards
       }
 
       switch request.phase {
       case .hand:
-        let elements = request.handCards.lazy.enumerated().filter {
+        let elements = request.handCards.unobscure().lazy.enumerated().filter {
           keuze.contains($0.offset + 1)
         }.map { $0.element }
 
         if elements.count > 1, !elements.sameNumber() {
-          throw PlayerError(text: "Je moet kaarten met dezelfde nummers opgeven")
+          throw PlayerError.sameNumber
         }
         executeTurn = .play(Set(elements)) // .sortSymbol()))
 
       case .tableClosed:
         if keuze.count != 1 {
-          throw PlayerError(text: "Je kan maar 1 kaart spelen")
+          throw PlayerError.closedOneCard
         }
 
-        guard let i = (1 ... request.numberOfClosedTableCards).first(where: {
+        guard let i = (1 ... request.closedCards.count).first(where: {
           $0 == keuze.first
         }) else {
-          throw PlayerError(text: "Deze kaart kan je niet spelen")
+          throw PlayerError.closedNumberNotInRange(
+            choice: keuze.first,
+            range: request.closedCards.count
+          )
         }
 
         executeTurn = .closedCardIndex(i)
 
       case .tableOpen:
-        executeTurn = .play(Set(request.openTableCards.lazy.enumerated().filter {
+        executeTurn = .play(Set(request.openTableCards.unobscure().lazy.enumerated().filter {
           keuze.contains($0.offset + 1)
         }.map { $0.element }))
       }
 
     } else {
-      throw PlayerError(text: "not implemented")
+      assertionFailure("Unknown Error")
+      throw PlayerError.unknown
     }
 
     return executeTurn
@@ -162,32 +166,35 @@ actor _UserInputAI: GameAi {
     return request
   }
 
-  func beginMove(request: TurnRequest, previousError: PlayerError?) async throws -> (Card, Card, Card) {
+  func beginMove(request: TurnRequest,
+                 previousError: PlayerError?) async throws -> (Card, Card, Card)
+  {
     if let previousError = previousError {
       await renderHandler(RenderPosition.input
         .down(n: -2).cliRep + previousError.text)
     }
 
     do {
-      await renderHandler(RenderPosition.input.cliRep + "Selecteer drie kaarten voor je tafelkaarten...")
+      await renderHandler(RenderPosition.input
+        .cliRep + "Selecteer drie kaarten voor je tafelkaarten...")
       await renderHandler(RenderPosition.input.down(n: 1).cliRep)
 
       let input = await getInput()
       guard let keuze = await parseInput(input: input) else {
-        throw PlayerError(text: "Snap ik niet")
+        throw PlayerError.inputNotRecognized(input: input, hint: nil)
       }
 
       guard keuze.count == 3 else {
-        throw PlayerError(text: "Je moet 3 kaarten selecteren!")
+        throw PlayerError.openCardsThreeCards
       }
-      let cards = request.handCards.lazy.enumerated().filter {
+      let cards = request.handCards.unobscure().lazy.enumerated().filter {
         keuze.contains($0.offset + 1)
       }.map { $0.element } // .sortSymbol()
 
       return (cards[0], cards[1], cards[2])
 
     } catch {
-      return try  await beginMove(
+      return try await beginMove(
         request: request,
         previousError: error as? PlayerError ?? previousError
       )

@@ -10,7 +10,8 @@ public protocol GameAi: Actor {
   init()
 
   func render(snapshot: GameSnapshot, error: PlayerError?) async -> Void
-  func beginMove(request: TurnRequest, previousError: PlayerError?) async throws -> (Card, Card, Card)
+  func beginMove(request: TurnRequest, previousError: PlayerError?) async throws
+    -> (Card, Card, Card)
   func move(request: TurnRequest, previousError: PlayerError?) async throws -> Turn
 }
 

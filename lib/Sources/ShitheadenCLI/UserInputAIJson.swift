@@ -1,6 +1,6 @@
 //
 //  UserInputAIJson.swift
-//  
+//
 //
 //  Created by Tomas Harkema on 19/06/2021.
 //
@@ -10,8 +10,8 @@ import ShitheadenShared
 
 actor UserInputAIJson: GameAi {
   let id: UUID
-  let reader: (() async throws -> MultiplayerRequest)
-  let renderHandler: ((GameSnapshot, PlayerError?) async -> Void)
+  let reader: (Action) async throws -> MultiplayerRequest
+  let renderHandler: (GameSnapshot, PlayerError?) async -> Void
 
   required init() {
     fatalError()
@@ -19,7 +19,7 @@ actor UserInputAIJson: GameAi {
 
   init(
     id: UUID,
-    reader: @escaping (() async throws -> MultiplayerRequest),
+    reader: @escaping ((Action) async throws -> MultiplayerRequest),
     renderHandler: @escaping ((GameSnapshot, PlayerError?) async -> Void)
   ) {
     self.id = id
@@ -27,100 +27,97 @@ actor UserInputAIJson: GameAi {
     self.renderHandler = renderHandler
   }
 
-  func render(snapshot: GameSnapshot, error: PlayerError?) async -> Void {
-    await self.renderHandler(snapshot, error)
+  func render(snapshot: GameSnapshot, error: PlayerError?) async {
+    await renderHandler(snapshot, error)
   }
 
-  func beginMove(request: TurnRequest, previousError: PlayerError?) async throws -> (Card, Card, Card) {
+  func beginMove(request: TurnRequest,
+                 previousError _: PlayerError?) async throws -> (Card, Card, Card)
+  {
 //    do {
-      let string = try await reader()
-      guard case .cards(let cards) = string else {
-        throw PlayerError(text: "no cards")
-      }
+    let string = try await reader(.requestBeginTurn)
 
+    switch string {
+    case let .cardIndexes(cards):
       guard cards.count == 3 else {
-        throw PlayerError(text: "no 3 choices")
+        throw PlayerError.cardsCount(3)
       }
-
-      let card1 = request.handCards[cards[0] - 1]
-      let card2 = request.handCards[cards[1] - 1]
-      let card3 = request.handCards[cards[2] - 1]
+      let hand = request.handCards.unobscure()
+      let card1 = hand[cards[0] - 1]
+      let card2 = hand[cards[1] - 1]
+      let card3 = hand[cards[2] - 1]
 
       return (card1, card2, card3)
+    case let .concreteCards(cards):
+      guard cards.count == 3 else {
+        throw PlayerError.cardsCount(3)
+      }
+      return (cards[0], cards[1], cards[2])
 
-
-
-      //    guard let data = string.data(using: .utf8) else {
-      //      throw PlayerError(text: "data not parsable")
-      //    }
-      //
-      //    return try JSONDecoder().decode(T.self, from: data)
-
-
-
-//      guard data.count == 3 else {
-//        throw PlayerError(text: "no 3 choices")
-//      }
-//
-//      return (data[0], data[1], data[2])
-//    } catch {
-//      print(error)
-//      return try await beginMove(request: request, previousError: previousError)
-//    }
+    default:
+      throw PlayerError.debug("Only cardIndexes or concreteCards permitted")
+    }
   }
 
-  func move(request: TurnRequest, previousError: PlayerError?) async throws -> Turn {
+  func move(request: TurnRequest, previousError _: PlayerError?) async throws -> Turn {
 //    do {
-      let string = try await reader()
+    let string = try await reader(.requestNormalTurn)
 
-      let turn: Turn
-      switch string {
-      case .string(let string):
-        if string.contains("p") {
-          turn = .pass
-        } else {
-          throw PlayerError(text: "String not recognized")
-        }
-
-      case .cards(let keuze):
-
-
-        switch request.phase {
-        case .hand:
-          let elements = request.handCards.lazy.enumerated().filter {
-            keuze.contains($0.offset + 1)
-          }.map { $0.element }
-
-          if elements.count > 1, !elements.sameNumber() {
-            throw PlayerError(text: "Je moet kaarten met dezelfde nummers opgeven")
-          }
-          turn = .play(Set(elements)) // .sortSymbol()))
-
-        case .tableClosed:
-          if keuze.count != 1 {
-            throw PlayerError(text: "Je kan maar 1 kaart spelen")
-          }
-
-          guard let i = (1 ... request.numberOfClosedTableCards).first(where: {
-            $0 == keuze.first
-          }) else {
-            throw PlayerError(text: "Deze kaart kan je niet spelen")
-          }
-
-          turn = .closedCardIndex(i)
-
-        case .tableOpen:
-          turn = .play(Set(request.openTableCards.lazy.enumerated().filter {
-            keuze.contains($0.offset + 1)
-          }.map { $0.element }))
-        }
-
-
-      default:
-        throw PlayerError(text: "wut??")
+    let turn: Turn
+    switch string {
+    case let .string(string):
+      if string.contains("p") {
+        turn = .pass
+      } else {
+        throw PlayerError
+          .inputNotRecognized(input: string,
+                              hint: "voer p in om te passen.") // PlayerError(text: "String not recognized")
       }
 
+    case let .cardIndexes(keuze):
+
+      switch request.phase {
+      case .hand:
+        let elements = request.handCards.unobscure().lazy.enumerated().filter {
+          keuze.contains($0.offset + 1)
+        }.map { $0.element }
+
+        if elements.count > 1, !elements.sameNumber() {
+          throw PlayerError.sameNumber // (text: "Je moet kaarten met dezelfde nummers opgeven")
+        }
+        turn = .play(Set(elements)) // .sortSymbol()))
+
+      case .tableClosed:
+        if keuze.count != 1 {
+          throw PlayerError.cardsCount(1)
+        }
+
+        guard let int = keuze.first, let i = (1 ... request.closedCards.count).first(where: {
+          $0 == int
+        }) else {
+          throw PlayerError.closedNumberNotInRange(
+            choice: keuze.first,
+            range: request.closedCards.count
+          )
+//          throw PlayerError.cardNotPlayable(played: <#T##Card#>, on: <#T##Card#>)//(text: "Deze kaart kan je niet spelen")
+        }
+
+        turn = .closedCardIndex(i)
+
+      case .tableOpen:
+        turn = .play(Set(request.openTableCards.unobscure().lazy.enumerated().filter {
+          keuze.contains($0.offset + 1)
+        }.map { $0.element }))
+      }
+
+    case let .concreteTurn(turn):
       return turn
+
+    default:
+      throw PlayerError.debug("Only string or cardIndexes or turn permitted")
+    }
+
+    return turn
 //    } catch {
 //      return try await move(request: request, previousError: (error as? PlayerError) ?? previousError)
 //    }

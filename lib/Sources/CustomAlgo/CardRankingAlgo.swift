@@ -11,14 +11,12 @@ public actor CardRankingAlgo: GameAi {
   private var passes = 0
   public required init() {}
 
-  public func render(snapshot: GameSnapshot, error: PlayerError?) async {
-    
-  }
+  public func render(snapshot _: GameSnapshot, error _: PlayerError?) async {}
 
   public func beginMove(request: TurnRequest,
                         previousError _: PlayerError?) async -> (Card, Card, Card)
   {
-    let putOnTable = request.handCards.map {
+    let putOnTable = request.handCards.unobscure().map {
       ($0, $0.number.importanceScore)
     }.sorted {
       $0.1 > $1.1
@@ -52,7 +50,7 @@ public actor CardRankingAlgo: GameAi {
       } ?? .pass
 
     case .tableClosed:
-      return Turn.closedCardIndex(Int.random(in: 1 ... request.numberOfClosedTableCards))
+      return Turn.closedCardIndex(Int.random(in: 1 ... request.closedCards.count))
     }
   }
 }

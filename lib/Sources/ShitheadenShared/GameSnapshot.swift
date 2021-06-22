@@ -8,21 +8,21 @@
 import Foundation
 
 public struct GameSnapshot: Equatable, Codable {
-  public let numberOfDeckCards: Int
-  public let players: [ObscuredPlayerResult]
-  public let latestTableCards: [Card]
-  public let numberOfTableCards: Int
-  public let numberOfBurntCards: Int
+  public let deckCards: [RenderCard]
+  public let players: [TurnRequest]
+  public let tableCards: [RenderCard]
+  public let burntCards: [RenderCard]
   public let playerOnTurn: UUID
-  public let winner: ObscuredPlayerResult?
+  public let winner: TurnRequest?
 
   public init(
-    numberOfDeckCards: Int, players: [ObscuredPlayerResult], latestTableCards: [Card], numberOfTableCards: Int, numberOfBurntCards: Int, playerOnTurn: UUID, winner: ObscuredPlayerResult?) {
-    self.numberOfDeckCards = numberOfDeckCards
+    deckCards: [RenderCard], players: [TurnRequest],
+    tableCards: [RenderCard], burntCards: [RenderCard], playerOnTurn: UUID, winner: TurnRequest?
+  ) {
+    self.deckCards = deckCards
     self.players = players
-    self.latestTableCards = latestTableCards
-    self.numberOfTableCards = numberOfTableCards
-    self.numberOfBurntCards = numberOfBurntCards
+    self.tableCards = tableCards
+    self.burntCards = burntCards
     self.playerOnTurn = playerOnTurn
     self.winner = winner
   }

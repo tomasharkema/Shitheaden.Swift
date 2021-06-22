@@ -28,11 +28,11 @@ public enum Turn: Equatable, Hashable, Codable {
     switch self {
     case let .play(cards):
       if cards.isEmpty {
-        throw PlayerError(text: "Not empty")
+        throw PlayerError.notEmpty
       }
       if cards.contains(where: { $0.number != cards.first?.number }) {
         print(cards)
-        throw PlayerError(text: "Not all the same")
+        throw PlayerError.notSameNumber
       }
 
 //    case let .putOnTable(a, b, c):

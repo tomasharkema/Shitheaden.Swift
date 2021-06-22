@@ -40,32 +40,17 @@ extension TurnRequest {
 
   func _possibleTurns() -> [Turn] {
     switch phase {
-//    case .putOnTable:
-//
-//      var turns = [Turn]()
-//      for firstIteration in handCards {
-//        for secondIteration in handCards.filter({ $0 != firstIteration }) {
-//          for thirdIteration in handCards
-//            .filter({ $0 != firstIteration && $0 != secondIteration })
-//          {
-//            turns.append(Turn.putOnTable(firstIteration, secondIteration, thirdIteration))
-//          }
-//        }
-//      }
-//
-//      return turns.unique()
-
     case .hand:
-      let actions = handCards.filter { lastTableCard?.afters.contains($0) ?? true }
+      let actions = handCards.unobscure()
+        .filter { h in lastTableCard?.number.afters.contains { $0 == h.number } ?? true }
         .map { Turn.play([$0]) }
-      let e = Array([actions, [.pass]].joined()).includeDoubles() // .unique()
-//      if e.doubles() {
-//        fatalError()
-//      }
+      print(actions)
+      let e = Array([actions, [.pass]].joined()).includeDoubles()
       return e
 
     case .tableOpen:
-      let actions = openTableCards.filter { lastTableCard?.afters.contains($0) ?? true }
+      let actions = handCards.unobscure()
+        .filter { h in lastTableCard?.number.afters.contains { $0 == h.number } ?? true }
         .map { Turn.play([$0]) }
       if actions.isEmpty {
         return [Turn.pass]
@@ -73,7 +58,7 @@ extension TurnRequest {
       return actions.includeDoubles()
 
     case .tableClosed:
-      return (1 ... numberOfClosedTableCards).map { Turn.closedCardIndex($0) }.unique()
+      return closedCards.enumerated().map { Turn.closedCardIndex($0.offset + 1) }.unique()
     }
   }
 }

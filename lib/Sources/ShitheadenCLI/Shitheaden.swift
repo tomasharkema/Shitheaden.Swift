@@ -6,11 +6,11 @@
 //  Copyright © 2015 Tomas Harkema. All rights reserved.
 //
 
+import ANSIEscapeCode
 import ArgumentParser
 import CustomAlgo
 import Foundation
 import ShitheadenRuntime
-import ANSIEscapeCode
 
 @main
 struct Shitheaden: ParsableCommand {
@@ -63,17 +63,18 @@ struct Shitheaden: ParsableCommand {
   #endif
 
   private func startServer() async {
+    let games = AtomicDictonary<String, MultiplayerHandler>()
     async {
       do {
         print("START! websocket")
-        let server = Server()
+        let server = Server(games: games)
         try await server.server()
       } catch {
         print(error)
       }
     }
     async {
-      let server = TelnetServer()
+      let server = TelnetServer(games: games)
       await server.startServer()
     }
     return await withUnsafeContinuation { _ in }
@@ -102,14 +103,32 @@ struct Shitheaden: ParsableCommand {
           id: id,
           name: "Zuid (JIJ)",
           position: .zuid,
-//          ai: UserInputAI(id: id)
-          ai: UserInputAIJson(id: id, reader: {
+          ai: UserInputAIJson.cli(id: id, print: {
+            print($0)
+          }, read: {
+            await Keyboard.getKeyboardInput()
+          })
+        ),
+      ], slowMode: true
+    )
 
-      print(ANSIEscapeCode.Cursor.showCursor + ANSIEscapeCode.Cursor.position(
+    await game.startGame()
+  }
+}
+
+extension UserInputAIJson {
+  static func cli(
+    id: UUID,
+    print: @escaping (String) async -> Void,
+    read: @escaping () async -> String
+  ) -> UserInputAIJson {
+    return UserInputAIJson(id: id, reader: { _ in
+      await print(ANSIEscapeCode.Cursor.showCursor + ANSIEscapeCode.Cursor.position(
         row: RenderPosition.input.y + 1,
         column: 0
       ))
-      let input = await Keyboard.getKeyboardInput()
+      let input = await read()
+      await print(ANSIEscapeCode.Cursor.hideCursor)
       let inputs = input.split(separator: ",").map {
         Int($0.trimmingCharacters(in: .whitespacesAndNewlines))
       }
@@ -120,18 +139,10 @@ struct Shitheaden: ParsableCommand {
         return .string(input)
       }
 
-      return .cards(inputs.map { $0! })
-    }, renderHandler: { (game, error) in
-      print(await Renderer.render(game: game, error: error))
+      return .cardIndexes(inputs.map { $0! })
+    }, renderHandler: { game, error in
+      await print(Renderer.render(game: game, error: error))
     })
-        ),
-      ], slowMode: true
-//      , localUserUUID: id, render: { game, clear in
-//        await print(Renderer.render(game: game, clear: clear))
-//      }
-    )
-
-    await game.startGame()
   }
 }
 
