@@ -199,7 +199,6 @@ class TelnetClient: Client {
       client.send(string: await Renderer.error(error: error))
 
     case let .multiplayerEvent(.string(string)):
-
       client.send(string: string)
 
     case let .multiplayerEvent(.gameSnapshot(snapshot)):
@@ -243,7 +242,11 @@ class TelnetClient: Client {
     case let .error(error: .gameNotFound(code: code)):
       print("START", event)
     case let .multiplayerEvent(multiplayerEvent: .action(action: action)):
-      print("START", event)
+
+      client.send(string: ANSIEscapeCode.Cursor.showCursor + ANSIEscapeCode.Cursor.position(
+        row: RenderPosition.input.y + 2,
+        column: 0
+      ))
 
     case .quit:
       for onQuit in onQuit {

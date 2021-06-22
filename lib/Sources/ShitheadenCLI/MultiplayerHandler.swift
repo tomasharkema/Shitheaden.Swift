@@ -45,15 +45,6 @@ actor MultiplayerHandler {
 
     await client.send(.waiting)
     await send(.joined(numberOfPlayers: 1 + competitors.count))
-
-//    let send = """
-//    Aantal spelers: \(1 + competitors.count)
-//
-//    """
-//    master.1.send(string: send)
-//    for s in slaves {
-//      s.1.send(string: send)
-//    }
   }
 
   nonisolated func waitForStart() async {
@@ -99,6 +90,7 @@ actor MultiplayerHandler {
       _ = await self.challenger.1
         .send(.multiplayerEvent(multiplayerEvent: .gameSnapshot(snapshot: game)))
       if let error = error {
+        print(error)
         _ = await self.challenger.1.send(.error(error: .playerError(error: error)))
       }
     }
@@ -122,8 +114,9 @@ actor MultiplayerHandler {
         } renderHandler: { game, error in
           _ = await player.1
             .send(.multiplayerEvent(multiplayerEvent: .gameSnapshot(snapshot: game)))
+          print(error)
           if let error = error {
-            _ = await self.challenger.1.send(.error(error: .playerError(error: error)))
+            _ = await player.1.send(.error(error: .playerError(error: error)))
           }
         }
       )
