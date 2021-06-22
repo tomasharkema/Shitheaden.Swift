@@ -1,0 +1,52 @@
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+
+    <title>Shitheaden</title>
+    <meta name="description" content="Shitheaden">
+
+    <link rel="stylesheet" href="stylesheet.css">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="content">
+        <div x-data="game">
+            <template x-if="snapshot">
+                <div class="game">
+                    <template x-for="player in snapshot.players" x-key="player.id">
+                        <div class="player" :class="player.position">
+                            <p x-text="player.name"></p>
+        
+                            <div class="closed-cards">
+                                <template x-for="card in player.closedCards" x-key="card.card.card.id">
+                                    <div class="card hidden"></div>
+                                </template>
+                            </div>
+        
+                            <div class="open-cards">
+                                <template x-for="card in player.openTableCards" x-key="card.card.card.id">
+                                    <div class="card" :class="symbol" x-data="card.card.card">
+                                        <span class="card-number" x-text="number"></span>
+                                        <span class="card-number" x-text="number"></span>
+                                    </div>
+                                </template>
+                            </div>
+        
+                            <div class="hand-cards" x-show="player.isObscured && player.handCards.length > 0">
+                                <div class="card hidden"></div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </template>
+        </div>
+    </div>
+
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="api.js"></script>
+</body>
+</html>

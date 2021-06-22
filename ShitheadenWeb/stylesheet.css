@@ -1,0 +1,107 @@
+html, body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #FAFAFA;
+    margin: 0;
+}
+
+.content {
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 1200px;
+    min-height: calc(100vh - 40px);
+    padding: 20px;
+    background-color: white;
+}
+
+/*
+ * Player
+ */
+
+.player {
+    position: relative;
+    padding: 0 200px;
+    width: 340px;
+    height: 222.5px;
+
+    font-size: 22px;
+    text-align: center;
+    background-color: #F0F0F0;
+}
+
+.player p {
+    width: 340px;
+}
+
+.closed-cards, .open-cards {
+    display: flex;
+    gap: 20px;
+}
+
+.open-cards {
+    margin-top: -130px;
+}
+
+.hand-cards {
+    position: absolute;
+    right: 0;
+    bottom: 20px;
+}
+
+/*
+ * Cards
+ */
+
+.card {
+    position: relative;
+    width: 100px;
+    height: 150px;
+    border: 1px solid black;
+    border-radius: 10px;
+    background-color: white;
+}
+
+.card::after {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 32px;
+}
+
+.harten::after { content: '\2665'; }
+.schoppen::after { content: '\2660'; }
+.ruiten::after { content: '\2666'; }
+.klaver::after { content: '\2663'; }
+
+.harten, .ruiten {
+    color: red; 
+}
+
+.card-number {
+    position: absolute;
+    font-size: 22px;
+}
+
+.card-number:first-child {
+    top: 10px;
+    left: 10px;
+}
+
+.card-number:last-child {
+    bottom: 10px;
+    right: 10px;
+    transform: rotate(180deg);
+}
+
+.hidden::after {
+    content: '';
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    width: 80px;
+    height: 130px;
+    transform: none;
+
+    background-color: #faa;
+    border-radius: 10px;
+}
