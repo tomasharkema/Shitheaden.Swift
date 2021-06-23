@@ -13,7 +13,7 @@ extension Turn {
     switch self {
     case let .play(cards):
       #if os(Linux)
-        let cardsJoined = "\(cards)"
+      let cardsJoined = cards.joined(separator: ", ")
       #else
         let cardsJoined = ListFormatter().string(from: Array(cards))!
       #endif

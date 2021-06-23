@@ -41,6 +41,7 @@ public class WebSocketClient {
         buffer.writeBytes(d)
         let frame = WebSocketFrame(fin: true, opcode: .binary, data: buffer)
         let p = context.writeAndFlush(handler.wrapOutboundOut(frame))
+        print("WRITE", turn)
         p.whenSuccess { c.resume(returning: ()) }
 
         p.whenFailure {

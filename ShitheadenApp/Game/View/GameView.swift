@@ -105,10 +105,12 @@ struct GameView: View {
     .actionSheet(isPresented: $showMenu, content: {
       ActionSheet(title: Text("Weet je zeker dat je wilt stoppen?"), message: nil, buttons: [
         .destructive(Text("Stoppen"), action: {
-          withAnimation {
-            game.stop()
+        async {
+          await game.stop()
+          await MainActor.run {
             state = nil
           }
+        }
         }),
         .cancel(),
       ])

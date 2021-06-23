@@ -12,30 +12,6 @@ public class EventHandler<T> {
   var events = [T]()
   var dataHandlers = AtomicDictionary<UUID, (T) async -> Void>()
 
-  var readOnly: ReadOnly {
-    return ReadOnly(e: self)
-  }
-
-  class ReadOnly {
-    private let e: EventHandler<T>
-
-    init(e: EventHandler<T>) {
-      self.e = e
-    }
-
-    public func removeOnDataHandler(id: UUID?) {
-      return removeOnDataHandler(id: id)
-    }
-
-    public func once(_ fn: @escaping (T) async -> Void) {
-      return e.once(fn)
-    }
-
-    public func on(_ fn: @escaping (T) async -> Void) -> UUID {
-      return e.on(fn)
-    }
-  }
-
   public init() {}
 
   public func removeOnDataHandler(id: UUID?) {
@@ -116,5 +92,36 @@ public class EventHandler<T> {
         }
       }
     })
+  }
+}
+
+extension EventHandler {
+
+  public var readOnly: ReadOnly {
+    return ReadOnly(e: self)
+  }
+
+  public class ReadOnly {
+    private let e: EventHandler<T>
+
+    init(e: EventHandler<T>) {
+      self.e = e
+    }
+
+    public func removeOnDataHandler(id: UUID?) {
+      return removeOnDataHandler(id: id)
+    }
+
+    public func once(_ fn: @escaping (T) async -> Void) {
+      return e.once(fn)
+    }
+
+    public func once() async throws -> T {
+      return try await e.once()
+    }
+
+    public func on(_ fn: @escaping (T) async -> Void) -> UUID {
+      return e.on(fn)
+    }
   }
 }

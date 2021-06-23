@@ -10,8 +10,8 @@ import ShitheadenRuntime
 import ShitheadenShared
 
 protocol Client: AnyObject {
-  var quit: EventHandler<Void> { get }
-  var data: EventHandler<ServerRequest> { get }
+  var quit: EventHandler<Void>.ReadOnly { get }
+  var data: EventHandler<ServerRequest>.ReadOnly { get }
 
   func send(_ event: ServerEvent) async
 }
@@ -30,12 +30,27 @@ actor MultiplayerHandler {
     competitors = []
 
     challenger.1.quit.on {
-      print("onQuitRead")
+      print("onQuitRead", self.gameTask)
       self.gameTask?.cancel()
+
+      self.competitors.forEach { c in
+        async {
+          await c.1.send(.quit)
+        }
+      }
     }
-    competitors.forEach { $0.1.quit.on {
-      print("onQuitRead")
+    competitors.forEach { d in
+      d.1.quit.on {
+      print("onQuitRead", self.gameTask)
       self.gameTask?.cancel()
+      async {
+        await challenger.1.send(.quit)
+      }
+        self.competitors.filter { $0.0 != d.0 }.forEach { c in
+        async {
+          await c.1.send(.quit)
+        }
+      }
     }}
   }
 

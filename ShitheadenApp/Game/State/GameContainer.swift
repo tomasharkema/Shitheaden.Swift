@@ -34,7 +34,9 @@ class GameContainer: ObservableObject {
   }
 
   var onDataId: UUID?
+  var client: WebSocketClient?
   func startOnline(_ client: WebSocketClient) async {
+    self.client = client
     await client.data.removeOnDataHandler(id: onDataId)
     onDataId = await client.data.on { ob in
       async {
@@ -223,7 +225,8 @@ class GameContainer: ObservableObject {
     }
   }
 
-  func stop() {
-    print("STOP!")
+  func stop() async {
+    print("STOP!", client)
+    try? await client?.write(.quit)
   }
 }

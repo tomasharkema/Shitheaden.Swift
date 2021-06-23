@@ -23,7 +23,7 @@ public struct RenderPosition: Equatable {
 
   public static let allCases: [RenderPosition] = [.noord, .oost, .zuid, .west]
 
-  public static let hand = zuid.down(n: 5).right(n: -5)
+  public static let hand = input.down(n: -3)
 
   public let x: Int
   public let y: Int

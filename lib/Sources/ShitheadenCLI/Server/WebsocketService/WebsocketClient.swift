@@ -16,9 +16,13 @@ import ShitheadenShared
 class WebsocketClient: Client {
   private let context: ChannelHandlerContext
   let handler: WebSocketServerHandler
-  let quit: EventHandler<Void>
-  let data: EventHandler<ServerRequest>
+
+//  let quitHandler: EventHandler<Void>
+//  let dataHandler: EventHandler<ServerRequest>
   let games: AtomicDictionary<String, MultiplayerHandler>
+
+  let quit: EventHandler<Void>.ReadOnly
+  let data: EventHandler<ServerRequest>.ReadOnly
 
   init(
     context: ChannelHandlerContext,
@@ -29,9 +33,15 @@ class WebsocketClient: Client {
   ) {
     self.context = context
     self.handler = handler
-    self.quit = quit
-    self.data = data
+    self.quit = quit.readOnly
+    self.data = data.readOnly
     self.games = games
+
+    data.on {
+      if case .quit = $0 {
+        quit.emit(())
+      }
+    }
   }
 
   func start() async {
@@ -52,9 +62,7 @@ class WebsocketClient: Client {
         return try await startSinglePlayer()
 
       case .quit:
-        //        await onQuit.emit(())
-        context.close()
-
+        print("GOT QUIT!!!!")
       case .startGame:
         print("OJOO!")
 
