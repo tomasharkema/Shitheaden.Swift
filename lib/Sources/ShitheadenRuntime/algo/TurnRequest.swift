@@ -49,7 +49,7 @@ extension TurnRequest {
       return e
 
     case .tableOpen:
-      let actions = handCards.unobscure()
+      let actions = openTableCards.unobscure()
         .filter { h in lastTableCard?.number.afters.contains { $0 == h.number } ?? true }
         .map { Turn.play([$0]) }
       if actions.isEmpty {
