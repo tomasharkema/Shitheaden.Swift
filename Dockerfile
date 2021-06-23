@@ -22,6 +22,7 @@ RUN apt-get update -y && apt-get install -y git curl libatomic1 libxml2 netcat-o
 
 COPY lib/Package.swift ./Package.swift
 COPY lib/Sources ./Sources
+COPY lib/Tests ./Tests
 
 RUN swift build -v -c release
 
