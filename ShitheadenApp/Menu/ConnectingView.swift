@@ -23,23 +23,26 @@ class Connecting: ObservableObject {
   let websocket = WebSocketClient()
   @Published var connection: ConnectionState = .connecting
 
+  var id: UUID?
+
   func start() {
     print("START")
     async {
       do {
         websocket.setOnConnected { connection in
           print("setOnConnected")
-
-          connection.onQuit.append {
+          async {
+          await connection.quit.on {
             self.connection = .gameNotFound
           }
 
-          connection.onData.append { d in
+             self.id = await connection.data.on { d in
             async {
               await MainActor.run {
                 self.onData(d)
               }
             }
+          }
           }
         }
 
@@ -147,7 +150,7 @@ struct ConnectingView: View {
         }
       }
       if case .gameSnapshot = connection.connection { } else {
-        Button("Cancel", action: {
+        Button("Annuleren", action: {
           state = nil
         })
       }

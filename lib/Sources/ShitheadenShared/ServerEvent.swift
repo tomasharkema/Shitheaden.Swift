@@ -7,11 +7,22 @@
 
 import Foundation
 
-public enum ServerError: Equatable, Codable {
+public enum ServerError: LocalizedError, Equatable, Codable {
   case text(text: String)
   case playerError(error: PlayerError)
 
   case gameNotFound(code: String)
+
+  public var errorDescription: String? {
+    switch self {
+    case .text(let text):
+      return text
+    case .playerError(let error):
+      return error.errorDescription
+    case .gameNotFound(let code):
+      return "\(code) is niet gevonden"
+    }
+  }
 }
 
 public enum ServerEvent: Equatable, Codable {

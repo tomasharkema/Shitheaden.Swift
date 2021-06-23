@@ -13,9 +13,9 @@ import NIOWebSocket
 import ShitheadenRuntime
 
 actor Server {
-  let games: AtomicDictonary<String, MultiplayerHandler>
+  let games: AtomicDictionary<String, MultiplayerHandler>
 
-  init(games: AtomicDictonary<String, MultiplayerHandler>) {
+  init(games: AtomicDictionary<String, MultiplayerHandler>) {
     self.games = games
   }
 

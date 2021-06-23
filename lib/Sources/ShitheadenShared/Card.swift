@@ -49,14 +49,6 @@ public extension Array where Element == Card {
     }
   }
 
-//  func sortSymbol() -> [Card] {
-//    let enumerated = Symbol.allCases.enumerated()
-//    return sorted { l, r in
-//      (enumerated.first { $0.element == l.symbol }?.offset ?? 100) <
-//        (enumerated.first { $0.element == r.symbol }?.offset ?? 100)
-//    }
-//  }
-
   func sameNumber() -> Bool {
     return !contains {
       $0.number != first?.number

@@ -10,6 +10,7 @@ import NIO
 import NIOHTTP1
 import NIOWebSocket
 import ShitheadenShared
+//import NIOSSL
 
 // The HTTP handler to be used to initiate the request.
 // This initial request will be adapted by the WebSocket upgrader to contain the upgrade header parameters.
@@ -75,28 +76,90 @@ private final class HTTPInitialRequestHandler: ChannelInboundHandler, RemovableC
   }
 }
 
-// The web socket handler to be used once the upgrade has occurred.
-// One added, it sends a ping-pong round trip with "Hello World" data.
-// It also listens for any text frames from the server and prints them.
+public class EventHandler<T> {
+  var events = [T]()
+  var dataHandlers = AtomicDictionary<UUID, (T) async -> Void>()
+
+  public init() {}
+
+  public func removeOnDataHandler(id: UUID?) {
+    if let id = id {
+      async {
+        await dataHandlers.insert(id, value: nil)
+      }
+    }
+  }
+
+  public func once(_ fn: @escaping (T) async -> Void) {
+    let uuid = UUID()
+    var hasSend = false
+    let f = { (el: T) in
+      if !hasSend {
+        hasSend = true
+        await fn(el)
+      }
+    }
+    DispatchQueue.global().async {
+      async {
+        await self.dataHandlers.insert(uuid, value: f)
+      }
+    }
+  }
+
+  public func on(_ fn: @escaping (T) async -> Void) -> UUID {
+    events.forEach { el in
+      DispatchQueue.global().async {
+        async {
+          await fn(el)
+        }
+      }
+    }
+
+    events = []
+    
+    let uuid = UUID()
+    async {
+      await dataHandlers.insert(uuid, value: fn)
+    }
+    return uuid
+  }
+
+  public func emit(_ v: T) {
+    async {
+      if await dataHandlers.isEmpty() {
+        events.append(v)
+      }
+      await dataHandlers.values().forEach { fn in
+        DispatchQueue.global().async {
+        async  {
+          await fn(v)
+        }
+        }
+      }
+    }
+  }
+
+  public func once() async -> T {
+    return await withCheckedContinuation { g in
+      self.once { d in
+        g.resume(returning: d)
+      }
+    }
+  }
+}
 
 public final class WebSocketHandler: ChannelInboundHandler {
   public typealias InboundIn = WebSocketFrame
   public typealias OutboundOut = WebSocketFrame
 
-  public var onQuit = [() -> Void]()
-  public var onData = [(ServerEvent) -> Void]()
+  public var quit = EventHandler<Void>()
+  public var data = EventHandler<ServerEvent>()
   public private(set) var write: ((ServerRequest) async -> Void)!
 
 //  private var context: ChannelHandlerContext!
 
   init() {
     print("INIT!")
-  }
-
-  func callOnQuit() {
-    for onQuit in onQuit {
-      onQuit()
-    }
   }
 
   // This is being hit, channel active won't be called as it is already added.
@@ -145,10 +208,9 @@ public final class WebSocketHandler: ChannelInboundHandler {
       do {
         let object = try JSONDecoder().decode(ServerEvent.self, from: Data(text))
 
-        for onData in onData {
-          onData(object)
+        async {
+        await self.data.emit(object)
         }
-
       } catch {
         print(error)
       }
@@ -186,10 +248,9 @@ public final class WebSocketHandler: ChannelInboundHandler {
   }
 
   private func closeOnError(context: ChannelHandlerContext) {
-    for onQuit in onQuit {
-      onQuit()
+    async {
+      await quit.emit(())
     }
-
     // We have hit an error, we want to close. We do that by sending a close frame and then
     // shutting down the write side of the connection. The server will respond with a close of its own.
     var data = context.channel.allocator.buffer(capacity: 2)
@@ -235,11 +296,23 @@ public class WebSocketClient {
     async {
       let handler = WebSocketHandler()
 
+
+//      let configuration = TLSConfiguration.clientDefault
+//      let sslContext = try NIOSSLContext(configuration: configuration)
+
+
       let group = MultiThreadedEventLoopGroup(numberOfThreads: 1)
       let bootstrap = ClientBootstrap(group: group)
+      
         // Enable SO_REUSEADDR.
         .channelOption(ChannelOptions.socket(SocketOptionLevel(SOL_SOCKET), SO_REUSEADDR), value: 1)
         .channelInitializer { channel in
+
+//          do {
+//            channel.pipeline.addHandler(try NIOSSLClientHandler(context: sslContext, serverHostname: "shitheaden-api.harkema.io"))
+//          } catch {
+//            print(error)
+//          }
 
           let httpHandler = HTTPInitialRequestHandler()
 
@@ -266,7 +339,8 @@ public class WebSocketClient {
           }
         }
 
-      let channel = try bootstrap.connect(host: "192.168.1.76", port: 3338).wait()
+//      let channel = try bootstrap.connect(host: "shitheaden-api.harkema.io", port: 443).wait()
+        let channel = try bootstrap.connect(host: "192.168.1.102", port: 3338).wait()
       print("CONNECTION!")
       connection = handler
       task = async {
@@ -274,7 +348,7 @@ public class WebSocketClient {
           try! group.syncShutdownGracefully()
         }
         try channel.closeFuture.wait()
-        handler.callOnQuit()
+        await handler.quit.emit(())
         connection = nil
         print("Client closed")
       }

@@ -28,7 +28,7 @@ struct GameView: View {
               PlayerView(
                 player: player,
                 orientation: .horizontal,
-                playerOnTurn: player.id == game.gameSnapshot?.playerOnTurn
+                playerOnTurn: game.gameSnapshot?.playersOnTurn.contains(player.id) ?? false
               )
             }
             Spacer()
@@ -37,7 +37,7 @@ struct GameView: View {
                 PlayerView(
                   player: player,
                   orientation: .vertical,
-                  playerOnTurn: player.id == game.gameSnapshot?.playerOnTurn
+                  playerOnTurn: game.gameSnapshot?.playersOnTurn.contains(player.id) ?? false
                 )
               }
 
@@ -47,7 +47,7 @@ struct GameView: View {
                 PlayerView(
                   player: player,
                   orientation: .vertical,
-                  playerOnTurn: player.id == game.gameSnapshot?.playerOnTurn
+                  playerOnTurn: game.gameSnapshot?.playersOnTurn.contains(player.id) ?? false
                 )
               }
             }
@@ -57,7 +57,7 @@ struct GameView: View {
               PlayerView(
                 player: player,
                 orientation: .horizontal,
-                playerOnTurn: player.id == game.gameSnapshot?.playerOnTurn
+                playerOnTurn: game.gameSnapshot?.playersOnTurn.contains(player.id) ?? false
               )
             }
           }
@@ -83,7 +83,8 @@ struct GameView: View {
             error: game.error,
             cards: game.localCards,
             selectedCards: game.selectedCards,
-            isOnSet: game.isOnSet, canPass: game.canPass,
+            isOnTurn: game.isOnTurn,
+            canPass: game.canPass,
             playClosedCard: { i in
               game.playClosedCard(i)
             }, select: {

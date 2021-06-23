@@ -17,7 +17,8 @@ public final actor Game {
   var turns = [(String, Turn)]()
   let rules = Rules.all
   var slowMode = false
-  var playerOnTurn: UUID?
+  var playersOnTurn = Set<UUID>()
+  var playerAndError = [UUID: PlayerError]()
 
   public init(
     players: [Player],
@@ -58,7 +59,8 @@ public final actor Game {
         algoName: player.ai.algoName,
         done: player.done,
         position: player.position,
-        isObscured: obscure
+        isObscured: obscure,
+        playerError: nil
       )
     } else {
       return TurnRequest(
@@ -74,7 +76,8 @@ public final actor Game {
         algoName: player.ai.algoName,
         done: player.done,
         position: player.position,
-        isObscured: obscure
+        isObscured: obscure,
+        playerError: playerAndError[player.id]
       )
     }
   }
@@ -87,7 +90,7 @@ public final actor Game {
       },
       tableCards: .init(open: table, limit: 5),
       burntCards: burnt.map { .hidden(id: $0.id) },
-      playerOnTurn: playerOnTurn ?? UUID(),
+      playersOnTurn: playersOnTurn,
       winner: winner.map { getPlayerSnapshot(false, player: $0) }
     )
   }
@@ -134,16 +137,18 @@ public final actor Game {
       algoName: player.ai.algoName,
       done: player.done,
       position: player.position,
-      isObscured: false
+      isObscured: false,
+      playerError: previousError
     )
 
-    playerOnTurn = player.id
+    playersOnTurn.insert(player.id)
+    defer { playersOnTurn.remove(player.id) }
 
     await sendRender(error: previousError)
 
     do {
       let (card1, card2, card3) = try await player.ai
-        .beginMove(request: req, previousError: previousError)
+        .beginMove(request: req)
 
       // verify turn
       if [card1, card2, card3].contains(where: {
@@ -152,6 +157,8 @@ public final actor Game {
         throw PlayerError.cardNotInHand
       }
 
+      playerAndError[player.id] = nil
+      
       player.handCards.remove(at: player.handCards.firstIndex(of: card1)!)
       player.handCards.remove(at: player.handCards.firstIndex(of: card2)!)
       player.handCards.remove(at: player.handCards.firstIndex(of: card3)!)
@@ -175,8 +182,7 @@ public final actor Game {
 
   private func sendRender(error: PlayerError?) async {
     for player in players {
-      let error = player.id == playerOnTurn ? error : nil
-      await player.ai.render(snapshot: getSnapshot(for: player.id), error: error)
+      await player.ai.render(snapshot: getSnapshot(for: player.id))
     }
   }
 
@@ -205,8 +211,10 @@ public final actor Game {
       algoName: player.ai.algoName,
       done: player.done,
       position: player.position,
-      isObscured: false
+      isObscured: false,
+      playerError: previousError
     )
+
     if slowMode {
       let userPlayer = players.first { $0.ai.algoName.isUser }
       if !(userPlayer?.done ?? true) {
@@ -214,12 +222,13 @@ public final actor Game {
       }
     }
 
-    playerOnTurn = player.id
+    playersOnTurn.insert(player.id)
+    defer { playersOnTurn.remove(player.id) }
 
     await sendRender(error: previousError)
 
     do {
-      let turn = try await player.ai.move(request: req, previousError: previousError)
+      let turn = try await player.ai.move(request: req)
 
       do {
         try turn.verify()
@@ -272,7 +281,7 @@ public final actor Game {
       }
 
       player.turns.append(turn)
-
+      playerAndError[player.id] = nil
       switch turn {
       case let .closedCardIndex(index):
         if player.phase == .tableClosed {
@@ -415,26 +424,19 @@ public final actor Game {
   }
 
   func beginRound() async {
-//    return await withTaskGroup(of: Void.self, returning: Void.self, body: { obj in
-//      for (index, player) in enumer {
-//      }
-//      return ()
-//    })
-//    return await withTaskGroup(of: Void.self) { g in
-    for (index, player) in await players.enumerated() {
-//        g.async {
-      let newPlayer = await commitBeginTurn(
-        playerIndex: index,
-        player: player,
-        numberCalled: 0,
-        previousError: nil
-      )
-      async {
-        await self.updatePlayer(player: newPlayer)
-        try! await self.checkIntegrity()
-        await self.sendRender(error: nil)
-//          }
-//        }
+    return await withTaskGroup(of: Void.self) { g in
+      for (index, player) in players.enumerated() {
+        g.async {
+          let newPlayer = await self.commitBeginTurn(
+            playerIndex: index,
+            player: player,
+            numberCalled: 0,
+            previousError: nil
+          )
+          await self.updatePlayer(player: newPlayer)
+          try! await self.checkIntegrity()
+          await self.sendRender(error: nil)
+        }
       }
     }
   }

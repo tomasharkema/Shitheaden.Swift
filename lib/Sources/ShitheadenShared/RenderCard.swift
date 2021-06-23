@@ -24,6 +24,15 @@ public enum RenderCard: Equatable, Hashable, Codable, Comparable {
     }
   }
 
+  public var hidden: UUID? {
+    switch self {
+    case let .hidden(id):
+      return id
+    case .card:
+      return nil
+    }
+  }
+
   public static func < (lhs: RenderCard, rhs: RenderCard) -> Bool {
     switch (lhs, rhs) {
     case let (.card(l), .card(r)):

@@ -11,6 +11,8 @@ import ShitheadenRuntime
 import ShitheadenShared
 import SwiftUI
 
+
+
 @MainActor
 class GameContainer: ObservableObject {
   private var appInput: AppInputUserInputAI?
@@ -21,7 +23,7 @@ class GameContainer: ObservableObject {
   @Published var localCards = [RenderCard]()
   @Published var localPhase: Phase?
   @Published var localClosedCards = [RenderCard]()
-  @Published var isOnSet = false
+  @Published var isOnTurn = false
   @Published var canPass = false
 
   private(set) var beginMoveHandler: (((Card, Card, Card)) async -> Void)?
@@ -33,8 +35,10 @@ class GameContainer: ObservableObject {
     await start()
   }
 
+  var onDataId: UUID?
   func startOnline(_ handler: WebSocketHandler) async {
-    handler.onData.append { ob in
+    await handler.data.removeOnDataHandler(id: onDataId)
+    onDataId = await handler.data.on { ob in
       async {
         await MainActor.run {
           self.handleOnlineObject(ob, handler: handler)
@@ -51,25 +55,27 @@ class GameContainer: ObservableObject {
     case let .multiplayerEvent(multiplayerEvent):
       switch multiplayerEvent {
       case let .error(error):
-        self.error = "\(error)"
+        self.error = error.localizedDescription
 
       case .action(.requestBeginTurn):
-        isOnSet = true
-        canPass = true
+        isOnTurn = true
+        canPass = false
 
         moveHandler = nil
         beginMoveHandler = {
           print($0)
+          self.isOnTurn = false
           await handler.write(.multiplayerRequest(.concreteCards([$0.0, $0.1, $0.2])))
         }
 
       case .action(action: .requestNormalTurn):
-        isOnSet = true
-        canPass = false
+        isOnTurn = true
+        canPass = true
 
         beginMoveHandler = nil
         moveHandler = {
           print($0)
+          self.isOnTurn = false
           await handler.write(.multiplayerRequest(.concreteTurn($0)))
         }
 
@@ -79,7 +85,8 @@ class GameContainer: ObservableObject {
       case let .gameSnapshot(snapshot):
         handle(snapshot: snapshot)
       }
-
+    case .error(let error):
+      self.error = error.localizedDescription
     default:
       print("DERP \(ob)")
     }
@@ -100,6 +107,8 @@ class GameContainer: ObservableObject {
       localCards = []
     }
 
+    isOnTurn = snapshot.playersOnTurn.contains(localPlayer.id)
+
     gameSnapshot = snapshot
   }
 
@@ -111,13 +120,13 @@ class GameContainer: ObservableObject {
     let appInput = AppInputUserInputAI(
       beginMoveHandler: { h in
         await MainActor.run {
-          self.isOnSet = true
+          self.isOnTurn = true
           self.canPass = false
           self.beginMoveHandler = h
         }
       }, moveHandler: { h in
         await MainActor.run {
-          self.isOnSet = true
+          self.isOnTurn = true
           self.canPass = true
           self.moveHandler = h
         }
@@ -188,7 +197,7 @@ class GameContainer: ObservableObject {
           selectedCards.dropFirst().first!.card!,
           selectedCards.dropFirst().dropFirst().first!.card!
         ))
-        isOnSet = false
+        isOnTurn = false
         self.beginMoveHandler = nil
       } else if let moveHandler = moveHandler {
         error = nil
@@ -197,7 +206,7 @@ class GameContainer: ObservableObject {
         } else {
           await moveHandler(.pass)
         }
-        isOnSet = false
+        isOnTurn = false
         self.moveHandler = nil
       } else {
         return

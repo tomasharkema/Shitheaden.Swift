@@ -52,15 +52,15 @@ extension TurnRequest {
 
 public extension Number {
   var ansi: String {
-    switch self {
-    case .gold:
-      return ANSIEscapeCode.Decoration.textColor(.lightYellow) + "G"
-    case .silver:
-      return ANSIEscapeCode.Decoration.textColor(.lightWhite) + "S"
-    case .bronze:
-      return ANSIEscapeCode.Decoration.textColor(.lightRed) + "B"
-    default:
+//    switch self {
+//    case .gold:
+//      return ANSIEscapeCode.Decoration.textColor(.lightYellow) + "G"
+//    case .silver:
+//      return ANSIEscapeCode.Decoration.textColor(.lightWhite) + "S"
+//    case .bronze:
+//      return ANSIEscapeCode.Decoration.textColor(.lightRed) + "B"
+//    default:
       return string
-    }
+//    }
   }
 }

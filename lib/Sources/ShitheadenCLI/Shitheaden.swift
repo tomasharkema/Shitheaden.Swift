@@ -63,7 +63,7 @@ struct Shitheaden: ParsableCommand {
   #endif
 
   private func startServer() async {
-    let games = AtomicDictonary<String, MultiplayerHandler>()
+    let games = AtomicDictionary<String, MultiplayerHandler>()
     async {
       do {
         print("START! websocket")
@@ -122,11 +122,14 @@ extension UserInputAIJson {
     print: @escaping (String) async -> Void,
     read: @escaping () async -> String
   ) -> UserInputAIJson {
-    return UserInputAIJson(id: id, reader: { _ in
+    return UserInputAIJson(id: id, reader: { q, error in
       await print(ANSIEscapeCode.Cursor.showCursor + ANSIEscapeCode.Cursor.position(
         row: RenderPosition.input.y + 1,
         column: 0
       ))
+      if let error = error {
+        await print(Renderer.error(error: error))
+      }
       let input = await read()
       await print(ANSIEscapeCode.Cursor.hideCursor)
       let inputs = input.split(separator: ",").map {
@@ -140,8 +143,8 @@ extension UserInputAIJson {
       }
 
       return .cardIndexes(inputs.map { $0! })
-    }, renderHandler: { game, error in
-      await print(Renderer.render(game: game, error: error))
+    }, renderHandler: { game in
+      await print(Renderer.render(game: game))
     })
   }
 }

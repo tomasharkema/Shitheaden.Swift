@@ -11,10 +11,9 @@ public actor CardRankingAlgo: GameAi {
   private var passes = 0
   public required init() {}
 
-  public func render(snapshot _: GameSnapshot, error _: PlayerError?) async {}
+  public func render(snapshot _: GameSnapshot) async {}
 
-  public func beginMove(request: TurnRequest,
-                        previousError _: PlayerError?) async -> (Card, Card, Card)
+  public func beginMove(request: TurnRequest) async -> (Card, Card, Card)
   {
     let putOnTable = request.handCards.unobscure().map {
       ($0, $0.number.importanceScore)
@@ -31,7 +30,7 @@ public actor CardRankingAlgo: GameAi {
     )
   }
 
-  public func move(request: TurnRequest, previousError _: PlayerError?) async -> Turn {
+  public func move(request: TurnRequest) async -> Turn {
     passes += 1
 //    print("PASSES: ", passes)
 

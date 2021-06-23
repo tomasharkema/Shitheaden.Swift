@@ -13,9 +13,9 @@ import ShitheadenShared
 import SwiftSocket
 
 class TelnetServer {
-  let games: AtomicDictonary<String, MultiplayerHandler>
+  let games: AtomicDictionary<String, MultiplayerHandler>
 
-  init(games: AtomicDictonary<String, MultiplayerHandler>) {
+  init(games: AtomicDictionary<String, MultiplayerHandler>) {
     self.games = games
   }
 
@@ -67,9 +67,10 @@ class TelnetServer {
           name: "Zuid (JIJ)",
           position: .zuid,
           ai: UserInputAIJson.cli(id: id, print: {
-            await client.send(string: $0)
+            client.send(string: $0)
           }, read: {
-            await client.read()
+            print("READ!")
+            return await client.read()
           })
         ),
       ], slowMode: true
@@ -187,10 +188,13 @@ extension TCPClient {
 
 class TelnetClient: Client {
   let client: TCPClient
-  var onQuit = [() async -> Void]()
+  let onQuit = EventHandler<()>()
+  let onRead = EventHandler<ServerRequest>()
 
   init(client: TCPClient) {
     self.client = client
+
+    async { try await read() }
   }
 
   func send(_ event: ServerEvent) async {
@@ -202,7 +206,7 @@ class TelnetClient: Client {
       client.send(string: string)
 
     case let .multiplayerEvent(.gameSnapshot(snapshot)):
-      client.send(string: await Renderer.render(game: snapshot, error: nil))
+      client.send(string: await Renderer.render(game: snapshot))
 
     case .waiting:
       client.send(string: """
@@ -249,21 +253,19 @@ class TelnetClient: Client {
       ))
 
     case .quit:
-      for onQuit in onQuit {
-        await onQuit()
-      }
+      await onQuit.emit(())
       return client.close()
     }
   }
 
-  func read() async throws -> ServerRequest {
-    client.send(string: ANSIEscapeCode.Cursor.showCursor + ANSIEscapeCode.Cursor.position(
-      row: RenderPosition.input.y + 2,
-      column: 0
-    ))
+  private func read() async throws -> ServerRequest {
+//    client.send(string: ANSIEscapeCode.Cursor.showCursor + ANSIEscapeCode.Cursor.position(
+//      row: RenderPosition.input.y + 2,
+//      column: 0
+//    ))
 
     let input: String = await client.read()
-    client.send(string: ANSIEscapeCode.Cursor.hideCursor)
+//    client.send(string: ANSIEscapeCode.Cursor.hideCursor)
     let inputs = input.split(separator: ",").map {
       Int($0.trimmingCharacters(in: .whitespacesAndNewlines))
     }
@@ -271,9 +273,12 @@ class TelnetClient: Client {
 //      await renderHandler(RenderPosition.input.down(n: 1)
 //                            .cliRep + "Je moet p of een aantal cijfers invullen...")
 //      throw PlayerError(text: "Je moet p of een aantal cijfers invullen...")
-      return .multiplayerRequest(.string(input))
-    }
 
-    return .multiplayerRequest(.cardIndexes(inputs.map { $0! }))
+      await onRead.emit(.multiplayerRequest(.string(input)))
+      return try await read()
+//      return .multiplayerRequest(.string(input))
+    }
+    await onRead.emit(.multiplayerRequest(.cardIndexes(inputs.map { $0! })))
+    return try await read()
   }
 }

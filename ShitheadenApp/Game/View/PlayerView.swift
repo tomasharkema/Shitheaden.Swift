@@ -34,9 +34,7 @@ struct PlayerView: View {
             .offset(x: orientation == .vertical ? 5 : 0, y: orientation == .vertical ? 0 : -5)
           )
 
-          if !player.algoName.isUser {
-            CardStackView(cards: player.handCards, offset: 2)
-          }
+          CardStackView(cards: player.handCards, offset: 2)
         }
       }
       .padding()

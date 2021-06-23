@@ -21,6 +21,7 @@ public struct TurnRequest: Equatable, Codable {
   public let done: Bool
   public let position: Position
   public let isObscured: Bool
+  public let playerError: PlayerError?
 
   public init(
     id: UUID, name: String,
@@ -34,7 +35,8 @@ public struct TurnRequest: Equatable, Codable {
     algoName: String,
     done: Bool,
     position: Position,
-    isObscured: Bool
+    isObscured: Bool,
+    playerError: PlayerError?
   ) {
     self.id = id
     self.name = name
@@ -49,5 +51,6 @@ public struct TurnRequest: Equatable, Codable {
     self.done = done
     self.position = position
     self.isObscured = isObscured
+    self.playerError = playerError
   }
 }

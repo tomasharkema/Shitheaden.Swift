@@ -61,7 +61,7 @@ extension MaxConcurrentJobs {
       current -= 1
       print("========== CONTINUE FUN OJOO less \(current) \(tasks.count)")
       if let task = tasks.first {
-        asyncDetached {
+        async {
           task.resume()
         }
         tasks.removeFirst()

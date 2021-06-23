@@ -5,7 +5,9 @@
 //  Created by Tomas Harkema on 15/06/2021.
 //
 
-public enum PlayerError: Error, Codable, Equatable {
+import Foundation
+
+public enum PlayerError: LocalizedError, Codable, Equatable {
   case notEmpty
   case cardsCount(Int)
   case sameNumber
@@ -26,7 +28,7 @@ public enum PlayerError: Error, Codable, Equatable {
   case unknown
   case debug(String)
 
-  public var text: String {
+  public var errorDescription: String? {
     switch self {
     case .notEmpty:
       return "Je moet een aantal kaarten spelen..."
@@ -71,9 +73,5 @@ public enum PlayerError: Error, Codable, Equatable {
     case let .debug(text):
       return text
     }
-  }
-
-  public var errorDescription: String? {
-    text
   }
 }

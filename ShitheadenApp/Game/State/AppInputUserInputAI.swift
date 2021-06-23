@@ -32,17 +32,17 @@ actor AppInputUserInputAI: GameAi {
     self.renderHandler = renderHandler
   }
 
-  func render(snapshot: GameSnapshot, error: PlayerError?) async {
-    if let e = error {
-      await errorHandler(e.text)
-    }
+  func render(snapshot: GameSnapshot) async {
+//    if let e = snap {
+//      await errorHandler(e.errorDescription ?? e.localizedDescription)
+//    }
 
     await renderHandler(snapshot)
   }
 
-  func beginMove(request _: TurnRequest, previousError: PlayerError?) async -> (Card, Card, Card) {
-    if let e = previousError {
-      await errorHandler(e.text)
+  func beginMove(request: TurnRequest) async -> (Card, Card, Card) {
+    if let e = request.playerError {
+      await errorHandler(e.errorDescription ?? e.localizedDescription)
     }
 
     return await withUnsafeContinuation { g in
@@ -54,9 +54,9 @@ actor AppInputUserInputAI: GameAi {
     }
   }
 
-  func move(request _: TurnRequest, previousError: PlayerError?) async -> Turn {
-    if let e = previousError {
-      await errorHandler(e.text)
+  func move(request: TurnRequest) async -> Turn {
+    if let e = request.playerError {
+      await errorHandler(e.errorDescription ?? e.localizedDescription)
     }
 
     return await withUnsafeContinuation { g in

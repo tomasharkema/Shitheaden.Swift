@@ -44,8 +44,8 @@ actor _UserInputAI: GameAi {
     self.renderHandler = renderHandler
   }
 
-  func render(snapshot: GameSnapshot, error: PlayerError?) async {
-    await renderHandler(Renderer.render(game: snapshot, error: error))
+  func render(snapshot: GameSnapshot) async {
+    await renderHandler(Renderer.render(game: snapshot))
   }
 
   private func parseInput(input: String) async -> [Int]? {
@@ -139,16 +139,14 @@ actor _UserInputAI: GameAi {
 //    }
   }
 
-  func move(request: TurnRequest, previousError: PlayerError?) async -> Turn {
-    if let previousError = previousError {
+  func move(request: TurnRequest) async throws -> Turn {
+    if let error = request.playerError {
       await renderHandler(RenderPosition.input
-        .down(n: -2) >>> previousError.text)
+        .down(n: -2) >>> (error.errorDescription ?? error.localizedDescription))
     }
-    do {
+
       return try await execute(request: request)
-    } catch {
-      return await move(request: request, previousError: error as? PlayerError ?? previousError)
-    }
+
 //    if let res = await execute(request: request) {
 //      return try await execute(request: request)
 //    } else {
@@ -166,15 +164,13 @@ actor _UserInputAI: GameAi {
     return request
   }
 
-  func beginMove(request: TurnRequest,
-                 previousError: PlayerError?) async throws -> (Card, Card, Card)
+  func beginMove(request: TurnRequest) async throws -> (Card, Card, Card)
   {
-    if let previousError = previousError {
+    if let error = request.playerError {
       await renderHandler(RenderPosition.input
-        .down(n: -2).cliRep + previousError.text)
+        .down(n: -2).cliRep + (error.errorDescription ?? error.localizedDescription))
     }
 
-    do {
       await renderHandler(RenderPosition.input
         .cliRep + "Selecteer drie kaarten voor je tafelkaarten...")
       await renderHandler(RenderPosition.input.down(n: 1).cliRep)
@@ -193,11 +189,5 @@ actor _UserInputAI: GameAi {
 
       return (cards[0], cards[1], cards[2])
 
-    } catch {
-      return try await beginMove(
-        request: request,
-        previousError: error as? PlayerError ?? previousError
-      )
-    }
   }
 }

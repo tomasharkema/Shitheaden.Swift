@@ -8,6 +8,7 @@
 import Foundation
 import ShitheadenRuntime
 import ShitheadenShared
+import ANSIEscapeCode
 
 extension TurnRequest {
   var renderPosition: RenderPosition {
@@ -27,10 +28,10 @@ extension TurnRequest {
 enum Renderer {
   static func error(error: PlayerError) -> String {
     return RenderPosition.input.down(n: 1)
-      .cliRep + error.text
+      .cliRep + (error.errorDescription ?? error.localizedDescription)
   }
 
-  static func render(game: GameSnapshot, error: PlayerError?) async -> String {
+  static func render(game: GameSnapshot) async -> String {
     let playersString: [String] = game.players.flatMap { player -> [String] in
       if !player.done {
         return [
@@ -51,7 +52,7 @@ enum Renderer {
     let hand = handString != nil ? RenderPosition.hand >>> "Hand: \(handString!)" : ""
 
     let status: String
-    if let userPlayer = userPlayer, game.playerOnTurn == userPlayer.id {
+    if let userPlayer = userPlayer, game.playersOnTurn.contains(userPlayer.id) {
       switch userPlayer.phase {
       case .hand:
         status = (RenderPosition.input.cliRep +
@@ -67,11 +68,12 @@ enum Renderer {
       status = ""
     }
 
-    let error = error.map {
-      RenderPosition.input.down(n: 1)
-        .cliRep + $0.text
-    } ?? "" // ?? RenderPosition.input.down(n: 1)
-//      .cliRep + "                                          "
+    let cursor: String = game.playersOnTurn.contains(userPlayer?.id ?? UUID()) ? ANSIEscapeCode.Cursor.showCursor + ANSIEscapeCode.Cursor.position(
+      row: RenderPosition.input.y + 2,
+      column: 0
+    ) : ANSIEscapeCode.Cursor.hideCursor
+
+    let errorString = userPlayer?.playerError.map { error(error: $0) } ?? ""
 
     let strings: [[String]] = [
       [
@@ -85,9 +87,9 @@ enum Renderer {
         RenderPosition.tafel.down(n: 1) >>> "\(game.tableCards.count)",
         hand,
         status,
-        error,
       ],
       playersString,
+      [errorString, cursor]
     ]
 
     return strings.joined().joined(separator: "\n")

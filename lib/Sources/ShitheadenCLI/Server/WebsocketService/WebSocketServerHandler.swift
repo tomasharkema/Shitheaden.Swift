@@ -17,16 +17,13 @@ final class WebSocketServerHandler: ChannelInboundHandler {
   typealias InboundIn = WebSocketFrame
   typealias OutboundOut = WebSocketFrame
 
-  let games: AtomicDictonary<String, MultiplayerHandler>
+  let games: AtomicDictionary<String, MultiplayerHandler>
 
-  init(games: AtomicDictonary<String, MultiplayerHandler>) {
+  init(games: AtomicDictionary<String, MultiplayerHandler>) {
     self.games = games
   }
 
   private var awaitingClose: Bool = false
-
-  private var handleData = [(ServerRequest) -> Void]()
-  private var onClose = [() -> Void]()
   private var game: Game?
   private var task: Task.Handle<Void, Never>?
 
@@ -43,9 +40,6 @@ final class WebSocketServerHandler: ChannelInboundHandler {
 
   public func channelRead(context: ChannelHandlerContext, data: NIOAny) {
     let frame = unwrapInboundIn(data)
-
-    print(frame)
-    print(frame.opcode)
 
     switch frame.opcode {
     case .connectionClose:
@@ -70,7 +64,7 @@ final class WebSocketServerHandler: ChannelInboundHandler {
       print(d)
       let sr = try! JSONDecoder().decode(ServerRequest.self, from: d.data(using: .utf8)!)
       print(sr)
-
+      print("READ!", context.name)
       handlers[context.name]?._onWrite(sr)
 
 
@@ -92,63 +86,9 @@ final class WebSocketServerHandler: ChannelInboundHandler {
     print("DEINIT!")
   }
 
-//  private func startGame(context: ChannelHandlerContext) {
-//    guard context.channel.isActive else { return }
-//
-//    // We can't send if we sent a close message.
-//    guard !awaitingClose else { return }
-//
-//    let id = UUID()
-//
-//    task = asyncDetached {
-//      let game = Game(players: [
-//        Player(
-//          name: "West (Unfair)",
-//          position: .west,
-//          ai: CardRankingAlgoWithUnfairPassing()
-//        ),
-//        Player(
-//          name: "Noord",
-//          position: .noord,
-//          ai: CardRankingAlgo()
-//        ),
-//        Player(
-//          name: "Oost",
-//          position: .oost,
-//          ai: CardRankingAlgo()
-//        ),
-//        Player(
-//          name: "Zuid (JIJ)",
-//          position: .zuid,
-//          ai: UserInputAIJson(id: id) { request in
-//            print("READ! UserInputAIJson")
-//            return await withUnsafeContinuation { g in
-//              send(.action(request))
-//              self.handleData = {
-//                g.resume(returning: $0)
-//                self.handleData = nil
-//              }
-//            }
-//          } renderHandler: { game, error in
-//            if let error = error {
-//              send(.error(.playerError(error)))
-//            }
-//            send(.render(game))
-//          }
-//        ),
-//      ], slowMode: true)
-//      self.game = game
-//      asyncDetached(priority: .background) {
-//        await game.startGame()
-//      }
-//    }
-//  }
-
   private func receivedClose(context: ChannelHandlerContext, frame: WebSocketFrame) {
-    for h in handlers[context.name]?.onQuit ?? [] {
-      async {
-        await h()
-      }
+    async {
+      await handlers[context.name]?.onQuit.emit(())
     }
 
     task?.cancel()
@@ -199,13 +139,14 @@ final class WebSocketServerHandler: ChannelInboundHandler {
 class WebsocketClient: Client {
   let context: ChannelHandlerContext
   let handler: WebSocketServerHandler
-  var onQuit = [() async -> Void]()
-  let games: AtomicDictonary<String, MultiplayerHandler>
+  let onQuit = EventHandler<()>()
+  let onRead = EventHandler<ServerRequest>()
+  let games: AtomicDictionary<String, MultiplayerHandler>
 
   init(
     context: ChannelHandlerContext,
     handler: WebSocketServerHandler,
-    games: AtomicDictonary<String, MultiplayerHandler>
+    games: AtomicDictionary<String, MultiplayerHandler>
   ) {
     self.context = context
     self.handler = handler
@@ -215,7 +156,7 @@ class WebsocketClient: Client {
   func start() async {
     await send(.requestMultiplayerChoice)
     
-    let choice: ServerRequest? = await read()
+    let choice: ServerRequest? = await onRead.once()
     switch choice {
     case let .joinMultiplayer(code):
       await joinGame(code: code)
@@ -229,9 +170,7 @@ class WebsocketClient: Client {
       return await startSinglePlayer()
 
     case .quit:
-      for onQuit in onQuit {
-        await onQuit()
-      }
+      await onQuit.emit(())
       context.close()
 
     case .startGame:
@@ -276,13 +215,16 @@ class WebsocketClient: Client {
           id: id,
           name: "Zuid (JIJ)",
           position: .zuid,
-          ai: UserInputAIJson(id: id, reader: { request in
-      return try await self.read().getMultiplayerRequest()
+          ai: UserInputAIJson(id: id, reader: { request, error in
+      if let error = error {
+        await self.send(.multiplayerEvent(multiplayerEvent: .error(error: error)))
+      }
+      return try await self.onRead.once().getMultiplayerRequest()
           }, renderHandler: {
             await self.send(.multiplayerEvent(multiplayerEvent: .gameSnapshot(snapshot: $0)))
-            if let error = $1 {
-              await self.send(.multiplayerEvent(multiplayerEvent: .error(error: error)))
-            }
+//            if let error = $1 {
+//              await self.send(.multiplayerEvent(multiplayerEvent: .error(error: error)))
+//            }
           })
         ),
       ], slowMode: true
@@ -314,7 +256,9 @@ class WebsocketClient: Client {
           let frame = WebSocketFrame(fin: true, opcode: .binary, data: buffer)
           self.context.writeAndFlush(self.handler.wrapOutboundOut(frame)).whenComplete {
             print($0)
-            g.resume()
+            asyncDetached {
+              g.resume()
+            }
           }
         } catch {
           print(error)
@@ -323,21 +267,9 @@ class WebsocketClient: Client {
     }
   }
 
-  private var consume = [UUID: (ServerRequest) -> Void]()
   func _onWrite(_ ev: ServerRequest) {
-//    consume?(ev)
-    for c in consume {
-      c.value(ev)
-    }
-  }
-
-  func read() async -> ServerRequest {
-    let id = UUID()
-    return await withUnsafeContinuation { g in
-      consume[id] = {
-        g.resume(returning: $0)
-        self.consume[id] = nil
-      }
+    async {
+        await onRead.emit(ev)
     }
   }
 }

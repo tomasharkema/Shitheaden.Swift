@@ -10,8 +10,8 @@ import ShitheadenShared
 
 actor UserInputAIJson: GameAi {
   let id: UUID
-  let reader: (Action) async throws -> MultiplayerRequest
-  let renderHandler: (GameSnapshot, PlayerError?) async -> Void
+  let reader: (Action, PlayerError?) async throws -> MultiplayerRequest
+  let renderHandler: (GameSnapshot) async -> Void
 
   required init() {
     fatalError()
@@ -19,23 +19,22 @@ actor UserInputAIJson: GameAi {
 
   init(
     id: UUID,
-    reader: @escaping ((Action) async throws -> MultiplayerRequest),
-    renderHandler: @escaping ((GameSnapshot, PlayerError?) async -> Void)
+    reader: @escaping ((Action, PlayerError?) async throws -> MultiplayerRequest),
+    renderHandler: @escaping ((GameSnapshot) async -> Void)
   ) {
     self.id = id
     self.reader = reader
     self.renderHandler = renderHandler
   }
 
-  func render(snapshot: GameSnapshot, error: PlayerError?) async {
-    await renderHandler(snapshot, error)
+  func render(snapshot: GameSnapshot) async {
+    await renderHandler(snapshot)
   }
 
-  func beginMove(request: TurnRequest,
-                 previousError _: PlayerError?) async throws -> (Card, Card, Card)
+  func beginMove(request: TurnRequest) async throws -> (Card, Card, Card)
   {
 //    do {
-    let string = try await reader(.requestBeginTurn)
+    let string = try await reader(.requestBeginTurn, request.playerError)
 
     switch string {
     case let .cardIndexes(cards):
@@ -47,11 +46,13 @@ actor UserInputAIJson: GameAi {
       let card2 = hand[cards[1] - 1]
       let card3 = hand[cards[2] - 1]
 
+      print("CONCRETE CARDS", (card1, card2, card3))
       return (card1, card2, card3)
     case let .concreteCards(cards):
       guard cards.count == 3 else {
         throw PlayerError.cardsCount(3)
       }
+      print("CONCRETE CARDS", (cards[0], cards[1], cards[2]))
       return (cards[0], cards[1], cards[2])
 
     default:
@@ -59,9 +60,9 @@ actor UserInputAIJson: GameAi {
     }
   }
 
-  func move(request: TurnRequest, previousError _: PlayerError?) async throws -> Turn {
+  func move(request: TurnRequest) async throws -> Turn {
 //    do {
-    let string = try await reader(.requestNormalTurn)
+    let string = try await reader(.requestNormalTurn, request.playerError)
 
     let turn: Turn
     switch string {
@@ -110,13 +111,13 @@ actor UserInputAIJson: GameAi {
         }.map { $0.element }))
       }
 
-    case let .concreteTurn(turn):
-      return turn
+    case let .concreteTurn(t):
+      turn = t
 
     default:
       throw PlayerError.debug("Only string or cardIndexes or turn permitted")
     }
-
+    print("TURN", turn)
     return turn
 //    } catch {
 //      return try await move(request: request, previousError: (error as? PlayerError) ?? previousError)

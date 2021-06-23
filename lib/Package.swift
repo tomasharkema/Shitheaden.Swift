@@ -30,6 +30,7 @@ let package = Package(
     ),
     .package(url: "https://github.com/tomasharkema/SwiftSocket", branch: "master"),
     .package(url: "https://github.com/apple/swift-nio", from: "2.29.0"),
+    .package(url: "https://github.com/apple/swift-nio-ssl", from: "2.13.1"),
     .package(url: "https://github.com/flintprocessor/ANSIEscapeCode", branch: "master"),
   ],
   targets: [
@@ -46,6 +47,7 @@ let package = Package(
         .product(name: "NIO", package: "swift-nio"),
         .product(name: "NIOHTTP1", package: "swift-nio"),
         .product(name: "NIOWebSocket", package: "swift-nio"),
+
       ],
       path: "./Sources/ShitheadenCLI",
       swiftSettings: [
@@ -65,6 +67,7 @@ let package = Package(
         .product(name: "NIO", package: "swift-nio"),
         .product(name: "NIOHTTP1", package: "swift-nio"),
         .product(name: "NIOWebSocket", package: "swift-nio"),
+        .product(name: "NIOSSL", package: "swift-nio-ssl")
       ],
       swiftSettings: [
         .unsafeFlags([

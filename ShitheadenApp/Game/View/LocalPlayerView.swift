@@ -14,7 +14,7 @@ struct LocalPlayerView: View {
   let error: String?
   let cards: [RenderCard]
   let selectedCards: Set<RenderCard>
-  let isOnSet: Bool
+  let isOnTurn: Bool
   let canPass: Bool
 
   let playClosedCard: (Int) -> Void
@@ -59,7 +59,9 @@ struct LocalPlayerView: View {
           Button(action: {
             play()
           }, label: {
-            if selectedCards.count > 0 {
+            if !isOnTurn {
+              Text("Wacht op beurt").disabled(true)
+            } else if selectedCards.count > 0 {
               Text("SPEEL!")
             } else if canPass {
               Text("PAS!")
@@ -67,8 +69,8 @@ struct LocalPlayerView: View {
               Text("SPEEL!").disabled(true)
             }
           })
-            .disabled(!isOnSet)
-            .onChange(of: isOnSet, perform: {
+            .disabled(!isOnTurn)
+            .onChange(of: isOnTurn, perform: {
               if $0 {
                 let impactHeavy = UIImpactFeedbackGenerator(style: .light)
                 impactHeavy.impactOccurred()

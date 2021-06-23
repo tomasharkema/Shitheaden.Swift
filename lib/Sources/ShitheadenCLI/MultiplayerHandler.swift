@@ -10,9 +10,10 @@ import ShitheadenRuntime
 import ShitheadenShared
 
 protocol Client: AnyObject {
-  var onQuit: [() async -> Void] { get set }
+  var onQuit: EventHandler<()> { get }
+  var onRead: EventHandler<ServerRequest> { get }
+
   func send(_ event: ServerEvent) async
-  func read() async throws -> ServerRequest
 }
 
 actor MultiplayerHandler {
@@ -50,8 +51,7 @@ actor MultiplayerHandler {
   nonisolated func waitForStart() async {
     await challenger.1.send(.codeCreate(code: code))
 
-    do {
-      let r = try await challenger.1.read()
+      let r = await challenger.1.onRead.once()
       guard case let .multiplayerRequest(read) = r, let string = read.string,
             string.contains("start")
       else {
@@ -60,39 +60,39 @@ actor MultiplayerHandler {
 
       await send(.start)
 
-      await startMultiplayerGame()
-    } catch {
-      print(error)
-      return await waitForStart()
-    }
-//    promise.resolve()
+      print(await startMultiplayerGame())
   }
 
   nonisolated func finished() async {
     _ = await finshedTask.getResult()
   }
 
-  private func startMultiplayerGame() async {
-    await challenger.1.onQuit.append {
-      await self.send(.quit)
+  private func startMultiplayerGame() async -> GameSnapshot {
+    _ = challenger.1.onQuit.on {
+        await self.send(.quit)
     }
-    for player in await competitors {
-      player.1.onQuit.append {
+    
+    for player in competitors {
+      _ = player.1.onQuit.on {
         await self.send(.quit)
       }
     }
 
-    let initiatorAi = UserInputAIJson(id: challenger.0) { request in
+    let initiatorAi = UserInputAIJson(id: challenger.0) { request, error in
       print("READ! startMultiplayerGame", request)
+      if let error = error {
+        await self.challenger.1.send(.multiplayerEvent(multiplayerEvent: .error(error: error)))
+      }
       await self.challenger.1.send(.multiplayerEvent(multiplayerEvent: .action(action: request)))
-      return try await self.challenger.1.read().getMultiplayerRequest()
-    } renderHandler: { game, error in
+      return try await self.challenger.1.onRead.once().getMultiplayerRequest()
+    } renderHandler: { game in
+      print("READ! renderHandler")
       _ = await self.challenger.1
         .send(.multiplayerEvent(multiplayerEvent: .gameSnapshot(snapshot: game)))
-      if let error = error {
-        print(error)
-        _ = await self.challenger.1.send(.error(error: .playerError(error: error)))
-      }
+//      if let error = game.playerError {
+//        print(error)
+//        _ = await self.challenger.1.send(.error(error: .playerError(error: error)))
+//      }
     }
 
     let initiator = Player(
@@ -102,22 +102,25 @@ actor MultiplayerHandler {
       ai: initiatorAi
     )
 
-    let joiners = await competitors.prefix(3).enumerated().map { index, player in
+    let joiners = competitors.prefix(3).enumerated().map { index, player in
       Player(
         id: player.0,
         name: String(player.0.uuidString.prefix(5)),
         position: Position.allCases[index + 1],
-        ai: UserInputAIJson(id: player.0) { request in
+        ai: UserInputAIJson(id: player.0) { request, error in
           print("READ!", request)
+        if let error = error {
+        await player.1.send(.multiplayerEvent(multiplayerEvent: .error(error: error)))
+        }
           await player.1.send(.multiplayerEvent(multiplayerEvent: .action(action: request)))
-          return try await player.1.read().getMultiplayerRequest()
-        } renderHandler: { game, error in
+          return try await player.1.onRead.once().getMultiplayerRequest()
+        } renderHandler: { game in
+          print("READ! renderHandler")
           _ = await player.1
             .send(.multiplayerEvent(multiplayerEvent: .gameSnapshot(snapshot: game)))
-          print(error)
-          if let error = error {
-            _ = await player.1.send(.error(error: .playerError(error: error)))
-          }
+//          if let error = error {
+//            _ = await player.1.send(.error(error: .playerError(error: error)))
+//          }
         }
       )
     }
@@ -126,10 +129,10 @@ actor MultiplayerHandler {
       players: [initiator] + joiners, slowMode: true
     )
     let gameTask = async {
-      await game.startGame()
+      return await game.startGame()
     }
 
     self.gameTask = gameTask
-    await gameTask.getResult()
+    return await gameTask.get()
   }
 }
