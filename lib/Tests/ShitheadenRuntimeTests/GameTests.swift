@@ -42,7 +42,7 @@ class GameTests: XCTestCase {
       XCTAssertNotNil(snapshot.winner)
       expectation.fulfill()
     }
-    wait(for: [expectation], timeout: 10.0)
+    wait(for: [expectation], timeout: 120.0)
   }
 
   func testNormalRunTwoPlayers() {
@@ -58,7 +58,7 @@ class GameTests: XCTestCase {
         ai: CardRankingAlgo()
       )
     ], slowMode: false)
-    
+
     let expectation = XCTestExpectation(description: "Download apple.com home page")
 
     async {
@@ -66,6 +66,6 @@ class GameTests: XCTestCase {
       XCTAssertNotNil(snapshot.winner)
       expectation.fulfill()
     }
-    wait(for: [expectation], timeout: 10.0)
+    wait(for: [expectation], timeout: 120.0)
   }
 }
