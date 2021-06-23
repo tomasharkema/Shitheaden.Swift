@@ -50,4 +50,4 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
       - name: Build
-        run: docker pull tomasharkema7/shitheaden && docker run --rm tomasharkema7/shitheaden --test-ai
+        run: docker pull tomasharkema7/shitheaden && docker run --rm tomasharkema7/shitheaden --test-ai --parallelization 2
