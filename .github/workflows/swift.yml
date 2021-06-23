@@ -24,7 +24,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Test
-        run: docker build --target test . -t test
+        run: docker build . -t test -f Dockerfiletesting
 
   swift:
     runs-on: ubuntu-18.04
