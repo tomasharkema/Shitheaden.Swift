@@ -12,8 +12,16 @@ let package = Package(
   ],
   products: [
     .executable(name: "shitheaden", targets: ["shitheaden"]),
-    .library(name: "ShitheadenRuntime", type: .static, targets: ["ShitheadenRuntime", "ShitheadenRuntimeTests"]),
-    .library(name: "ShitheadenRuntimeDynamic", type: .dynamic, targets: ["ShitheadenRuntime", "ShitheadenRuntimeTests"]),
+    .library(
+      name: "ShitheadenRuntime",
+      type: .static,
+      targets: ["ShitheadenRuntime"]
+    ),
+    .library(
+      name: "ShitheadenRuntimeDynamic",
+      type: .dynamic,
+      targets: ["ShitheadenRuntime"]
+    ),
     .library(
       name: "ShitheadenShared",
       type: .static,
@@ -81,8 +89,8 @@ let package = Package(
     .testTarget(
       name: "ShitheadenRuntimeTests",
       dependencies: [
-        .target(name: "ShitheadenRuntime"),
-          .target(name: "CustomAlgo")
+        "ShitheadenRuntime",
+        "CustomAlgo"
       ]
     ),
     .target(
