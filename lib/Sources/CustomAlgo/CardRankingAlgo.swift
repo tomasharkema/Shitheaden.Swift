@@ -57,8 +57,6 @@ public actor CardRankingAlgo: GameAi {
 extension Turn {
   var playedCards: [Card] {
     switch self {
-//    case let .putOnTable(f, s, t):
-//      return [f, s, t]
     case let .play(cards):
       return Array(cards)
     case .closedCardIndex, .pass:

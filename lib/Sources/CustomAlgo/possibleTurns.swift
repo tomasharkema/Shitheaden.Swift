@@ -14,7 +14,9 @@ extension TurnRequest {
       let actions = handCards.unobscure()
         .filter { h in lastTableCard?.number.afters.contains { $0 == h.number } ?? true }
         .map { Turn.play([$0]) }
-      return Array([actions, [.pass]].joined())
+      print(actions)
+      let e = Array([actions, [.pass]].joined()).includeDoubles()
+      return e
 
     case .tableOpen:
       let actions = openTableCards.unobscure()
@@ -23,10 +25,10 @@ extension TurnRequest {
       if actions.isEmpty {
         return [Turn.pass]
       }
-      return actions
+      return actions.includeDoubles()
 
     case .tableClosed:
-      return closedCards.enumerated().map { Turn.closedCardIndex($0.offset + 1) }
+      return closedCards.enumerated().map { Turn.closedCardIndex($0.offset + 1) }.unique()
     }
   }
 }

@@ -35,7 +35,7 @@ class GameTests: XCTestCase {
                       )
                     ], slowMode: false)
     let snapshot = await game.startGame()
-    XCTAssertNotNil(snapshot)
+    XCTAssertNotNil(snapshot.winner)
   }
 
   func testNormalRunTwoPlayers() async {
@@ -52,6 +52,6 @@ class GameTests: XCTestCase {
       )
     ], slowMode: false)
     let snapshot = await game.startGame()
-    XCTAssertNotNil(snapshot)
+    XCTAssertNotNil(snapshot.winner)
   }
 }

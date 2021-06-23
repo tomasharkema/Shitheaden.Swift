@@ -158,7 +158,7 @@ public final actor Game {
       }
 
       playerAndError[player.id] = nil
-      
+
       player.handCards.remove(at: player.handCards.firstIndex(of: card1)!)
       player.handCards.remove(at: player.handCards.firstIndex(of: card2)!)
       player.handCards.remove(at: player.handCards.firstIndex(of: card3)!)
@@ -315,11 +315,13 @@ public final actor Game {
           fatalError("Can not throw closedCardIndex")
         }
       case let .play(possibleBeurt):
-        assert(!possibleBeurt.contains { !player.handCards.contains($0) }, "WTF")
+        print("possibleBeurt", possibleBeurt, "handCards", player.handCards)
         table.append(contentsOf: possibleBeurt)
 
         switch player.phase {
         case .hand:
+          assert(!possibleBeurt.contains { !player.handCards.contains($0) }, "WTF")
+
           for p in possibleBeurt {
             player.handCards.remove(at: player.handCards.firstIndex(of: p)!)
           }
