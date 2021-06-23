@@ -12,7 +12,6 @@ struct CardView: View {
   let card: RenderCard
 
   var body: some View {
-
     VStack {
       if let card = card.card {
         HStack {
@@ -69,16 +68,16 @@ extension Card {
   }
 
   var numberColor: Color {
-    switch number {
-    case .gold:
-      return Color.yellow
-    case .silver:
-      return Color.gray
-    case .bronze:
-      return Color.orange
-    default:
-      return color
-    }
+//    switch number {
+//    case .gold:
+//      return Color.yellow
+//    case .silver:
+//      return Color.gray
+//    case .bronze:
+//      return Color.orange
+//    default:
+    return color
+//    }
   }
 }
 

@@ -56,13 +56,13 @@
             )
 
             do {
-            print(" START: \(gameId) \(idx) / \(self.roundsPerGame)")
-            let snapshot = try await game.startGame()
-            print(
-              " END: \(gameId) \(idx) / \(self.roundsPerGame) winner: \(snapshot.winner?.algoName ?? "")"
-            )
-            await unlock()
-            return await [game.getSnapshot(for: nil)]
+              print(" START: \(gameId) \(idx) / \(self.roundsPerGame)")
+              let snapshot = try await game.startGame()
+              print(
+                " END: \(gameId) \(idx) / \(self.roundsPerGame) winner: \(snapshot.winner?.algoName ?? "")"
+              )
+              await unlock()
+              return await [game.getSnapshot(for: nil)]
             } catch {
               return []
             }

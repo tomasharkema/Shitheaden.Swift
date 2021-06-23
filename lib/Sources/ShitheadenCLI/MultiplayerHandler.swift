@@ -10,8 +10,8 @@ import ShitheadenRuntime
 import ShitheadenShared
 
 protocol Client: AnyObject {
-  var onQuit: EventHandler<Void> { get }
-  var onRead: EventHandler<ServerRequest> { get }
+  var quit: EventHandler<Void> { get }
+  var data: EventHandler<ServerRequest> { get }
 
   func send(_ event: ServerEvent) async
 }
@@ -29,11 +29,11 @@ actor MultiplayerHandler {
     code = UUID().uuidString.prefix(5).lowercased()
     competitors = []
 
-    challenger.1.onQuit.on {
+    challenger.1.quit.on {
       print("onQuitRead")
       self.gameTask?.cancel()
     }
-    competitors.forEach { $0.1.onQuit.on {
+    competitors.forEach { $0.1.quit.on {
       print("onQuitRead")
       self.gameTask?.cancel()
     }}
@@ -60,7 +60,7 @@ actor MultiplayerHandler {
   nonisolated func waitForStart() async throws {
     await challenger.1.send(.codeCreate(code: code))
 
-    let r = try await challenger.1.onRead.once()
+    let r = try await challenger.1.data.once()
     guard case let .multiplayerRequest(read) = r, let string = read.string,
           string.contains("start")
     else {
@@ -77,12 +77,12 @@ actor MultiplayerHandler {
   }
 
   private func startMultiplayerGame() async throws -> GameSnapshot {
-    _ = challenger.1.onQuit.on {
+    _ = challenger.1.quit.on {
       await self.send(.quit)
     }
 
     for player in competitors {
-      _ = player.1.onQuit.on {
+      _ = player.1.quit.on {
         await self.send(.quit)
       }
     }
@@ -93,7 +93,7 @@ actor MultiplayerHandler {
         await self.challenger.1.send(.multiplayerEvent(multiplayerEvent: .error(error: error)))
       }
       await self.challenger.1.send(.multiplayerEvent(multiplayerEvent: .action(action: request)))
-      return try await self.challenger.1.onRead.once().getMultiplayerRequest()
+      return try await self.challenger.1.data.once().getMultiplayerRequest()
     } renderHandler: { game in
       print("READ! renderHandler")
       _ = await self.challenger.1
@@ -122,7 +122,7 @@ actor MultiplayerHandler {
             await player.1.send(.multiplayerEvent(multiplayerEvent: .error(error: error)))
           }
           await player.1.send(.multiplayerEvent(multiplayerEvent: .action(action: request)))
-          return try await player.1.onRead.once().getMultiplayerRequest()
+          return try await player.1.data.once().getMultiplayerRequest()
         } renderHandler: { game in
           print("READ! renderHandler")
           _ = await player.1
@@ -146,7 +146,7 @@ actor MultiplayerHandler {
     self.gameTask = gameTask
 
     return try await withTaskCancellationHandler(operation: {
-      return try await gameTask.get()
+      try await gameTask.get()
     }, onCancel: {
       promise.resolve()
     })

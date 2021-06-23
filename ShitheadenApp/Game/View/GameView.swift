@@ -10,7 +10,7 @@ import SwiftUI
 
 enum GameType {
   case offline
-  case online(WebSocketHandler)
+  case online(WebSocketClient)
 }
 
 struct GameView: View {

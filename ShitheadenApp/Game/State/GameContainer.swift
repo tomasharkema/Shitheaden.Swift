@@ -24,8 +24,8 @@ class GameContainer: ObservableObject {
   @Published var isOnTurn = false
   @Published var canPass = false
 
-  private(set) var beginMoveHandler: (((Card, Card, Card)) async -> Void)?
-  private(set) var moveHandler: ((Turn) async -> Void)?
+  private(set) var beginMoveHandler: (((Card, Card, Card)) async throws -> Void)?
+  private(set) var moveHandler: ((Turn) async throws -> Void)?
 
   func reset() async {
     appInput = nil
@@ -34,18 +34,18 @@ class GameContainer: ObservableObject {
   }
 
   var onDataId: UUID?
-  func startOnline(_ handler: WebSocketHandler) async {
-    await handler.data.removeOnDataHandler(id: onDataId)
-    onDataId = await handler.data.on { ob in
+  func startOnline(_ client: WebSocketClient) async {
+    await client.data.removeOnDataHandler(id: onDataId)
+    onDataId = await client.data.on { ob in
       async {
         await MainActor.run {
-          self.handleOnlineObject(ob, handler: handler)
+          self.handleOnlineObject(ob, client: client)
         }
       }
     }
   }
 
-  private func handleOnlineObject(_ ob: ServerEvent, handler: WebSocketHandler) {
+  private func handleOnlineObject(_ ob: ServerEvent, client: WebSocketClient) {
     switch ob {
     case .requestMultiplayerChoice:
       print("START ONLINE")
@@ -63,7 +63,7 @@ class GameContainer: ObservableObject {
         beginMoveHandler = {
           print($0)
           self.isOnTurn = false
-          await handler.write(.multiplayerRequest(.concreteCards([$0.0, $0.1, $0.2])))
+          try await client.write(.multiplayerRequest(.concreteCards([$0.0, $0.1, $0.2])))
         }
 
       case .action(action: .requestNormalTurn):
@@ -74,7 +74,7 @@ class GameContainer: ObservableObject {
         moveHandler = {
           print($0)
           self.isOnTurn = false
-          await handler.write(.multiplayerRequest(.concreteTurn($0)))
+          try await client.write(.multiplayerRequest(.concreteTurn($0)))
         }
 
       case let .string(string):
@@ -162,7 +162,7 @@ class GameContainer: ObservableObject {
     ], slowMode: true)
     self.game = game
     do {
-    try await game.startGame()
+      try await game.startGame()
     } catch {
       print(error)
     }
@@ -194,7 +194,7 @@ class GameContainer: ObservableObject {
           return
         }
         error = nil
-        await beginMoveHandler((
+        try await beginMoveHandler((
           selectedCards.first!.card!,
           selectedCards.dropFirst().first!.card!,
           selectedCards.dropFirst().dropFirst().first!.card!
@@ -204,9 +204,9 @@ class GameContainer: ObservableObject {
       } else if let moveHandler = moveHandler {
         error = nil
         if selectedCards.count > 0 {
-          await moveHandler(.play(Set(selectedCards.map { $0.card! })))
+          try await moveHandler(.play(Set(selectedCards.map { $0.card! })))
         } else {
-          await moveHandler(.pass)
+          try await moveHandler(.pass)
         }
         isOnTurn = false
         self.moveHandler = nil
@@ -219,7 +219,7 @@ class GameContainer: ObservableObject {
 
   func playClosedCard(_ i: Int) {
     async {
-      await moveHandler?(.closedCardIndex(i + 1))
+      try await moveHandler?(.closedCardIndex(i + 1))
     }
   }
 

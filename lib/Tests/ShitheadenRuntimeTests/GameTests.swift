@@ -40,8 +40,9 @@ class GameTests: XCTestCase {
     if #available(macOS 12.0, *) {
       async {
         do {
-        let snapshot = try await game.startGame()
-        XCTAssertNotNil(snapshot.winner)      } catch {
+          let snapshot = try await game.startGame()
+          XCTAssertNotNil(snapshot.winner)
+        } catch {
           print(error)
           XCTFail("ERROR! \(error)")
         }
@@ -68,17 +69,16 @@ class GameTests: XCTestCase {
     let expectation = XCTestExpectation(description: "wait for game play")
 
     if #available(macOS 12.0, *) {
-    async {
-      do {
-      let snapshot = try await game.startGame()
-      XCTAssertNotNil(snapshot.winner)
-      } catch {
-        print(error)
-        XCTFail("ERROR! \(error)")
+      async {
+        do {
+          let snapshot = try await game.startGame()
+          XCTAssertNotNil(snapshot.winner)
+        } catch {
+          print(error)
+          XCTFail("ERROR! \(error)")
+        }
+        expectation.fulfill()
       }
-      expectation.fulfill()
-
-    }
     }
     wait(for: [expectation], timeout: 120.0)
   }

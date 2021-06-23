@@ -87,7 +87,7 @@ public final actor Game {
       deckCards: deck.cards.map { .hidden(id: $0.id) },
       players: players.map {
         getPlayerSnapshot($0.id != uuid, player: $0)
-    }.orderPosition(for: uuid),
+      }.orderPosition(for: uuid),
       tableCards: .init(open: table, limit: 5),
       burntCards: burnt.map { .hidden(id: $0.id) },
       playersOnTurn: playersOnTurn,
@@ -433,18 +433,18 @@ public final actor Game {
   func beginRound() async throws {
     try Task.checkCancellation()
 //    return await withTaskGroup(of: Void.self) { g in
-      for (index, player) in await players.enumerated() {
+    for (index, player) in await players.enumerated() {
 //        g.async {
-          let newPlayer = try await self.commitBeginTurn(
-            playerIndex: index,
-            player: player,
-            numberCalled: 0,
-            previousError: nil
-          )
-          await self.updatePlayer(player: newPlayer)
-          try! await self.checkIntegrity()
-          await self.sendRender(error: nil)
-        }
+      let newPlayer = try await commitBeginTurn(
+        playerIndex: index,
+        player: player,
+        numberCalled: 0,
+        previousError: nil
+      )
+      await updatePlayer(player: newPlayer)
+      try! await checkIntegrity()
+      await sendRender(error: nil)
+    }
 //      }
 //    }
   }
@@ -471,23 +471,6 @@ public final actor Game {
     if !done {
       return try await turn(n: n + 1)
     }
-  }
-
-  func sortPlayerLowestCard() {
-    guard let player = players
-      .min(by: {
-        (($0.handCards.filter { $0.number >= .four }.min { $0 > $1 })?.order ?? 0)
-          >
-          (($1.handCards.filter { $0.number >= .four }.min { $0 > $1 })?.order ?? 0)
-      })
-    else {
-      return
-    }
-    guard let place = players.firstIndex(of: player) else {
-      return
-    }
-    let newPlayers = players.shifted(by: -place)
-    players = newPlayers
   }
 
   func pickDonePlayers() -> [Player] {
@@ -523,7 +506,7 @@ public final actor Game {
     try await beginRound()
 
     try Task.checkCancellation()
-    sortPlayerLowestCard()
+    players = players.sortPlayerLowestCard()
 
     try Task.checkCancellation()
     try await turn()
@@ -601,15 +584,14 @@ public extension String {
 
 extension Array where Element == TurnRequest {
   func orderPosition(for id: UUID?) -> [TurnRequest] {
-    guard let id = id, let offsetForZuid = Position.allCases.firstIndex(of: .zuid), let offsetForPlayer = firstIndex(where: { $0.id == id}) else {
-      print("orderPosition", "DERP")
+    guard let id = id, let offsetForZuid = Position.allCases.firstIndex(of: .zuid),
+          let offsetForPlayer = firstIndex(where: { $0.id == id })
+    else {
       return self
     }
 
-    print("orderPosition", offsetForZuid, offsetForPlayer)
-
-    return self.enumerated()
-      .map { (index, element) in
+    return enumerated()
+      .map { index, element in
         var newElement = element
         newElement.position = Position.allCases.shifted(by: offsetForPlayer - offsetForZuid)[index]
         return newElement

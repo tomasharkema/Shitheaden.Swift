@@ -71,7 +71,7 @@ class TelnetServer {
             if let error = $1 {
               await client.send(.multiplayerEvent(multiplayerEvent: .error(error: error)))
             }
-            return try await client.onRead.once().getMultiplayerRequest()
+            return try await client.data.once().getMultiplayerRequest()
           }, renderHandler: {
             _ = await client.send(.multiplayerEvent(multiplayerEvent: .gameSnapshot(snapshot: $0)))
           })
@@ -91,7 +91,7 @@ class TelnetServer {
       return s
     }
 
-    onQuitRead = client.onQuit.on {
+    onQuitRead = client.quit.on {
       print("onQuitRead")
       task.cancel()
     }
@@ -102,7 +102,6 @@ class TelnetServer {
   private func echoService(client: TelnetClient) async {
     do {
       let task: Task.Handle<Void, Error> = asyncDetached {
-
         await client.send(string: """
         Welkom bij shitheaden!!
 
@@ -112,15 +111,15 @@ class TelnetServer {
         multiplayer   Start een multiplayer game
 
         """)
-        guard let choice: String = try await client.onRead.once().getMultiplayerRequest().string else {
+        guard let choice: String = try await client.data.once().getMultiplayerRequest().string
+        else {
           return await echoService(client: client)
         }
         print(choice)
 
-
         if choice.hasPrefix("j") {
           // join
-         try await joinGame(client: client)
+          try await joinGame(client: client)
         } else if choice.hasPrefix("s") {
           // single
           print(try await singlePlayer(client: client))
@@ -157,7 +156,9 @@ class TelnetServer {
     Typ je code in:
 
     """)
-    guard let code = await (try await client.onRead.once().getMultiplayerRequest().string)?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() else {
+    guard let code = await (try await client.data.once().getMultiplayerRequest().string)?
+      .trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+    else {
       return try await joinGame(client: client)
     }
 
@@ -212,15 +213,15 @@ extension TCPClient {
 //        await cancel.set(value: true)
 //      }
 //    }, operation: {
-      var string = ""
+    var string = ""
 
-      while !(string.hasSuffix("\n") || string.hasSuffix("\r")) {
-        try Task.checkCancellation()
-        string += try await _read()
-        print("APPEND: \(string)")
-      }
+    while !(string.hasSuffix("\n") || string.hasSuffix("\r")) {
+      try Task.checkCancellation()
+      string += try await _read()
+      print("APPEND: \(string)")
+    }
     try Task.checkCancellation()
-      print("COMMIT: \(string)")
+    print("COMMIT: \(string)")
     return string.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
 //    })
   }
@@ -228,8 +229,8 @@ extension TCPClient {
 
 class TelnetClient: Client {
   let client: TCPClient
-  let onQuit = EventHandler<Void>()
-  let onRead = EventHandler<ServerRequest>()
+  let quit = EventHandler<Void>()
+  let data = EventHandler<ServerRequest>()
 
   init(client: TCPClient) {
     self.client = client
@@ -237,8 +238,8 @@ class TelnetClient: Client {
     async { do {
       try await read()
     } catch {
-      onRead.emit(.quit)
-      onQuit.emit(())
+      data.emit(.quit)
+      quit.emit(())
       print("ERROR", error)
     }}
   }
@@ -304,7 +305,7 @@ class TelnetClient: Client {
 
     case .quit:
       print("QUIT!")
-//      await onQuit.emit(())
+//      await quit.emit(())
 //      return client.close()
     }
   }
@@ -318,8 +319,8 @@ class TelnetClient: Client {
     let input: String = try await client.read()
 
     if input.contains("quit") {
-      onRead.emit(.quit)
-      onQuit.emit(())
+      data.emit(.quit)
+      quit.emit(())
       print("ON QUIT")
       return .quit
     }
@@ -333,12 +334,12 @@ class TelnetClient: Client {
 //                            .cliRep + "Je moet p of een aantal cijfers invullen...")
 //      throw PlayerError(text: "Je moet p of een aantal cijfers invullen...")
 
-      await onRead.emit(.multiplayerRequest(.string(input)))
+      await data.emit(.multiplayerRequest(.string(input)))
       try Task.checkCancellation()
       return try await read()
 //      return .multiplayerRequest(.string(input))
     }
-    await onRead.emit(.multiplayerRequest(.cardIndexes(inputs.map { $0! })))
+    await data.emit(.multiplayerRequest(.cardIndexes(inputs.map { $0! })))
     try Task.checkCancellation()
     return try await read()
   }

@@ -90,7 +90,7 @@ let package = Package(
       name: "ShitheadenRuntimeTests",
       dependencies: [
         "ShitheadenRuntime",
-        "CustomAlgo"
+        "CustomAlgo",
       ]
     ),
     .target(
