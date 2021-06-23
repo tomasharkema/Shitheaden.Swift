@@ -12,6 +12,7 @@ struct CardView: View {
   let card: RenderCard
 
   var body: some View {
+
     VStack {
       if let card = card.card {
         HStack {
@@ -19,7 +20,8 @@ struct CardView: View {
           Spacer()
           Text(card.number.string)
             .foregroundColor(card.numberColor)
-            .font(.subheadline.monospaced().bold())
+            .font(Font.custom("CardCharacters", size: 12))
+//            .font(.subheadline.monospaced().bold())
         }
         Text(card.symbol.string).font(.title3)
       } else {

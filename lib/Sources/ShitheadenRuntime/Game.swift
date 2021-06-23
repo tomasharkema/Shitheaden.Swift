@@ -87,7 +87,7 @@ public final actor Game {
       deckCards: deck.cards.map { .hidden(id: $0.id) },
       players: players.map {
         getPlayerSnapshot($0.id != uuid, player: $0)
-      },
+    }.orderPosition(for: uuid),
       tableCards: .init(open: table, limit: 5),
       burntCards: burnt.map { .hidden(id: $0.id) },
       playersOnTurn: playersOnTurn,
@@ -596,5 +596,23 @@ public final actor Game {
 public extension String {
   nonisolated var isUser: Bool {
     return contains("UserInputAI")
+  }
+}
+
+extension Array where Element == TurnRequest {
+  func orderPosition(for id: UUID?) -> [TurnRequest] {
+    guard let id = id, let offsetForZuid = Position.allCases.firstIndex(of: .zuid), let offsetForPlayer = firstIndex(where: { $0.id == id}) else {
+      print("orderPosition", "DERP")
+      return self
+    }
+
+    print("orderPosition", offsetForZuid, offsetForPlayer)
+
+    return self.enumerated()
+      .map { (index, element) in
+        var newElement = element
+        newElement.position = Position.allCases.shifted(by: offsetForPlayer - offsetForZuid)[index]
+        return newElement
+      }
   }
 }

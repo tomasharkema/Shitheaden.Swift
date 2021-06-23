@@ -348,8 +348,8 @@ public class WebSocketClient {
         }
 
 //      let channel = try bootstrap.connect(host: "shitheaden-api.harkema.io", port: 443).wait()
-//        let channel = try bootstrap.connect(host: "192.168.1.102", port: 3338).wait()
       let channel = try bootstrap.connect(host: "192.168.1.102", port: 3338).wait()
+//      let channel = try bootstrap.connect(host: "192.168.1.76", port: 3338).wait()
       print("CONNECTION!")
       connection = handler
       task = async {

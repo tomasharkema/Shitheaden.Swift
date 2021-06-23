@@ -26,6 +26,7 @@
 		C3812A58267C816400397E65 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3812A57267C816400397E65 /* ContentView.swift */; };
 		C3812A5A267C816500397E65 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C3812A59267C816500397E65 /* Assets.xcassets */; };
 		C3812A5D267C816500397E65 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C3812A5C267C816500397E65 /* Preview Assets.xcassets */; };
+		C398542A26837F8200D64483 /* card.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C398542926837F8200D64483 /* card.ttf */; };
 		C39A09572682159C00F011BB /* AlertView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C39A09562682159C00F011BB /* AlertView.swift */; };
 /* End PBXBuildFile section */
 
@@ -48,6 +49,8 @@
 		C3812A57267C816400397E65 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		C3812A59267C816500397E65 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		C3812A5C267C816500397E65 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		C398542926837F8200D64483 /* card.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = card.ttf; sourceTree = "<group>"; };
+		C398542B268380C600D64483 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		C398B203267CA35D00AAD375 /* lib */ = {isa = PBXFileReference; lastKnownFileType = folder; path = lib; sourceTree = "<group>"; };
 		C39A09562682159C00F011BB /* AlertView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertView.swift; sourceTree = "<group>"; };
 		C3FFA11C267CA6C3007972BA /* ShitheadenApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ShitheadenApp.entitlements; sourceTree = "<group>"; };
@@ -131,6 +134,8 @@
 		C3812A54267C816400397E65 /* ShitheadenApp */ = {
 			isa = PBXGroup;
 			children = (
+				C398542B268380C600D64483 /* Info.plist */,
+				C398542926837F8200D64483 /* card.ttf */,
 				C303CC4A2680B27700201FEF /* Menu */,
 				C303CC472680B22D00201FEF /* Game */,
 				C3FFA11C267CA6C3007972BA /* ShitheadenApp.entitlements */,
@@ -229,6 +234,7 @@
 			files = (
 				C3812A5D267C816500397E65 /* Preview Assets.xcassets in Resources */,
 				C3812A5A267C816500397E65 /* Assets.xcassets in Resources */,
+				C398542A26837F8200D64483 /* card.ttf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -389,6 +395,10 @@
 				DEVELOPMENT_TEAM = 3LF943TRKL;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ShitheadenApp/Info.plist;
+				INFOPLIST_KEY_CFBundleExecutable = ShitheadenApp;
+				INFOPLIST_KEY_CFBundleName = ShitheadenApp;
+				INFOPLIST_KEY_CFBundleVersion = 1;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -425,6 +435,10 @@
 				DEVELOPMENT_TEAM = 3LF943TRKL;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ShitheadenApp/Info.plist;
+				INFOPLIST_KEY_CFBundleExecutable = ShitheadenApp;
+				INFOPLIST_KEY_CFBundleName = ShitheadenApp;
+				INFOPLIST_KEY_CFBundleVersion = 1;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

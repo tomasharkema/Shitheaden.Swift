@@ -19,7 +19,7 @@ public struct TurnRequest: Equatable, Codable {
   public let deckCards: [RenderCard]
   public let algoName: String
   public let done: Bool
-  public let position: Position
+  public var position: Position
   public let isObscured: Bool
   public let playerError: PlayerError?
 
