@@ -22,3 +22,5 @@ COPY --from=builder /app/.build/release/shitheaden /app/shitheaden
 COPY --from=builder /app/lib.sig /app/lib.sig
 
 ENTRYPOINT /app/shitheaden
+
+CMD [ "/app/shitheaden", "--server" ]
