@@ -11,7 +11,7 @@ import CustomAlgo
 import XCTest
 
 class GameTests: XCTestCase {
-  func testNormalRunFourPlayers() async {
+  func testNormalRunFourPlayers() {
     let game = Game(players: [
                       Player(
                         name: "West (Unfair)",
@@ -34,11 +34,18 @@ class GameTests: XCTestCase {
                         ai: CardRankingAlgo()
                       )
                     ], slowMode: false)
-    let snapshot = await game.startGame()
-    XCTAssertNotNil(snapshot.winner)
+
+    let expectation = XCTestExpectation(description: "Download apple.com home page")
+
+    async {
+      let snapshot = await game.startGame()
+      XCTAssertNotNil(snapshot.winner)
+      expectation.fulfill()
+    }
+    wait(for: [expectation], timeout: 10.0)
   }
 
-  func testNormalRunTwoPlayers() async {
+  func testNormalRunTwoPlayers() {
     let game = Game(players: [
       Player(
         name: "West (Unfair)",
@@ -51,7 +58,14 @@ class GameTests: XCTestCase {
         ai: CardRankingAlgo()
       )
     ], slowMode: false)
-    let snapshot = await game.startGame()
-    XCTAssertNotNil(snapshot.winner)
+    
+    let expectation = XCTestExpectation(description: "Download apple.com home page")
+
+    async {
+      let snapshot = await game.startGame()
+      XCTAssertNotNil(snapshot.winner)
+      expectation.fulfill()
+    }
+    wait(for: [expectation], timeout: 10.0)
   }
 }
