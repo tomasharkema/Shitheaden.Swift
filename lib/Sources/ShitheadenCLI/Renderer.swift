@@ -5,10 +5,10 @@
 //  Created by Tomas Harkema on 16/06/2021.
 //
 
+import ANSIEscapeCode
 import Foundation
 import ShitheadenRuntime
 import ShitheadenShared
-import ANSIEscapeCode
 
 extension TurnRequest {
   var renderPosition: RenderPosition {
@@ -68,10 +68,11 @@ enum Renderer {
       status = ""
     }
 
-    let cursor: String = game.playersOnTurn.contains(userPlayer?.id ?? UUID()) ? ANSIEscapeCode.Cursor.showCursor + ANSIEscapeCode.Cursor.position(
-      row: RenderPosition.input.y + 2,
-      column: 0
-    ) : ANSIEscapeCode.Cursor.hideCursor
+    let cursor: String = game.playersOnTurn.contains(userPlayer?.id ?? UUID()) ? ANSIEscapeCode
+      .Cursor.showCursor + ANSIEscapeCode.Cursor.position(
+        row: RenderPosition.input.y + 2,
+        column: 0
+      ) : ANSIEscapeCode.Cursor.hideCursor
 
     let errorString = userPlayer?.playerError.map { error(error: $0) } ?? ""
 
@@ -89,7 +90,7 @@ enum Renderer {
         status,
       ],
       playersString,
-      [errorString, cursor]
+      [errorString, cursor],
     ]
 
     return strings.joined().joined(separator: "\n")

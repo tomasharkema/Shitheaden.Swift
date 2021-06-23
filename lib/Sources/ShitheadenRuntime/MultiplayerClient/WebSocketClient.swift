@@ -10,7 +10,7 @@ import NIO
 import NIOHTTP1
 import NIOWebSocket
 import ShitheadenShared
-//import NIOSSL
+// import NIOSSL
 
 // The HTTP handler to be used to initiate the request.
 // This initial request will be adapted by the WebSocket upgrader to contain the upgrade header parameters.
@@ -116,7 +116,7 @@ public class EventHandler<T> {
     }
 
     events = []
-    
+
     let uuid = UUID()
     async {
       await dataHandlers.insert(uuid, value: fn)
@@ -131,20 +131,30 @@ public class EventHandler<T> {
       }
       await dataHandlers.values().forEach { fn in
         DispatchQueue.global().async {
-        async  {
-          await fn(v)
-        }
+          async {
+            await fn(v)
+          }
         }
       }
     }
   }
 
-  public func once() async -> T {
-    return await withCheckedContinuation { g in
-      self.once { d in
-        g.resume(returning: d)
+  public func once() async throws -> T {
+    let handler = EventHandler<()>()
+    return try await withTaskCancellationHandler(handler: {
+      handler.emit(())
+      print("CANCEL!", handler)
+    }, operation: {
+      try await withUnsafeThrowingContinuation { g in
+        print(" SET HANDLER!")
+        handler.once { _ in
+          g.resume(throwing: PlayerError.debug("QUIT"))
+        }
+        self.once { d in
+          g.resume(returning: d)
+        }
       }
-    }
+    })
   }
 }
 
@@ -209,7 +219,7 @@ public final class WebSocketHandler: ChannelInboundHandler {
         let object = try JSONDecoder().decode(ServerEvent.self, from: Data(text))
 
         async {
-        await self.data.emit(object)
+          await self.data.emit(object)
         }
       } catch {
         print(error)
@@ -296,14 +306,12 @@ public class WebSocketClient {
     async {
       let handler = WebSocketHandler()
 
-
 //      let configuration = TLSConfiguration.clientDefault
 //      let sslContext = try NIOSSLContext(configuration: configuration)
 
-
       let group = MultiThreadedEventLoopGroup(numberOfThreads: 1)
       let bootstrap = ClientBootstrap(group: group)
-      
+
         // Enable SO_REUSEADDR.
         .channelOption(ChannelOptions.socket(SocketOptionLevel(SOL_SOCKET), SO_REUSEADDR), value: 1)
         .channelInitializer { channel in
@@ -340,7 +348,8 @@ public class WebSocketClient {
         }
 
 //      let channel = try bootstrap.connect(host: "shitheaden-api.harkema.io", port: 443).wait()
-        let channel = try bootstrap.connect(host: "192.168.1.102", port: 3338).wait()
+//        let channel = try bootstrap.connect(host: "192.168.1.102", port: 3338).wait()
+      let channel = try bootstrap.connect(host: "192.168.1.102", port: 3338).wait()
       print("CONNECTION!")
       connection = handler
       task = async {

@@ -13,8 +13,7 @@ public actor CardRankingAlgo: GameAi {
 
   public func render(snapshot _: GameSnapshot) async {}
 
-  public func beginMove(request: TurnRequest) async -> (Card, Card, Card)
-  {
+  public func beginMove(request: TurnRequest) async -> (Card, Card, Card) {
     let putOnTable = request.handCards.unobscure().map {
       ($0, $0.number.importanceScore)
     }.sorted {

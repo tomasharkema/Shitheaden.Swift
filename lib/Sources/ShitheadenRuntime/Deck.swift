@@ -28,13 +28,13 @@ public struct Deck: Equatable, Codable {
         cards.append(Card(id: UUID(), symbol: symbol, number: number))
       }
     }
-    for _ in 0..<Int.random(in: 0..<100) {
-    cards.shuffle()
-    cards.shuffle()
-    cards.shuffle()
-    cards.shuffle()
-    cards.shuffle()
-    cards.shuffle()
+    for _ in 0 ..< Int.random(in: 0 ..< 100) {
+      cards.shuffle()
+      cards.shuffle()
+      cards.shuffle()
+      cards.shuffle()
+      cards.shuffle()
+      cards.shuffle()
     }
     return Deck(cards: cards)
   }

@@ -11,8 +11,6 @@ import ShitheadenRuntime
 import ShitheadenShared
 import SwiftUI
 
-
-
 @MainActor
 class GameContainer: ObservableObject {
   private var appInput: AppInputUserInputAI?
@@ -85,7 +83,7 @@ class GameContainer: ObservableObject {
       case let .gameSnapshot(snapshot):
         handle(snapshot: snapshot)
       }
-    case .error(let error):
+    case let .error(error):
       self.error = error.localizedDescription
     default:
       print("DERP \(ob)")
@@ -163,7 +161,11 @@ class GameContainer: ObservableObject {
       ),
     ], slowMode: true)
     self.game = game
-    await game.startGame()
+    do {
+    try await game.startGame()
+    } catch {
+      print(error)
+    }
     print("DONE!")
   }
 

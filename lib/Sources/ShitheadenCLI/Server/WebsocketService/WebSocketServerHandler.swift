@@ -67,7 +67,6 @@ final class WebSocketServerHandler: ChannelInboundHandler {
       print("READ!", context.name)
       handlers[context.name]?._onWrite(sr)
 
-
     case .continuation, .pong:
       // We ignore these frames.
       break
@@ -139,7 +138,7 @@ final class WebSocketServerHandler: ChannelInboundHandler {
 class WebsocketClient: Client {
   let context: ChannelHandlerContext
   let handler: WebSocketServerHandler
-  let onQuit = EventHandler<()>()
+  let onQuit = EventHandler<Void>()
   let onRead = EventHandler<ServerRequest>()
   let games: AtomicDictionary<String, MultiplayerHandler>
 
@@ -155,44 +154,48 @@ class WebsocketClient: Client {
 
   func start() async {
     await send(.requestMultiplayerChoice)
-    
-    let choice: ServerRequest? = await onRead.once()
-    switch choice {
-    case let .joinMultiplayer(code):
-      await joinGame(code: code)
-    case .startMultiplayer:
-      await startMultiplayer()
 
-    case .multiplayerRequest:
-      return await start()
+    do {
+      let choice: ServerRequest? = try await onRead.once()
+      switch choice {
+      case let .joinMultiplayer(code):
+        try await joinGame(code: code)
+      case .startMultiplayer:
+        try await startMultiplayer()
 
-    case .singlePlayer:
-      return await startSinglePlayer()
+      case .multiplayerRequest:
+        return await start()
 
-    case .quit:
-      await onQuit.emit(())
-      context.close()
+      case .singlePlayer:
+        return try await startSinglePlayer()
 
-    case .startGame:
-      print("OJOO!")
+      case .quit:
+//        await onQuit.emit(())
+        context.close()
 
-    case .none:
+      case .startGame:
+        print("OJOO!")
+
+      case .none:
+        return await start()
+      }
+    } catch {
       return await start()
     }
   }
 
-  private func joinGame(code: String) async {
+  private func joinGame(code: String) async throws {
     if let game = await games.get(code) {
       let id = UUID()
       await game.join(id: id, client: self)
-      await game.finished()
+      try await game.finished()
     } else {
       await send(.error(error: .gameNotFound(code: code)))
       return await start()
     }
   }
 
-  private func startSinglePlayer() async {
+  private func startSinglePlayer() async throws {
     let id = UUID()
     let game = Game(
       players: [
@@ -215,11 +218,11 @@ class WebsocketClient: Client {
           id: id,
           name: "Zuid (JIJ)",
           position: .zuid,
-          ai: UserInputAIJson(id: id, reader: { request, error in
-      if let error = error {
-        await self.send(.multiplayerEvent(multiplayerEvent: .error(error: error)))
-      }
-      return try await self.onRead.once().getMultiplayerRequest()
+          ai: UserInputAIJson(id: id, reader: { _, error in
+            if let error = error {
+              await self.send(.multiplayerEvent(multiplayerEvent: .error(error: error)))
+            }
+            return try await self.onRead.once().getMultiplayerRequest()
           }, renderHandler: {
             await self.send(.multiplayerEvent(multiplayerEvent: .gameSnapshot(snapshot: $0)))
 //            if let error = $1 {
@@ -230,16 +233,15 @@ class WebsocketClient: Client {
       ], slowMode: true
     )
 
-    await game.startGame()
+    try await game.startGame()
   }
 
-  private func startMultiplayer() async {
+  private func startMultiplayer() async throws {
     let id = UUID()
-    let promise = Promise()
-    let pair = MultiplayerHandler(challenger: (id, self), finshedTask: promise.task)
+    let pair = MultiplayerHandler(challenger: (id, self))
     await games.insert(pair.code, value: pair)
 
-    await pair.waitForStart()
+    try await pair.waitForStart()
   }
 
   func send(_ event: ServerEvent) async {
@@ -269,7 +271,7 @@ class WebsocketClient: Client {
 
   func _onWrite(_ ev: ServerRequest) {
     async {
-        await onRead.emit(ev)
+      await onRead.emit(ev)
     }
   }
 }

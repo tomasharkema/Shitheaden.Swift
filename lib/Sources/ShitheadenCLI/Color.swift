@@ -60,7 +60,7 @@ public extension Number {
 //    case .bronze:
 //      return ANSIEscapeCode.Decoration.textColor(.lightRed) + "B"
 //    default:
-      return string
+    return string
 //    }
   }
 }

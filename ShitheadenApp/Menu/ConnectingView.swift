@@ -32,17 +32,17 @@ class Connecting: ObservableObject {
         websocket.setOnConnected { connection in
           print("setOnConnected")
           async {
-          await connection.quit.on {
-            self.connection = .gameNotFound
-          }
+            await connection.quit.on {
+              self.connection = .gameNotFound
+            }
 
-             self.id = await connection.data.on { d in
-            async {
-              await MainActor.run {
-                self.onData(d)
+            self.id = await connection.data.on { d in
+              async {
+                await MainActor.run {
+                  self.onData(d)
+                }
               }
             }
-          }
           }
         }
 

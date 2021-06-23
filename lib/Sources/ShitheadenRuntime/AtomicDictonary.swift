@@ -8,9 +8,7 @@
 public actor AtomicDictionary<Key: Hashable, Value> {
   private var dict = [Key: Value]()
 
-  public init() {
-
-  }
+  public init() {}
 
   public func values() -> [Value] {
     return Array(dict.values)

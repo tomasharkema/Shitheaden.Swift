@@ -31,8 +31,7 @@ actor UserInputAIJson: GameAi {
     await renderHandler(snapshot)
   }
 
-  func beginMove(request: TurnRequest) async throws -> (Card, Card, Card)
-  {
+  func beginMove(request: TurnRequest) async throws -> (Card, Card, Card) {
 //    do {
     let string = try await reader(.requestBeginTurn, request.playerError)
 

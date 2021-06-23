@@ -59,9 +59,7 @@ struct LocalPlayerView: View {
           Button(action: {
             play()
           }, label: {
-            if !isOnTurn {
-              Text("Wacht op beurt").disabled(true)
-            } else if selectedCards.count > 0 {
+            if selectedCards.count > 0 {
               Text("SPEEL!")
             } else if canPass {
               Text("PAS!")

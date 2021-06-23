@@ -120,8 +120,10 @@ public final actor Game {
     player oldP: Player,
     numberCalled: Int,
     previousError: PlayerError?
-  ) async -> Player {
+  ) async throws -> Player {
     var player = oldP
+
+    try Task.checkCancellation()
 
     player.sortCards()
 
@@ -171,7 +173,7 @@ public final actor Game {
     } catch {
       await sendRender(error: (error as? PlayerError) ?? previousError)
 
-      return await commitBeginTurn(
+      return try await commitBeginTurn(
         playerIndex: playerIndex,
         player: oldP,
         numberCalled: numberCalled,
@@ -180,7 +182,7 @@ public final actor Game {
     }
   }
 
-  private func sendRender(error: PlayerError?) async {
+  private func sendRender(error _: PlayerError?) async {
     for player in players {
       await player.ai.render(snapshot: getSnapshot(for: player.id))
     }
@@ -190,8 +192,10 @@ public final actor Game {
     playerIndex: Int,
     player oldP: Player,
     numberCalled: Int, previousError: PlayerError?
-  ) async -> Player {
+  ) async throws -> Player {
     var player = oldP
+
+    try Task.checkCancellation()
 
     guard !player.done, !done, numberCalled < 100 else {
       return player
@@ -250,7 +254,7 @@ public final actor Game {
         }
         await sendRender(error: error as? PlayerError ?? PlayerError.turnNotPossible(turn: turn))
 
-        return await commitTurn(
+        return try try await commitTurn(
           playerIndex: playerIndex,
           player: player,
           numberCalled: numberCalled + 1,
@@ -272,7 +276,7 @@ public final actor Game {
           #endif
           assertionFailure("This is not possible \(type(of: player.ai))")
         }
-        return await commitTurn(
+        return try await commitTurn(
           playerIndex: playerIndex,
           player: player,
           numberCalled: numberCalled + 1,
@@ -301,7 +305,7 @@ public final actor Game {
             updatePlayer(player: player)
             await sendRender(error: previousError)
             if rules.contains(.againAfterPass) {
-              return await commitTurn(
+              return try await commitTurn(
                 playerIndex: playerIndex,
                 player: player,
                 numberCalled: numberCalled + 1,
@@ -358,7 +362,7 @@ public final actor Game {
 //      printState()
         await sendRender(error: previousError)
         updatePlayer(player: player)
-        return await commitTurn(
+        return try await commitTurn(
           playerIndex: playerIndex,
           player: player,
           numberCalled: 0, previousError: nil
@@ -373,7 +377,7 @@ public final actor Game {
         updatePlayer(player: player)
 
         if rules.contains(.againAfterGoodBehavior), !player.done, !done {
-          return await commitTurn(
+          return try await commitTurn(
             playerIndex: playerIndex,
             player: player,
             numberCalled: 0, previousError: nil
@@ -395,7 +399,7 @@ public final actor Game {
         await sendRender(error: previousError)
         updatePlayer(player: player)
         if rules.contains(.againAfterGoodBehavior), !player.done, !done {
-          return await commitTurn(
+          return try await commitTurn(
             playerIndex: playerIndex,
             player: player,
             numberCalled: 0, previousError: nil
@@ -405,9 +409,10 @@ public final actor Game {
       return player
 
     } catch {
+      try Task.checkCancellation()
       await sendRender(error: error as? PlayerError ?? previousError)
 
-      return await commitTurn(
+      return try await commitTurn(
         playerIndex: playerIndex,
         player: player,
         numberCalled: numberCalled + 1,
@@ -425,11 +430,12 @@ public final actor Game {
     players[index] = player
   }
 
-  func beginRound() async {
-    return await withTaskGroup(of: Void.self) { g in
-      for (index, player) in players.enumerated() {
-        g.async {
-          let newPlayer = await self.commitBeginTurn(
+  func beginRound() async throws {
+    try Task.checkCancellation()
+//    return await withTaskGroup(of: Void.self) { g in
+      for (index, player) in await players.enumerated() {
+//        g.async {
+          let newPlayer = try await self.commitBeginTurn(
             playerIndex: index,
             player: player,
             numberCalled: 0,
@@ -439,14 +445,17 @@ public final actor Game {
           try! await self.checkIntegrity()
           await self.sendRender(error: nil)
         }
-      }
-    }
+//      }
+//    }
   }
 
-  func turn(n: Int = 0) async {
+  func turn(n: Int = 0) async throws {
+    try Task.checkCancellation()
+
     for (index, player) in players.enumerated() {
+      try Task.checkCancellation()
       if !player.done {
-        players[index] = await commitTurn(
+        players[index] = try await commitTurn(
           playerIndex: index, player: player,
           numberCalled: 0, previousError: nil
         )
@@ -460,7 +469,7 @@ public final actor Game {
     }
 
     if !done {
-      return await turn(n: n + 1)
+      return try await turn(n: n + 1)
     }
   }
 
@@ -498,20 +507,28 @@ public final actor Game {
     }
   }
 
-  public func startGame() async -> GameSnapshot {
+  public func startGame() async throws -> GameSnapshot {
+    try Task.checkCancellation()
+
     resetBeurten()
 
+    try Task.checkCancellation()
     await sendRender(error: nil)
 
     shuffle()
     deel()
+    try Task.checkCancellation()
     await sendRender(error: nil)
-    await beginRound()
+    try Task.checkCancellation()
+    try await beginRound()
 
+    try Task.checkCancellation()
     sortPlayerLowestCard()
 
-    await turn()
+    try Task.checkCancellation()
+    try await turn()
 
+    try Task.checkCancellation()
     return getSnapshot(for: nil)
   }
 

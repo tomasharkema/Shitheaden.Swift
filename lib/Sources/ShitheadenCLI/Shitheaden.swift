@@ -111,8 +111,11 @@ struct Shitheaden: ParsableCommand {
         ),
       ], slowMode: true
     )
-
-    await game.startGame()
+    do {
+      try await game.startGame()
+    } catch {
+      print(error)
+    }
   }
 }
 
@@ -122,7 +125,7 @@ extension UserInputAIJson {
     print: @escaping (String) async -> Void,
     read: @escaping () async -> String
   ) -> UserInputAIJson {
-    return UserInputAIJson(id: id, reader: { q, error in
+    return UserInputAIJson(id: id, reader: { _, error in
       await print(ANSIEscapeCode.Cursor.showCursor + ANSIEscapeCode.Cursor.position(
         row: RenderPosition.input.y + 1,
         column: 0
@@ -146,17 +149,5 @@ extension UserInputAIJson {
     }, renderHandler: { game in
       await print(Renderer.render(game: game))
     })
-  }
-}
-
-actor AtomicBool {
-  var value: Bool
-
-  init(value: Bool) {
-    self.value = value
-  }
-
-  func set(value: Bool) {
-    self.value = value
   }
 }

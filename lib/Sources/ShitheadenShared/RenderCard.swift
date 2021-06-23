@@ -55,7 +55,7 @@ public extension Array where Element == RenderCard {
   init(open cards: [Card], limit: Int) {
     self
       .init(cards.dropLast(limit).map { RenderCard.hidden(id: $0.id) } + cards.suffix(limit)
-              .map { RenderCard.card(card: $0) })
+        .map { RenderCard.card(card: $0) })
   }
 
   init(obscured cards: [Card]) {

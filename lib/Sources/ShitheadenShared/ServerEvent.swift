@@ -15,11 +15,11 @@ public enum ServerError: LocalizedError, Equatable, Codable {
 
   public var errorDescription: String? {
     switch self {
-    case .text(let text):
+    case let .text(text):
       return text
-    case .playerError(let error):
+    case let .playerError(error):
       return error.errorDescription
-    case .gameNotFound(let code):
+    case let .gameNotFound(code):
       return "\(code) is niet gevonden"
     }
   }

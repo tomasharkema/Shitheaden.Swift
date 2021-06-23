@@ -10,7 +10,7 @@ import ShitheadenRuntime
 import ShitheadenShared
 
 protocol Client: AnyObject {
-  var onQuit: EventHandler<()> { get }
+  var onQuit: EventHandler<Void> { get }
   var onRead: EventHandler<ServerRequest> { get }
 
   func send(_ event: ServerEvent) async
@@ -20,14 +20,23 @@ actor MultiplayerHandler {
   var challenger: (UUID, Client)
   let code: String
   var competitors: [(UUID, Client)]
-  let finshedTask: Task<Void, Never>
-  var gameTask: Task<GameSnapshot, Never>?
+  var gameTask: Task<GameSnapshot, Error>?
 
-  init(challenger: (UUID, Client), finshedTask: Task<Void, Never>) {
+  let promise = Promise()
+
+  init(challenger: (UUID, Client)) {
     self.challenger = challenger
     code = UUID().uuidString.prefix(5).lowercased()
     competitors = []
-    self.finshedTask = finshedTask
+
+    challenger.1.onQuit.on {
+      print("onQuitRead")
+      self.gameTask?.cancel()
+    }
+    competitors.forEach { $0.1.onQuit.on {
+      print("onQuitRead")
+      self.gameTask?.cancel()
+    }}
   }
 
   nonisolated func send(_ event: ServerEvent) async {
@@ -48,30 +57,30 @@ actor MultiplayerHandler {
     await send(.joined(numberOfPlayers: 1 + competitors.count))
   }
 
-  nonisolated func waitForStart() async {
+  nonisolated func waitForStart() async throws {
     await challenger.1.send(.codeCreate(code: code))
 
-      let r = await challenger.1.onRead.once()
-      guard case let .multiplayerRequest(read) = r, let string = read.string,
-            string.contains("start")
-      else {
-        return await waitForStart()
-      }
-
-      await send(.start)
-
-      print(await startMultiplayerGame())
-  }
-
-  nonisolated func finished() async {
-    _ = await finshedTask.getResult()
-  }
-
-  private func startMultiplayerGame() async -> GameSnapshot {
-    _ = challenger.1.onQuit.on {
-        await self.send(.quit)
+    let r = try await challenger.1.onRead.once()
+    guard case let .multiplayerRequest(read) = r, let string = read.string,
+          string.contains("start")
+    else {
+      return try await waitForStart()
     }
-    
+
+    await send(.start)
+
+    print(try await startMultiplayerGame())
+  }
+
+  nonisolated func finished() async throws {
+    return try await promise.task.get()
+  }
+
+  private func startMultiplayerGame() async throws -> GameSnapshot {
+    _ = challenger.1.onQuit.on {
+      await self.send(.quit)
+    }
+
     for player in competitors {
       _ = player.1.onQuit.on {
         await self.send(.quit)
@@ -109,9 +118,9 @@ actor MultiplayerHandler {
         position: Position.allCases[index + 1],
         ai: UserInputAIJson(id: player.0) { request, error in
           print("READ!", request)
-        if let error = error {
-        await player.1.send(.multiplayerEvent(multiplayerEvent: .error(error: error)))
-        }
+          if let error = error {
+            await player.1.send(.multiplayerEvent(multiplayerEvent: .error(error: error)))
+          }
           await player.1.send(.multiplayerEvent(multiplayerEvent: .action(action: request)))
           return try await player.1.onRead.once().getMultiplayerRequest()
         } renderHandler: { game in
@@ -128,11 +137,18 @@ actor MultiplayerHandler {
     let game = Game(
       players: [initiator] + joiners, slowMode: true
     )
-    let gameTask = async {
-      return await game.startGame()
+    let gameTask: Task<GameSnapshot, Error> = async {
+      let result = try await game.startGame()
+      promise.resolve()
+      return result
     }
 
     self.gameTask = gameTask
-    return await gameTask.get()
+
+    return try await withTaskCancellationHandler(operation: {
+      return try await gameTask.get()
+    }, onCancel: {
+      promise.resolve()
+    })
   }
 }

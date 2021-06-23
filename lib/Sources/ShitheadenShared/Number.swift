@@ -30,7 +30,7 @@ public enum Number: CaseIterable, Equatable, Hashable, Codable {
   public init(from decoder: Decoder) throws {
     let d = try decoder.singleValueContainer()
     let s = try d.decode(String.self)
-    
+
     guard let n = Number.allCases.first(where: {
       $0.string == s
     }) else {

@@ -145,7 +145,7 @@ actor _UserInputAI: GameAi {
         .down(n: -2) >>> (error.errorDescription ?? error.localizedDescription))
     }
 
-      return try await execute(request: request)
+    return try await execute(request: request)
 
 //    if let res = await execute(request: request) {
 //      return try await execute(request: request)
@@ -164,30 +164,28 @@ actor _UserInputAI: GameAi {
     return request
   }
 
-  func beginMove(request: TurnRequest) async throws -> (Card, Card, Card)
-  {
+  func beginMove(request: TurnRequest) async throws -> (Card, Card, Card) {
     if let error = request.playerError {
       await renderHandler(RenderPosition.input
         .down(n: -2).cliRep + (error.errorDescription ?? error.localizedDescription))
     }
 
-      await renderHandler(RenderPosition.input
-        .cliRep + "Selecteer drie kaarten voor je tafelkaarten...")
-      await renderHandler(RenderPosition.input.down(n: 1).cliRep)
+    await renderHandler(RenderPosition.input
+      .cliRep + "Selecteer drie kaarten voor je tafelkaarten...")
+    await renderHandler(RenderPosition.input.down(n: 1).cliRep)
 
-      let input = await getInput()
-      guard let keuze = await parseInput(input: input) else {
-        throw PlayerError.inputNotRecognized(input: input, hint: nil)
-      }
+    let input = await getInput()
+    guard let keuze = await parseInput(input: input) else {
+      throw PlayerError.inputNotRecognized(input: input, hint: nil)
+    }
 
-      guard keuze.count == 3 else {
-        throw PlayerError.openCardsThreeCards
-      }
-      let cards = request.handCards.unobscure().lazy.enumerated().filter {
-        keuze.contains($0.offset + 1)
-      }.map { $0.element } // .sortSymbol()
+    guard keuze.count == 3 else {
+      throw PlayerError.openCardsThreeCards
+    }
+    let cards = request.handCards.unobscure().lazy.enumerated().filter {
+      keuze.contains($0.offset + 1)
+    }.map { $0.element } // .sortSymbol()
 
-      return (cards[0], cards[1], cards[2])
-
+    return (cards[0], cards[1], cards[2])
   }
 }

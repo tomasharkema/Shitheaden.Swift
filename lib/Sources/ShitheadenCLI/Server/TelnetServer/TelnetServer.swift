@@ -28,7 +28,7 @@ class TelnetServer {
         while true {
           if let client = server.accept() {
             asyncDetached { [client] in
-              await echoService(client: client)
+              await echoService(client: TelnetClient(client: client))
             }
           } else {
             print("accept error")
@@ -42,8 +42,8 @@ class TelnetServer {
     return await withUnsafeContinuation { _ in }
   }
 
-  private func singlePlayer(client: TCPClient) async {
-    print("Newclient from:\(client.address)[\(client.port)] \(Thread.isMainThread)")
+  var onQuitRead: UUID?
+  private func singlePlayer(client: TelnetClient) async throws -> GameSnapshot {
     let id = UUID()
     let game = Game(
       players: [
@@ -66,73 +66,108 @@ class TelnetServer {
           id: id,
           name: "Zuid (JIJ)",
           position: .zuid,
-          ai: UserInputAIJson.cli(id: id, print: {
-            client.send(string: $0)
-          }, read: {
-            print("READ!")
-            return await client.read()
+          ai: UserInputAIJson(id: id, reader: {
+            await client.send(.multiplayerEvent(multiplayerEvent: .action(action: $0)))
+            if let error = $1 {
+              await client.send(.multiplayerEvent(multiplayerEvent: .error(error: error)))
+            }
+            return try await client.onRead.once().getMultiplayerRequest()
+          }, renderHandler: {
+            _ = await client.send(.multiplayerEvent(multiplayerEvent: .gameSnapshot(snapshot: $0)))
           })
+//          ai: UserInputAIJson.cli(id: id, print: {
+//      client.send(.s)
+//          }, read: {
+//            print("READ!")
+//            return await client.read()
+//          })
         ),
       ], slowMode: true
     )
 
-    await game.startGame()
-  }
-
-  private func echoService(client: TCPClient) async {
-    client.send(string: """
-    Welkom bij shitheaden!!
-
-    Typ het volgende om te beginnen:
-    join          Join een online game
-    single        Start een single game
-    multiplayer   Start een multiplayer game
-
-    """)
-    let choice: String = await client.read()
-    print(choice)
-
-    if choice.hasPrefix("j") {
-      // join
-      await joinGame(client: client)
-    } else if choice.hasPrefix("s") {
-      // single
-      await singlePlayer(client: client)
-    } else if choice.hasPrefix("m") {
-      // muliplayer
-      await startMultiplayer(client: client)
+    let task: Task<GameSnapshot, Error> = async {
+      let s = try await game.startGame()
+      print("DONE!")
+      return s
     }
 
-    return await echoService(client: client)
+    onQuitRead = client.onQuit.on {
+      print("onQuitRead")
+      task.cancel()
+    }
+
+    return try await task.get()
   }
 
-  private func startMultiplayer(client: TCPClient) async {
+  private func echoService(client: TelnetClient) async {
+    do {
+      let task: Task.Handle<Void, Error> = asyncDetached {
+
+        await client.send(string: """
+        Welkom bij shitheaden!!
+
+        Typ het volgende om te beginnen:
+        join          Join een online game
+        single        Start een single game
+        multiplayer   Start een multiplayer game
+
+        """)
+        guard let choice: String = try await client.onRead.once().getMultiplayerRequest().string else {
+          return await echoService(client: client)
+        }
+        print(choice)
+
+
+        if choice.hasPrefix("j") {
+          // join
+         try await joinGame(client: client)
+        } else if choice.hasPrefix("s") {
+          // single
+          print(try await singlePlayer(client: client))
+        } else if choice.hasPrefix("m") {
+          // muliplayer
+          try await startMultiplayer(client: client)
+        }
+
+        return await echoService(client: client)
+      }
+
+      return try await task.get()
+    } catch {
+      print("RESTART!")
+      return await echoService(client: client)
+    }
+  }
+
+  private func startMultiplayer(client: TelnetClient) async throws {
     let id = UUID()
     let promise = Promise()
     let pair = MultiplayerHandler(
-      challenger: (id, TelnetClient(client: client)),
-      finshedTask: promise.task
+      challenger: (id, client)
     )
     await games.insert(pair.code, value: pair)
 
-    await pair.waitForStart()
+    try await pair.waitForStart()
   }
 
-  private func joinGame(client: TCPClient) async {
-    client.send(string: """
+  private func joinGame(client: TelnetClient) async throws {
+    await client.send(string: """
 
 
     Typ je code in:
 
     """)
-    let code = await client.read().trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+    guard let code = await (try await client.onRead.once().getMultiplayerRequest().string)?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() else {
+      return try await joinGame(client: client)
+    }
 
     if let game = await games.get(code) {
       let id = UUID()
-      await game.join(id: id, client: TelnetClient(client: client))
-      await game.finished()
+      await game.join(id: id, client: client)
+      try await game.finished()
+      return await echoService(client: client)
     } else {
-      client.send(string: """
+      await client.send(string: """
 
       Game niet gevonden...
 
@@ -143,11 +178,15 @@ class TelnetServer {
 }
 
 extension TCPClient {
-  func _read(cancel: AtomicBool) async -> String {
+  func _read() async throws -> String {
     while bytesAvailable() == 0 {
+      try Task.checkCancellation()
       await delay(for: .now() + 0.1)
     }
-    guard let bytes = bytesAvailable(), await !cancel.value else {
+
+    try Task.checkCancellation()
+
+    guard let bytes = bytesAvailable() else {
       print("STRING NOT PARSED")
       return ""
     }
@@ -166,62 +205,73 @@ extension TCPClient {
     return string
   }
 
-  func read() async -> String {
-    let cancel = AtomicBool(value: false)
-
-    return await withTaskCancellationHandler(handler: {
-      async {
-        await cancel.set(value: true)
-      }
-    }, operation: {
+  func read() async throws -> String {
+//    return await withTaskCancellationHandler(handler: {
+//      print("TASKCANCEL!")
+//      async {
+//        await cancel.set(value: true)
+//      }
+//    }, operation: {
       var string = ""
 
-      while !(string.hasSuffix("\n") || string.hasSuffix("\r")), await !cancel.value {
-        string += await _read(cancel: cancel)
+      while !(string.hasSuffix("\n") || string.hasSuffix("\r")) {
+        try Task.checkCancellation()
+        string += try await _read()
         print("APPEND: \(string)")
       }
+    try Task.checkCancellation()
       print("COMMIT: \(string)")
-      return string
-    })
+    return string.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+//    })
   }
 }
 
 class TelnetClient: Client {
   let client: TCPClient
-  let onQuit = EventHandler<()>()
+  let onQuit = EventHandler<Void>()
   let onRead = EventHandler<ServerRequest>()
 
   init(client: TCPClient) {
     self.client = client
 
-    async { try await read() }
+    async { do {
+      try await read()
+    } catch {
+      onRead.emit(.quit)
+      onQuit.emit(())
+      print("ERROR", error)
+    }}
+  }
+
+  func send(string: String) async {
+    await send(.multiplayerEvent(multiplayerEvent: .string(string: string)))
   }
 
   func send(_ event: ServerEvent) async {
     switch event {
     case let .multiplayerEvent(.error(error)):
-      client.send(string: await Renderer.error(error: error))
+      await send(string: await Renderer.error(error: error))
 
     case let .multiplayerEvent(.string(string)):
-      client.send(string: string)
+      await client.send(string: string)
 
     case let .multiplayerEvent(.gameSnapshot(snapshot)):
-      client.send(string: await Renderer.render(game: snapshot))
+      await send(string: await Renderer.render(game: snapshot))
 
     case .waiting:
-      client.send(string: """
+      await send(string: """
 
       Joined! Wachten tot de game begint...
 
       """)
     case let .joined(numberOfPlayers):
-      client.send(string: """
+      await send(string: """
 
       Aantal spelers: \(numberOfPlayers)
 
       """)
     case let .codeCreate(code):
-      client.send(string: """
+      await send(string: """
 
 
       Hier is je code: \(code). Geef deze code aan je vrienden en wacht tot ze joinen!
@@ -230,14 +280,14 @@ class TelnetClient: Client {
       """)
 
     case .start:
-      client.send(string: """
+      await send(string: """
 
 
       Start game!
 
       """)
     case let .error(.playerError(error)):
-      client.send(string: await Renderer.error(error: error))
+      await send(string: await Renderer.error(error: error))
 
     case .requestMultiplayerChoice:
       print("START", event)
@@ -247,25 +297,34 @@ class TelnetClient: Client {
       print("START", event)
     case let .multiplayerEvent(multiplayerEvent: .action(action: action)):
 
-      client.send(string: ANSIEscapeCode.Cursor.showCursor + ANSIEscapeCode.Cursor.position(
+      await send(string: ANSIEscapeCode.Cursor.showCursor + ANSIEscapeCode.Cursor.position(
         row: RenderPosition.input.y + 2,
         column: 0
       ))
 
     case .quit:
-      await onQuit.emit(())
-      return client.close()
+      print("QUIT!")
+//      await onQuit.emit(())
+//      return client.close()
     }
   }
 
   private func read() async throws -> ServerRequest {
-//    client.send(string: ANSIEscapeCode.Cursor.showCursor + ANSIEscapeCode.Cursor.position(
+//    await send(string: ANSIEscapeCode.Cursor.showCursor + ANSIEscapeCode.Cursor.position(
 //      row: RenderPosition.input.y + 2,
 //      column: 0
 //    ))
 
-    let input: String = await client.read()
-//    client.send(string: ANSIEscapeCode.Cursor.hideCursor)
+    let input: String = try await client.read()
+
+    if input.contains("quit") {
+      onRead.emit(.quit)
+      onQuit.emit(())
+      print("ON QUIT")
+      return .quit
+    }
+
+//    await send(string: ANSIEscapeCode.Cursor.hideCursor)
     let inputs = input.split(separator: ",").map {
       Int($0.trimmingCharacters(in: .whitespacesAndNewlines))
     }
@@ -275,10 +334,12 @@ class TelnetClient: Client {
 //      throw PlayerError(text: "Je moet p of een aantal cijfers invullen...")
 
       await onRead.emit(.multiplayerRequest(.string(input)))
+      try Task.checkCancellation()
       return try await read()
 //      return .multiplayerRequest(.string(input))
     }
     await onRead.emit(.multiplayerRequest(.cardIndexes(inputs.map { $0! })))
+    try Task.checkCancellation()
     return try await read()
   }
 }

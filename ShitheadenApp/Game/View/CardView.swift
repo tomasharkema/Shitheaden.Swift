@@ -73,7 +73,7 @@ extension Card {
     case .silver:
       return Color.gray
     case .bronze:
-      return Color.brown
+      return Color.orange
     default:
       return color
     }

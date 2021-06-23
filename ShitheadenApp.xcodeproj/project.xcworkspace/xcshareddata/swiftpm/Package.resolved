@@ -29,15 +29,6 @@
         }
       },
       {
-        "package": "swift-nio-ssl",
-        "repositoryURL": "https://github.com/apple/swift-nio-ssl",
-        "state": {
-          "branch": null,
-          "revision": "6363cdf6d2fb863e82434f3c4618f4e896e37569",
-          "version": "2.13.1"
-        }
-      },
-      {
         "package": "SwiftSocket",
         "repositoryURL": "https://github.com/tomasharkema/SwiftSocket",
         "state": {

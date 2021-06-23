@@ -17,7 +17,8 @@ public struct GameSnapshot: Equatable, Codable {
 
   public init(
     deckCards: [RenderCard], players: [TurnRequest],
-    tableCards: [RenderCard], burntCards: [RenderCard], playersOnTurn: Set<UUID>, winner: TurnRequest?
+    tableCards: [RenderCard], burntCards: [RenderCard], playersOnTurn: Set<UUID>,
+    winner: TurnRequest?
   ) {
     self.deckCards = deckCards
     self.players = players
