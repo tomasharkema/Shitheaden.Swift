@@ -12,8 +12,8 @@ let package = Package(
   ],
   products: [
     .executable(name: "shitheaden", targets: ["shitheaden"]),
-    .library(name: "ShitheadenRuntime", type: .static, targets: ["ShitheadenRuntime"]),
-    .library(name: "ShitheadenRuntimeDynamic", type: .dynamic, targets: ["ShitheadenRuntime"]),
+    .library(name: "ShitheadenRuntime", type: .static, targets: ["ShitheadenRuntime", "ShitheadenRuntimeTests"]),
+    .library(name: "ShitheadenRuntimeDynamic", type: .dynamic, targets: ["ShitheadenRuntime", "ShitheadenRuntimeTests"]),
     .library(
       name: "ShitheadenShared",
       type: .static,
@@ -67,7 +67,7 @@ let package = Package(
         .product(name: "NIO", package: "swift-nio"),
         .product(name: "NIOHTTP1", package: "swift-nio"),
         .product(name: "NIOWebSocket", package: "swift-nio"),
-        .product(name: "NIOSSL", package: "swift-nio-ssl")
+//        .product(name: "NIOSSL", package: "swift-nio-ssl")
       ],
       swiftSettings: [
         .unsafeFlags([
@@ -76,6 +76,13 @@ let package = Package(
           "-Xfrontend", "-disable-availability-checking",
         ]),
         .define("DEBUG", .when(configuration: .debug)),
+      ]
+    ),
+    .testTarget(
+      name: "ShitheadenRuntimeTests",
+      dependencies: [
+        .target(name: "ShitheadenRuntime"),
+          .target(name: "CustomAlgo")
       ]
     ),
     .target(
