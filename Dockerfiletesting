@@ -6,8 +6,31 @@ RUN apt-get update -y && apt-get install -y git curl libatomic1 libxml2 netcat-o
 
 # RUN swift build --product NIOSSH
 
+RUN mkdir -p ./Sources/CustomAlgo && touch ./Sources/CustomAlgo/main.swift
+RUN mkdir -p ./Sources/ShitheadenRuntime && touch ./Sources/ShitheadenRuntime/main.swift
+RUN mkdir -p ./Sources/ShitheadenShared && touch ./Sources/ShitheadenShared/main.swift
+RUN mkdir -p ./Sources/ShitheadenCLI && touch ./Sources/ShitheadenCLI/main.swift
+RUN mkdir -p ./Tests/ShitheadenRuntimeTests && touch ./Tests/ShitheadenRuntimeTests/main.swift
+RUN mkdir -p ./Tests/ShitheadenSharedTests && touch ./Tests/ShitheadenSharedTests/main.swift
+
 COPY lib/Package.swift ./Package.swift
+
+COPY lib/Sources/Dependencies ./Sources/Dependencies
+
+RUN swift build --target Dependencies -v
+
+RUN rm ./Sources/CustomAlgo/main.swift
+RUN rm ./Sources/ShitheadenRuntime/main.swift
+RUN rm ./Sources/ShitheadenShared/main.swift
+RUN rm ./Sources/ShitheadenCLI/main.swift
+
 COPY lib/Sources ./Sources
+
+RUN swift build --product ShitheadenRuntime
+
+RUN rm ./Tests/ShitheadenRuntimeTests/main.swift
+RUN rm ./Tests/ShitheadenSharedTests/main.swift
+
 COPY lib/Tests ./Tests
 
 RUN swift test -v

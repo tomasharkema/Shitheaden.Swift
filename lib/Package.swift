@@ -54,7 +54,6 @@ let package = Package(
         .product(name: "NIO", package: "swift-nio"),
         .product(name: "NIOHTTP1", package: "swift-nio"),
         .product(name: "NIOWebSocket", package: "swift-nio"),
-
       ],
       path: "./Sources/ShitheadenCLI",
       swiftSettings: [
@@ -68,12 +67,22 @@ let package = Package(
       ]
     ),
     .target(
-      name: "ShitheadenRuntime",
+      name: "Dependencies",
       dependencies: [
-        .target(name: "ShitheadenShared"),
+        .product(name: "ANSIEscapeCode", package: "ANSIEscapeCode"),
+        .product(name: "NIOSSH", package: "swift-nio-ssh"),
         .product(name: "NIO", package: "swift-nio"),
         .product(name: "NIOHTTP1", package: "swift-nio"),
         .product(name: "NIOWebSocket", package: "swift-nio"),
+      ]
+    ),
+    .target(
+      name: "ShitheadenRuntime",
+      dependencies: [
+        .target(name: "ShitheadenShared"),
+//        .product(name: "NIO", package: "swift-nio"),
+//        .product(name: "NIOHTTP1", package: "swift-nio"),
+//        .product(name: "NIOWebSocket", package: "swift-nio"),
 //        .product(name: "NIOSSL", package: "swift-nio-ssl")
       ],
       swiftSettings: [

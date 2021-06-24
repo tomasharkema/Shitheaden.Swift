@@ -5,6 +5,8 @@
 //  Created by Tomas Harkema on 21/06/2021.
 //
 
+#if !os(Linux)
+
 import Foundation
 import ShitheadenShared
 
@@ -117,3 +119,5 @@ public class WebSocketClient: NSObject, URLSessionWebSocketDelegate {
     }
   }
 }
+
+#endif
