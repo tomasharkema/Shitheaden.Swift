@@ -16,6 +16,7 @@ struct LocalPlayerView: View {
   let selectedCards: Set<RenderCard>
   let isOnTurn: Bool
   let canPass: Bool
+  let explain: String?
 
   let playClosedCard: (Int) -> Void
   let select: (Set<RenderCard>, Bool) -> Void
@@ -24,7 +25,7 @@ struct LocalPlayerView: View {
   var body: some View {
     VStack {
 
-        Text(isOnTurn ? "Explain turn!" : " ")
+        Text(isOnTurn ? explain ?? " " : " ")
 
       if let error = error {
         Text(error)

@@ -117,7 +117,7 @@ extension EventHandler {
     }
 
     public func removeOnDataHandler(id: UUID?) {
-      return removeOnDataHandler(id: id)
+      return e.removeOnDataHandler(id: id)
     }
 
     public func once(_ fn: @escaping (T) async -> Void) {

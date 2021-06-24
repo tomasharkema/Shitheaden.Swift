@@ -6,59 +6,114 @@
 //
 
 import Foundation
-import NIO
-import NIOHTTP1
-import NIOWebSocket
 import ShitheadenShared
 
-public class WebSocketClient {
-  private weak var context: ChannelHandlerContext?
-  private weak var handler: WebSocketHandler?
+public class WebSocketClient: NSObject, URLSessionWebSocketDelegate {
+  let task: URLSessionWebSocketTask
+  private let onQuit: EventHandler<Void>
+  private let onData: EventHandler<ServerEvent>
+  public let quit: EventHandler<Void>.ReadOnly
+  public let data: EventHandler<ServerEvent>.ReadOnly
 
-  public let quit: EventHandler<Void>
-  public let data: EventHandler<ServerEvent>
+  init(task: URLSessionWebSocketTask) {
+    self.task = task
+    onQuit = EventHandler()
+    onData = EventHandler()
+    quit = onQuit.readOnly
+    data = onData.readOnly
+    super.init()
+    task.delegate = self
+    task.resume()
+    receive()
+  }
 
-  init(context: ChannelHandlerContext, handler: WebSocketHandler) {
-    self.context = context
-    self.handler = handler
+  private func receive() {
+    task.receive { result in
+      print(result)
+      async {
+      do {
+        let d: Data
+        switch result {
+        case .success(.data(let data)):
+          d = data
+        case .success(.string(let string)):
+          if let data = string.data(using: .utf8) {
+            d = data
+          }
+          print("ERROR!")
+          return
+        case .failure(let e):
+          print(e)
+          return
+        case .success(_):
+          print(result)
+          return
+        }
+        print("d", d)
 
-    quit = handler.quit
-    data = handler.data
+        let o = try JSONDecoder().decode(ServerEvent.self, from: d)
+        print("d", o)
+        await MainActor.run {
+          self.onData.emit(o)
+        }
+      } catch {
+        print(error)
+      }
+      }
+      self.receive()
+    }
+  }
+
+  deinit {
+    print("DERP!")
+  }
+
+  func connected() async throws -> Self {
+    let _: Void = try await withUnsafeThrowingContinuation { g in
+      task.sendPing(pongReceiveHandler: {
+        if let error = $0 {
+        g.resume(throwing: error)
+        } else {
+          g.resume()
+        }
+      })
+    }
+    print("CONNECTED!")
+    return self
+  }
+
+  var isConnected = false
+  public func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didOpenWithProtocol p: String?) {
+    print("didOpenWithProtocol \(p)")
+    webSocketTask.sendPing(pongReceiveHandler: {
+      print("PONSTAERT \(p), \($0)")
+    })
+  }
+
+  public func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
+    onQuit.emit(())
   }
 
   public func write(_ turn: ServerRequest) async throws {
-    guard let context = context, let handler = handler else {
-      assertionFailure("WHAT?")
-      throw NSError(domain: "", code: 0, userInfo: nil)
-    }
-
+    print("WRITE", turn)
     return try await withUnsafeThrowingContinuation { c in
       print("WRITE turn", turn)
-      context.eventLoop.execute {
         let d = try! JSONEncoder().encode(turn)
 
-        var buffer = context.channel.allocator.buffer(capacity: d.count)
-        buffer.writeBytes(d)
-        let frame = WebSocketFrame(fin: true, opcode: .binary, data: buffer)
-        let p = context.writeAndFlush(handler.wrapOutboundOut(frame))
-        print("WRITE", turn)
-        p.whenSuccess { c.resume(returning: ()) }
-
-        p.whenFailure {
-          c.resume(throwing: $0)
+      task.send(.data(d), completionHandler: {
+        if let error = $0 {
+          c.resume(throwing: error)
+        } else {
+          c.resume()
         }
-      }
+      })
     }
   }
 
   public func close() async {
     return await withUnsafeContinuation { g in
-      context?.eventLoop.execute {
-        let p = self.context?.close(mode: .all)
-        p?.whenComplete { _ in
-          g.resume()
-        }
-      }
+      task.cancel()
+      g.resume()
     }
   }
 }

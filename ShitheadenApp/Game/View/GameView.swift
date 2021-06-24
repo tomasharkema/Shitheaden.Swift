@@ -85,6 +85,7 @@ struct GameView: View {
             selectedCards: game.selectedCards,
             isOnTurn: game.gameState.isOnTurn,
             canPass: game.gameState.canPass,
+            explain: game.gameState.explain,
             playClosedCard: { i in
               game.playClosedCard(i)
             }, select: {

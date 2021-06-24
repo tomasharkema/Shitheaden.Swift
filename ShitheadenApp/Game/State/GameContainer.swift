@@ -11,21 +11,6 @@ import ShitheadenRuntime
 import ShitheadenShared
 import SwiftUI
 
-struct GameState: Equatable {
-  var gameSnapshot: GameSnapshot?
-  var error: String? = nil
-  var localCards = [RenderCard]()
-  var localPhase: Phase? = nil
-  var localClosedCards = [RenderCard]()
-  var isOnTurn = false {
-    didSet {
-      print("IS ON TURN!", isOnTurn)
-    }
-  }
-  var canPass = false
-  var endState: EndState? = nil
-}
-
 @MainActor
 class GameContainer: ObservableObject {
   private var appInput: AppInputUserInputAI?
@@ -122,8 +107,17 @@ class GameContainer: ObservableObject {
 
     newState.isOnTurn = snapshot.playersOnTurn.contains(localPlayer.id)
 
-//    newState.gameSnapshot = snapshot
     newState.endState = snapshot.currentRequest?.endState
+
+
+    switch localPlayer.phase {
+    case .hand:
+      newState.explain = "Speel een kaart uit je hand"
+    case .tableOpen:
+      newState.explain = "Speel een kaart van tafel"
+    case .tableClosed:
+      newState.explain = "Speel een kaart van je dichte stapel"
+    }
 
     if self.gameState != newState {
       self.gameState = newState

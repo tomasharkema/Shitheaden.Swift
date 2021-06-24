@@ -37,6 +37,7 @@ class Connecting: ObservableObject {
       connection = .connecting
       do {
         let client = try await websocket.start()
+        print("CLIENT!")
         self.client = client
         dataHandler = client.data.on {
           self.onData($0, client)
@@ -107,7 +108,7 @@ struct ConnectingView: View {
         GameView(state: $state, gameType: .online(handler))
           .onDisappear {
             async {
-              await handler.quit.emit(())
+              await handler.close()
             }
           }
 
