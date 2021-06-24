@@ -67,7 +67,7 @@ let package = Package(
       ]
     ),
     .target(
-      name: "Dependencies",
+      name: "DependenciesTarget",
       dependencies: [
         .product(name: "ANSIEscapeCode", package: "ANSIEscapeCode"),
         .product(name: "NIOSSH", package: "swift-nio-ssh"),
@@ -80,10 +80,6 @@ let package = Package(
       name: "ShitheadenRuntime",
       dependencies: [
         .target(name: "ShitheadenShared"),
-//        .product(name: "NIO", package: "swift-nio"),
-//        .product(name: "NIOHTTP1", package: "swift-nio"),
-//        .product(name: "NIOWebSocket", package: "swift-nio"),
-//        .product(name: "NIOSSL", package: "swift-nio-ssl")
       ],
       swiftSettings: [
         .unsafeFlags([
