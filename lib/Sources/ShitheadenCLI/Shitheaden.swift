@@ -70,18 +70,21 @@ struct Shitheaden: ParsableCommand {
       do {
         print("START! websocket")
         let server = WebsocketServer(games: games)
-        try await server.server(group: group)
+        let channel = try await server.server(group: group)
+        try channel.closeFuture.wait()
       } catch {
         print(error)
       }
     }
     async {
       let server = TelnetServer(games: games)
-      try await server.start(group: group)
+      let channel =  try await server.start(group: group)
+      try channel.closeFuture.wait()
     }
     async {
       let server = SSHServer(games: games)
-      try await server.start(group: group)
+      let channel = try await server.start(group: group)
+      try channel.closeFuture.wait()
     }
     return await withUnsafeContinuation { _ in }
   }

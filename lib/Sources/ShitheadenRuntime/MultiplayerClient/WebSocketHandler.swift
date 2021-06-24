@@ -29,6 +29,10 @@ public final class WebSocketHandler: ChannelInboundHandler {
     self.context.emit(context)
   }
 
+  public func channelActive(context: ChannelHandlerContext) {
+    print("CHANNEL ACTIVE")
+  }
+
   public func handlerRemoved(context _: ChannelHandlerContext) {
     print("WebSocket handler removed.")
     quit.emit(())

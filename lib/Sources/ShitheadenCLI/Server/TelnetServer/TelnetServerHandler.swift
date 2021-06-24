@@ -42,10 +42,6 @@ final class TelnetServerHandler: ChannelInboundHandler {
       return
     }
 
-    for s in string.utf8 {
-      print(s)
-    }
-
     if string.hasSuffix("\u{3}") || string.hasSuffix("\u{6}") {
       context.close()
       return
@@ -58,6 +54,7 @@ final class TelnetServerHandler: ChannelInboundHandler {
     }
 
     self.data.emit(buffer)
+    buffer = ""
   }
 
   public func channelReadComplete(context: ChannelHandlerContext) {

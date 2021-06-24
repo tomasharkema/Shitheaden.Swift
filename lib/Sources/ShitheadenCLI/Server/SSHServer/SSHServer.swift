@@ -100,7 +100,7 @@ class SSHServer {
     }
   }
 
-  func start(group: MultiThreadedEventLoopGroup) async throws {
+  func start(group: MultiThreadedEventLoopGroup) async throws -> Channel {
 
     let hostKey = NIOSSHPrivateKey(ed25519Key: .init())
     let bootstrap = ServerBootstrap(group: group)
@@ -135,6 +135,7 @@ class SSHServer {
     }
     print("Server started and listening on \(localAddress)")
     self.channel = channel
+    return channel
   }
 }
 

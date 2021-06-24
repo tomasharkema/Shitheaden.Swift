@@ -20,7 +20,7 @@ class TelnetServer {
     self.games = games
   }
 
-  func start(group: MultiThreadedEventLoopGroup) async throws {
+  func start(group: MultiThreadedEventLoopGroup) async throws -> Channel {
     let bootstrap = ServerBootstrap(group: group)
       .serverChannelOption(ChannelOptions.backlog, value: 256)
       .serverChannelOption(ChannelOptions.socketOption(.so_reuseaddr), value: 1)
@@ -48,6 +48,7 @@ class TelnetServer {
     }
     print("Server started and listening on \(localAddress)")
     self.channel = channel
+    return channel
   }
 }
 

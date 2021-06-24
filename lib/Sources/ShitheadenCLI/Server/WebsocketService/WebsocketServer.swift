@@ -21,15 +21,15 @@ actor WebsocketServer {
     self.games = games
   }
 
-  func server(group: MultiThreadedEventLoopGroup) async throws {
+  func server(group: MultiThreadedEventLoopGroup) async throws -> Channel {
     let upgrader = NIOWebSocketServerUpgrader(
       shouldUpgrade: { (channel: Channel, _: HTTPRequestHead) in
         channel.eventLoop.makeSucceededFuture(HTTPHeaders())
       },
       upgradePipelineHandler: { (channel: Channel, _: HTTPRequestHead) in
-      channel.pipeline.addHandler( BackPressureHandler()).flatMap {
-        channel.pipeline.addHandler(WebSocketServerHandler(games: self.games))
-      }
+        channel.pipeline.addHandler( BackPressureHandler()).flatMap {
+          channel.pipeline.addHandler(WebSocketServerHandler(games: self.games))
+        }
       }
     )
 
@@ -51,21 +51,17 @@ actor WebsocketServer {
           channel.pipeline.addHandler(httpHandler)
         }
       }
-
-      // Enable SO_REUSEADDR for the accepted Channels
       .childChannelOption(ChannelOptions.socketOption(.so_reuseaddr), value: 1)
-
-//    defer {
-//      try! group.syncShutdownGracefully()
-//    }
 
     let bind = bootstrap.bind(host: "0.0.0.0", port: 3338)
 
     let channel: Channel = try await withUnsafeThrowingContinuation { g in
       bind.whenSuccess {
+        print("LISTINGIN!")
         g.resume(returning: $0)
       }
       bind.whenFailure {
+        print("ERROR!")
         g.resume(throwing: $0)
       }
     }
@@ -77,5 +73,6 @@ actor WebsocketServer {
     }
     print("Server started and listening on \(localAddress)")
     self.channel = channel
+    return channel
   }
 }
