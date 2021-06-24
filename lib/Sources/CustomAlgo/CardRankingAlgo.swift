@@ -41,11 +41,23 @@ public actor CardRankingAlgo: GameAi {
         return .pass
       }
 
-      return pt.min { l, r in
-        let leftScore = l.playedCards.first?.number.importanceScore ?? 10000
-        let rightScore = r.playedCards.first?.number.importanceScore ?? 10000
+      guard let leastImportantTurn = pt.min(by: { l, r in
+        guard let leftCard = l.playedCards.first, let rightScore = r.playedCards.first?.number.importanceScore else {
+          return 10000 < 10000
+        }
+        
+        let leftScore = leftCard.number.importanceScore
+
+        if leftScore == rightScore && (request.deckCards.count < 3 || leftCard.number < .nine) {
+          return l.playedCards.count > r.playedCards.count
+        }
+        
         return leftScore < rightScore
-      } ?? .pass
+      }) else {
+        return .pass
+      }
+
+      return leastImportantTurn
 
     case .tableClosed:
       return Turn.closedCardIndex(Int.random(in: 1 ... request.closedCards.count))

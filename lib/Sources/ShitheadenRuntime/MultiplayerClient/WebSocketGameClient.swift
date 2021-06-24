@@ -19,7 +19,7 @@ public class WebSocketGameClient {
 
   public func start() async throws -> WebSocketClient {
     let handler = WebSocketHandler()
-    let group = MultiThreadedEventLoopGroup(numberOfThreads: 1)
+    let group = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount)
     let bootstrap = ClientBootstrap(group: group)
       .channelOption(ChannelOptions.socket(SocketOptionLevel(SOL_SOCKET), SO_REUSEADDR), value: 1)
       .channelInitializer { channel in

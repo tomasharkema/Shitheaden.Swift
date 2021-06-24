@@ -16,9 +16,6 @@ import ShitheadenShared
 class WebsocketClient: Client {
   private let context: ChannelHandlerContext
   let handler: WebSocketServerHandler
-
-//  let quitHandler: EventHandler<Void>
-//  let dataHandler: EventHandler<ServerRequest>
   let games: AtomicDictionary<String, MultiplayerHandler>
 
   let quit: EventHandler<Void>.ReadOnly

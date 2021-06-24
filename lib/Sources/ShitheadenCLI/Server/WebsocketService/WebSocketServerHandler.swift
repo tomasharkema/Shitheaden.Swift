@@ -31,8 +31,7 @@ final class WebSocketServerHandler: ChannelInboundHandler {
   private let data = EventHandler<ServerRequest>()
   private let handler = EventHandler<WebsocketClient>()
 
-  public func handlerAdded(context: ChannelHandlerContext) {
-    print("handlerAdded", context, context.name, Unmanaged.passUnretained(self).toOpaque())
+  public func channelActive(context: ChannelHandlerContext) {
     let c = WebsocketClient(context: context, handler: self, quit: quit, data: data, games: games)
     handler.emit(c)
     async {

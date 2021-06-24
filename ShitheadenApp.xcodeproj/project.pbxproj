@@ -27,6 +27,7 @@
 		C3812A5A267C816500397E65 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C3812A59267C816500397E65 /* Assets.xcassets */; };
 		C3812A5D267C816500397E65 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C3812A5C267C816500397E65 /* Preview Assets.xcassets */; };
 		C398542A26837F8200D64483 /* card.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C398542926837F8200D64483 /* card.ttf */; };
+		C398542D268472C300D64483 /* EndStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C398542C268472C300D64483 /* EndStateView.swift */; };
 		C39A09572682159C00F011BB /* AlertView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C39A09562682159C00F011BB /* AlertView.swift */; };
 /* End PBXBuildFile section */
 
@@ -51,6 +52,7 @@
 		C3812A5C267C816500397E65 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		C398542926837F8200D64483 /* card.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = card.ttf; sourceTree = "<group>"; };
 		C398542B268380C600D64483 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		C398542C268472C300D64483 /* EndStateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EndStateView.swift; sourceTree = "<group>"; };
 		C398B203267CA35D00AAD375 /* lib */ = {isa = PBXFileReference; lastKnownFileType = folder; path = lib; sourceTree = "<group>"; };
 		C39A09562682159C00F011BB /* AlertView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertView.swift; sourceTree = "<group>"; };
 		C3FFA11C267CA6C3007972BA /* ShitheadenApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ShitheadenApp.entitlements; sourceTree = "<group>"; };
@@ -100,6 +102,7 @@
 				C303CC5B2680B9F400201FEF /* LocalPlayerView.swift */,
 				C303CC5D2680BEC400201FEF /* CardWaverView.swift */,
 				C303CC5F2680C23600201FEF /* OrientationStack.swift */,
+				C398542C268472C300D64483 /* EndStateView.swift */,
 			);
 			path = View;
 			sourceTree = "<group>";
@@ -257,6 +260,7 @@
 				C303CC4C2680B27E00201FEF /* StatedButton.swift in Sources */,
 				C303CC622680CE3E00201FEF /* MenuView.swift in Sources */,
 				C303CC5E2680BEC400201FEF /* CardWaverView.swift in Sources */,
+				C398542D268472C300D64483 /* EndStateView.swift in Sources */,
 				C303CC602680C23600201FEF /* OrientationStack.swift in Sources */,
 				C39A09572682159C00F011BB /* AlertView.swift in Sources */,
 				C303CC5A2680B7E900201FEF /* TableView.swift in Sources */,

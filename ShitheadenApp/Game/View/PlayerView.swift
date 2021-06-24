@@ -39,8 +39,12 @@ struct PlayerView: View {
       }
       .padding()
       .background(playerOnTurn ? Color.green.opacity(1) : Color
-        .blue
-        .opacity(0.3)).cornerRadius(5)
+                    .green
+                    .opacity(0.3)).cornerRadius(20)
+      .overlay(
+        RoundedRectangle(cornerRadius: 20)
+          .stroke(Color.green, lineWidth: 5)
+      )
     }
   }
 }

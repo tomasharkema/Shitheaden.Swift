@@ -70,10 +70,12 @@ public enum ServerRequest: Equatable, Codable {
 
   public func getMultiplayerRequest() throws -> MultiplayerRequest {
     switch self {
+    case .quit:
+      throw PlayerError.unknown
     case let .multiplayerRequest(req):
       return req
     default:
-      throw NSError(domain: "", code: 0, userInfo: nil)
+      throw PlayerError.unknown
     }
   }
 }

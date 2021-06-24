@@ -40,11 +40,21 @@ public final actor Game {
     notDonePlayers.count == 1
   }
 
-  var winner: Player? {
-    done ? players.max { $0.turns.count < $1.turns.count } : nil
+  private func getEndState(player: Player) -> EndState? {
+    let sorted = players.sorted { $0.turns.count < $1.turns.count }
+
+    guard let order = sorted.firstIndex(of: player) else {
+      return nil
+    }
+
+    if order == 0 {
+      return .winner
+    } else {
+      return .place(order + 1)
+    }
   }
 
-  private func getPlayerSnapshot(_ obscure: Bool, player: Player) -> TurnRequest {
+  private func getPlayerSnapshot(_ obscure: Bool, player: Player, includeEndState: Bool) -> TurnRequest {
     if obscure {
       return TurnRequest(
         id: player.id,
@@ -60,7 +70,8 @@ public final actor Game {
         done: player.done,
         position: player.position,
         isObscured: obscure,
-        playerError: nil
+        playerError: nil,
+        endState: includeEndState ? getEndState(player: player) : nil
       )
     } else {
       return TurnRequest(
@@ -77,21 +88,22 @@ public final actor Game {
         done: player.done,
         position: player.position,
         isObscured: obscure,
-        playerError: playerAndError[player.id]
+        playerError: playerAndError[player.id],
+        endState: includeEndState ? getEndState(player: player) : nil
       )
     }
   }
 
-  public func getSnapshot(for uuid: UUID?) -> GameSnapshot {
+  public func getSnapshot(for uuid: UUID?, includeEndState: Bool) -> GameSnapshot {
     return GameSnapshot(
       deckCards: deck.cards.map { .hidden(id: $0.id) },
       players: players.map {
-        getPlayerSnapshot($0.id != uuid, player: $0)
+        getPlayerSnapshot($0.id != uuid, player: $0, includeEndState: includeEndState)
       }.orderPosition(for: uuid),
       tableCards: .init(open: table, limit: 5),
       burntCards: burnt.map { .hidden(id: $0.id) },
       playersOnTurn: playersOnTurn,
-      winner: winner.map { getPlayerSnapshot(false, player: $0) }
+      requestFor: uuid
     )
   }
 
@@ -140,11 +152,9 @@ public final actor Game {
       done: player.done,
       position: player.position,
       isObscured: false,
-      playerError: previousError
+      playerError: previousError,
+      endState: nil
     )
-
-    playersOnTurn.insert(player.id)
-    defer { playersOnTurn.remove(player.id) }
 
     await sendRender(error: previousError)
 
@@ -182,9 +192,18 @@ public final actor Game {
     }
   }
 
-  private func sendRender(error _: PlayerError?) async {
+  private func sendRender(error _: PlayerError?, includeEndState: Bool = false) async {
     for player in players {
-      await player.ai.render(snapshot: getSnapshot(for: player.id))
+      await player.ai.render(snapshot: getSnapshot(for: player.id, includeEndState: includeEndState))
+    }
+  }
+
+  private func playDelayIfNeeded(multiplier: Double = 1.0) async {
+    if slowMode {
+      let userPlayer = players.first { $0.ai.algoName.isUser }
+      if !(userPlayer?.done ?? true) {
+        await delay(for: .now() + (0.5 * multiplier))
+      }
     }
   }
 
@@ -216,18 +235,10 @@ public final actor Game {
       done: player.done,
       position: player.position,
       isObscured: false,
-      playerError: previousError
+      playerError: previousError,endState: nil
     )
 
-    if slowMode {
-      let userPlayer = players.first { $0.ai.algoName.isUser }
-      if !(userPlayer?.done ?? true) {
-        await delay(for: .now() + 0.5)
-      }
-    }
-
-    playersOnTurn.insert(player.id)
-    defer { playersOnTurn.remove(player.id) }
+    await playDelayIfNeeded()
 
     await sendRender(error: previousError)
 
@@ -300,6 +311,9 @@ public final actor Game {
              let lastApplied = table.filter({ $0.number != .three }).last,
              !lastTable.number.afters.contains(lastApplied.number)
           {
+            await sendRender(error: previousError)
+            await playDelayIfNeeded(multiplier: 2)
+
             player.handCards.append(contentsOf: table)
             table = []
             updatePlayer(player: player)
@@ -370,6 +384,10 @@ public final actor Game {
       }
 
       if lastCard?.number == .ten {
+
+        await sendRender(error: previousError)
+        await playDelayIfNeeded(multiplier: 2)
+
         burnt += table
         table = []
 
@@ -394,6 +412,10 @@ public final actor Game {
           return (1, curr.number)
         }
       }).0 == 4 {
+
+        await sendRender(error: previousError)
+        await playDelayIfNeeded(multiplier: 2)
+
         burnt.append(contentsOf: table)
         table = []
         await sendRender(error: previousError)
@@ -435,12 +457,15 @@ public final actor Game {
 //    return await withTaskGroup(of: Void.self) { g in
     for (index, player) in await players.enumerated() {
 //        g.async {
+      playersOnTurn.insert(player.id)
+
       let newPlayer = try await commitBeginTurn(
         playerIndex: index,
         player: player,
         numberCalled: 0,
         previousError: nil
       )
+      playersOnTurn.remove(player.id)
       await updatePlayer(player: newPlayer)
       try! await checkIntegrity()
       await sendRender(error: nil)
@@ -455,16 +480,19 @@ public final actor Game {
     for (index, player) in players.enumerated() {
       try Task.checkCancellation()
       if !player.done {
+
+        playersOnTurn.insert(player.id)
         players[index] = try await commitTurn(
           playerIndex: index, player: player,
           numberCalled: 0, previousError: nil
         )
         try! checkIntegrity()
+        playersOnTurn.remove(player.id)
         await sendRender(error: nil)
       }
     }
     if n > 1000 {
-      print("ERROR! GAME REACHED MAXIMUM OF 1000 TURNS! \(getSnapshot(for: nil))")
+      print("ERROR! GAME REACHED MAXIMUM OF 1000 TURNS! \(getSnapshot(for: nil, includeEndState: true))")
       return
     }
 
@@ -512,7 +540,8 @@ public final actor Game {
     try await turn()
 
     try Task.checkCancellation()
-    return getSnapshot(for: nil)
+    await sendRender(error: nil, includeEndState: true)
+    return getSnapshot(for: nil, includeEndState: true)
   }
 
   func checkIntegrity() throws {

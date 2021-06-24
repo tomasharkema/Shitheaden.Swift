@@ -18,16 +18,23 @@ struct LocalPlayerView: View {
   let canPass: Bool
 
   let playClosedCard: (Int) -> Void
-  let select: (RenderCard, Bool) -> Void
+  let select: (Set<RenderCard>, Bool) -> Void
   let play: () -> Void
 
   var body: some View {
     VStack {
+
+        Text(isOnTurn ? "Explain turn!" : " ")
+
       if let error = error {
-        Text(error).bold().foregroundColor(Color.red).onAppear {
-          let impactHeavy = UIImpactFeedbackGenerator(style: .heavy)
-          impactHeavy.impactOccurred()
-        }
+        Text(error)
+          .bold()
+          .foregroundColor(Color.red)
+          .onAppear {
+            print("HEAVY HAPTIC!!")
+            let impactHeavy = UIImpactFeedbackGenerator(style: .heavy)
+            impactHeavy.impactOccurred()
+          }
       }
 
       HStack {
@@ -43,6 +50,7 @@ struct LocalPlayerView: View {
               }).buttonStyle(PlainButtonStyle())
             }
           }
+          Spacer()
         } else {
           ScrollView(.horizontal) {
             CardWaverView(
@@ -51,7 +59,7 @@ struct LocalPlayerView: View {
               selectedCards: selectedCards,
               select: select
             )
-            .padding()
+            .padding(5)
           }
 
           Spacer()
@@ -70,6 +78,7 @@ struct LocalPlayerView: View {
             .disabled(!isOnTurn)
             .onChange(of: isOnTurn, perform: {
               if $0 {
+                print("HAPTIC!!")
                 let impactHeavy = UIImpactFeedbackGenerator(style: .light)
                 impactHeavy.impactOccurred()
               }

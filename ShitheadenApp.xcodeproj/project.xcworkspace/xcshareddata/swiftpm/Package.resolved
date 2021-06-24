@@ -20,21 +20,30 @@
         }
       },
       {
+        "package": "swift-crypto",
+        "repositoryURL": "https://github.com/apple/swift-crypto.git",
+        "state": {
+          "branch": null,
+          "revision": "3bea268b223651c4ab7b7b9ad62ef9b2d4143eb6",
+          "version": "1.1.6"
+        }
+      },
+      {
         "package": "swift-nio",
         "repositoryURL": "https://github.com/apple/swift-nio",
         "state": {
           "branch": null,
-          "revision": "d161bf658780b209c185994528e7e24376cf7283",
-          "version": "2.29.0"
+          "revision": "d79e33308b0ac83326b0ead0ea6446e604b8162d",
+          "version": "2.30.0"
         }
       },
       {
-        "package": "SwiftSocket",
-        "repositoryURL": "https://github.com/tomasharkema/SwiftSocket",
+        "package": "swift-nio-ssh",
+        "repositoryURL": "https://github.com/apple/swift-nio-ssh",
         "state": {
-          "branch": "master",
-          "revision": "12ffe22de640ed35c59819d275b6680eb85f8c3d",
-          "version": null
+          "branch": null,
+          "revision": "bc1a91daf3ae35134fbca5655ed221668d0369d3",
+          "version": "0.3.0"
         }
       }
     ]

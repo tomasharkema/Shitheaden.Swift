@@ -93,6 +93,14 @@ public class EventHandler<T> {
       }
     })
   }
+
+  public func map<N>(_ fn: @escaping (T) -> N) -> EventHandler<N>.ReadOnly {
+    let eventHandler = EventHandler<N>()
+    on {
+      eventHandler.emit(fn($0))
+    }
+    return eventHandler.readOnly
+  }
 }
 
 extension EventHandler {
@@ -122,6 +130,10 @@ extension EventHandler {
 
     public func on(_ fn: @escaping (T) async -> Void) -> UUID {
       return e.on(fn)
+    }
+
+    public func map<N>(_ fn: @escaping (T) -> N) -> EventHandler<N>.ReadOnly {
+      return e.map(fn)
     }
   }
 }

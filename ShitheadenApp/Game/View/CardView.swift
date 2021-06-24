@@ -19,10 +19,10 @@ struct CardView: View {
           Spacer()
           Text(card.number.string)
             .foregroundColor(card.numberColor)
-            .font(Font.custom("CardCharacters", size: 12))
+            .font(Font.custom("CardCharacters", size: 20))
 //            .font(.subheadline.monospaced().bold())
         }
-        Text(card.symbol.string).font(.title3)
+        Text(card.symbol.string).font(.title2)
       } else {
         Text("💩")
       }
@@ -30,13 +30,15 @@ struct CardView: View {
     .shadow(radius: 2)
     .foregroundColor(card.card?.color)
     .padding(5)
-    .frame(width: 40, height: 50)
+    .frame(width: 50, height: 62)
+    .drawingGroup()
     .background(Color.white)
     .cornerRadius(5)
-    .id(card.hashValue)
-    .shadow(radius: 2)
-    .padding(3)
-    .drawingGroup()
+    .overlay(
+      RoundedRectangle(cornerRadius: 5)
+        .stroke(Color.black.opacity(0.2), lineWidth: 2)
+    )
+    .padding(5)
     .id("CARD\(card.id.uuidString)")
     //    .transition(.identity)
   }

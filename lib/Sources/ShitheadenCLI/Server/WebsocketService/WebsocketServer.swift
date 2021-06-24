@@ -1,5 +1,5 @@
 //
-//  WebSocketTimeHandler.swift
+//  WebsocketServer.swift
 //
 //
 //  Created by Tomas Harkema on 18/06/2021.
@@ -12,22 +12,24 @@ import NIOHTTP1
 import NIOWebSocket
 import ShitheadenRuntime
 
-actor Server {
+actor WebsocketServer {
   let games: AtomicDictionary<String, MultiplayerHandler>
+
+  private var channel: Channel?
 
   init(games: AtomicDictionary<String, MultiplayerHandler>) {
     self.games = games
   }
 
-  func server() throws {
-    let group = MultiThreadedEventLoopGroup(numberOfThreads: 1)
-
+  func server(group: MultiThreadedEventLoopGroup) async throws {
     let upgrader = NIOWebSocketServerUpgrader(
       shouldUpgrade: { (channel: Channel, _: HTTPRequestHead) in
         channel.eventLoop.makeSucceededFuture(HTTPHeaders())
       },
       upgradePipelineHandler: { (channel: Channel, _: HTTPRequestHead) in
+      channel.pipeline.addHandler( BackPressureHandler()).flatMap {
         channel.pipeline.addHandler(WebSocketServerHandler(games: self.games))
+      }
       }
     )
 
@@ -53,11 +55,20 @@ actor Server {
       // Enable SO_REUSEADDR for the accepted Channels
       .childChannelOption(ChannelOptions.socketOption(.so_reuseaddr), value: 1)
 
-    defer {
-      try! group.syncShutdownGracefully()
-    }
+//    defer {
+//      try! group.syncShutdownGracefully()
+//    }
 
-    let channel = try bootstrap.bind(host: "0.0.0.0", port: 3338).wait()
+    let bind = bootstrap.bind(host: "0.0.0.0", port: 3338)
+
+    let channel: Channel = try await withUnsafeThrowingContinuation { g in
+      bind.whenSuccess {
+        g.resume(returning: $0)
+      }
+      bind.whenFailure {
+        g.resume(throwing: $0)
+      }
+    }
 
     guard let localAddress = channel.localAddress else {
       fatalError(
@@ -65,10 +76,6 @@ actor Server {
       )
     }
     print("Server started and listening on \(localAddress)")
-
-    // This will never unblock as we don't close the ServerChannel
-    try channel.closeFuture.wait()
-
-    print("Server closed")
+    self.channel = channel
   }
 }

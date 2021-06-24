@@ -11,18 +11,27 @@ import ShitheadenRuntime
 import ShitheadenShared
 import SwiftUI
 
+struct GameState: Equatable {
+  var gameSnapshot: GameSnapshot?
+  var error: String? = nil
+  var localCards = [RenderCard]()
+  var localPhase: Phase? = nil
+  var localClosedCards = [RenderCard]()
+  var isOnTurn = false {
+    didSet {
+      print("IS ON TURN!", isOnTurn)
+    }
+  }
+  var canPass = false
+  var endState: EndState? = nil
+}
+
 @MainActor
 class GameContainer: ObservableObject {
   private var appInput: AppInputUserInputAI?
   private var game: Game?
-  @Published var gameSnapshot: GameSnapshot?
-  @Published var error: String?
+  @Published var gameState: GameState = GameState()
   @Published var selectedCards = Set<RenderCard>()
-  @Published var localCards = [RenderCard]()
-  @Published var localPhase: Phase?
-  @Published var localClosedCards = [RenderCard]()
-  @Published var isOnTurn = false
-  @Published var canPass = false
 
   private(set) var beginMoveHandler: (((Card, Card, Card)) async throws -> Void)?
   private(set) var moveHandler: ((Turn) async throws -> Void)?
@@ -35,10 +44,11 @@ class GameContainer: ObservableObject {
 
   var onDataId: UUID?
   var client: WebSocketClient?
-  func startOnline(_ client: WebSocketClient) async {
+  func startOnline(_ client: WebSocketClient, restart: Bool) async {
+    self.gameState = GameState()
     self.client = client
-    await client.data.removeOnDataHandler(id: onDataId)
-    onDataId = await client.data.on { ob in
+    client.data.removeOnDataHandler(id: onDataId)
+    onDataId = client.data.on { ob in
       async {
         await MainActor.run {
           self.handleOnlineObject(ob, client: client)
@@ -55,27 +65,27 @@ class GameContainer: ObservableObject {
     case let .multiplayerEvent(multiplayerEvent):
       switch multiplayerEvent {
       case let .error(error):
-        self.error = error.localizedDescription
+        self.gameState.error = error.localizedDescription
 
       case .action(.requestBeginTurn):
-        isOnTurn = true
-        canPass = false
+        self.gameState.isOnTurn = true
+        self.gameState.canPass = false
 
         moveHandler = nil
         beginMoveHandler = {
           print($0)
-          self.isOnTurn = false
+          self.gameState.isOnTurn = false
           try await client.write(.multiplayerRequest(.concreteCards([$0.0, $0.1, $0.2])))
         }
 
       case .action(action: .requestNormalTurn):
-        isOnTurn = true
-        canPass = true
+        self.gameState.isOnTurn = true
+        self.gameState.canPass = true
 
         beginMoveHandler = nil
         moveHandler = {
           print($0)
-          self.isOnTurn = false
+          self.gameState.isOnTurn = false
           try await client.write(.multiplayerRequest(.concreteTurn($0)))
         }
 
@@ -86,7 +96,7 @@ class GameContainer: ObservableObject {
         handle(snapshot: snapshot)
       }
     case let .error(error):
-      self.error = error.localizedDescription
+      self.gameState.error = error.localizedDescription
     default:
       print("DERP \(ob)")
     }
@@ -96,43 +106,65 @@ class GameContainer: ObservableObject {
     guard let localPlayer = snapshot.players.first(where: { !$0.isObscured }) else {
       return
     }
-    localPhase = localPlayer.phase
+
+    var newState = self.gameState
+    newState.gameSnapshot = snapshot
+    newState.localPhase = localPlayer.phase
     if !localPlayer.handCards.isEmpty {
-      localCards = localPlayer.handCards.sortNumbers()
+      newState.localCards = localPlayer.handCards.sortNumbers()
     } else if !localPlayer.openTableCards.isEmpty {
-      localCards = localPlayer.openTableCards.sortNumbers()
+      newState.localCards = localPlayer.openTableCards.sortNumbers()
     } else {
       // closed cards!
-      localClosedCards = localPlayer.closedCards
-      localCards = []
+      newState.localClosedCards = localPlayer.closedCards
+      newState.localCards = []
     }
 
-    isOnTurn = snapshot.playersOnTurn.contains(localPlayer.id)
+    newState.isOnTurn = snapshot.playersOnTurn.contains(localPlayer.id)
 
-    gameSnapshot = snapshot
+//    newState.gameSnapshot = snapshot
+    newState.endState = snapshot.currentRequest?.endState
+
+    if self.gameState != newState {
+      self.gameState = newState
+    }
   }
 
-  func start() async {
+  var gameTask: Task.Handle<GameSnapshot?, Never>?
+  func start(restart: Bool = false) async {
+
+    if restart {
+      appInput = nil
+      game = nil
+      gameTask?.cancel()
+      gameTask = nil
+    }
+
     guard appInput == nil, game == nil else {
       return
     }
+    self.gameState = GameState()
     let id = UUID()
     let appInput = AppInputUserInputAI(
       beginMoveHandler: { h in
         await MainActor.run {
-          self.isOnTurn = true
-          self.canPass = false
+          var newState = self.gameState
+          newState.isOnTurn = true
+          newState.canPass = false
+          self.gameState = newState
           self.beginMoveHandler = h
         }
       }, moveHandler: { h in
         await MainActor.run {
-          self.isOnTurn = true
-          self.canPass = true
+          var newState = self.gameState
+          newState.isOnTurn = true
+          newState.canPass = true
+          self.gameState = newState
           self.moveHandler = h
         }
       }, errorHandler: { e in
         await MainActor.run {
-          self.error = e
+          self.gameState.error = e
         }
       }, renderHandler: { game in
         self.handle(snapshot: game)
@@ -163,27 +195,37 @@ class GameContainer: ObservableObject {
       ),
     ], slowMode: true)
     self.game = game
-    do {
-      try await game.startGame()
-    } catch {
-      print(error)
+    let gameTask: Task.Handle<GameSnapshot?, Never> = async {
+      var snapshot: GameSnapshot?
+      do {
+        snapshot = try await game.startGame()
+      } catch {
+        print(error)
+      }
+      print("DONE!", snapshot)
+      return snapshot
     }
-    print("DONE!")
+    self.gameTask = gameTask
+    await gameTask.get()
   }
 
-  func select(_ card: RenderCard, selected: Bool, deleteNotSameNumber: Bool) {
+  func select(_ cards: Set<RenderCard>, selected: Bool, deleteNotSameNumber: Bool) {
     if selected {
       if deleteNotSameNumber,
-         selectedCards.contains(where: { $0.card?.number != card.card?.number })
+         selectedCards.contains(where: { $0.card?.number != cards.first?.card?.number })
       {
-        selectedCards = [card]
+        selectedCards = cards
       } else {
-        selectedCards.insert(card)
+        for card in cards {
+          selectedCards.insert(card)
+        }
       }
 
     } else {
-      if let c = selectedCards.firstIndex(of: card) {
-        selectedCards.remove(at: c)
+      for card in cards {
+        if let c = selectedCards.firstIndex(of: card) {
+          selectedCards.remove(at: c)
+        }
       }
     }
   }
@@ -192,25 +234,25 @@ class GameContainer: ObservableObject {
     async {
       if let beginMoveHandler = beginMoveHandler {
         guard selectedCards.count == 3 else {
-          error = "Select drie kaarten!"
+          self.gameState.error = "Select drie kaarten!"
           return
         }
-        error = nil
+        self.gameState.error = nil
         try await beginMoveHandler((
           selectedCards.first!.card!,
           selectedCards.dropFirst().first!.card!,
           selectedCards.dropFirst().dropFirst().first!.card!
         ))
-        isOnTurn = false
+        self.gameState.isOnTurn = false
         self.beginMoveHandler = nil
       } else if let moveHandler = moveHandler {
-        error = nil
+        self.gameState.error = nil
         if selectedCards.count > 0 {
           try await moveHandler(.play(Set(selectedCards.map { $0.card! })))
         } else {
           try await moveHandler(.pass)
         }
-        isOnTurn = false
+        self.gameState.isOnTurn = false
         self.moveHandler = nil
       } else {
         return

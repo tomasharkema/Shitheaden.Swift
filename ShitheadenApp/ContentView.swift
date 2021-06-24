@@ -21,7 +21,6 @@ struct ContentView: View {
   @State var appState: AppState?
 
   var body: some View {
-    NavigationView {
       switch appState {
       case .singlePlayer:
         GameView(state: $appState, gameType: .offline)
@@ -34,7 +33,6 @@ struct ContentView: View {
       case .none:
         MenuView(state: $appState)
       }
-    }
   }
 }
 

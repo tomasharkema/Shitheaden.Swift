@@ -62,7 +62,7 @@
                 " END: \(gameId) \(idx) / \(self.roundsPerGame) winner: \(snapshot.winner?.algoName ?? "")"
               )
               await unlock()
-              return await [game.getSnapshot(for: nil)]
+              return await [game.getSnapshot(for: nil, includeEndState: true)]
             } catch {
               return []
             }

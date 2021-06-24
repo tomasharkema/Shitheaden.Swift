@@ -7,6 +7,11 @@
 
 import Foundation
 
+public enum EndState: Equatable, Codable {
+  case winner
+  case place(Int)
+}
+
 public struct TurnRequest: Equatable, Codable {
   public let id: UUID
   public let name: String
@@ -22,6 +27,7 @@ public struct TurnRequest: Equatable, Codable {
   public var position: Position
   public let isObscured: Bool
   public let playerError: PlayerError?
+  public let endState: EndState?
 
   public init(
     id: UUID, name: String,
@@ -36,7 +42,7 @@ public struct TurnRequest: Equatable, Codable {
     done: Bool,
     position: Position,
     isObscured: Bool,
-    playerError: PlayerError?
+    playerError: PlayerError?, endState: EndState?
   ) {
     self.id = id
     self.name = name
@@ -52,5 +58,6 @@ public struct TurnRequest: Equatable, Codable {
     self.position = position
     self.isObscured = isObscured
     self.playerError = playerError
+    self.endState = endState
   }
 }

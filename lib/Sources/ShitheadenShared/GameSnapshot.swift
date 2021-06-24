@@ -13,18 +13,29 @@ public struct GameSnapshot: Equatable, Codable {
   public let tableCards: [RenderCard]
   public let burntCards: [RenderCard]
   public let playersOnTurn: Set<UUID>
-  public let winner: TurnRequest?
+  public let requestFor: UUID?
+  public let currentRequest: TurnRequest?
 
   public init(
-    deckCards: [RenderCard], players: [TurnRequest],
-    tableCards: [RenderCard], burntCards: [RenderCard], playersOnTurn: Set<UUID>,
-    winner: TurnRequest?
+    deckCards: [RenderCard],
+    players: [TurnRequest],
+    tableCards: [RenderCard],
+    burntCards: [RenderCard],
+    playersOnTurn: Set<UUID>,
+    requestFor: UUID?
   ) {
     self.deckCards = deckCards
     self.players = players
     self.tableCards = tableCards
     self.burntCards = burntCards
     self.playersOnTurn = playersOnTurn
-    self.winner = winner
+    self.requestFor = requestFor
+
+    currentRequest = requestFor != nil ? players.first { $0.id == requestFor } : nil
+  }
+
+
+  public var winner: TurnRequest? {
+    return players.first { $0.endState == .winner }
   }
 }

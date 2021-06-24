@@ -11,6 +11,7 @@ import ArgumentParser
 import CustomAlgo
 import Foundation
 import ShitheadenRuntime
+import NIO
 
 @main
 struct Shitheaden: ParsableCommand {
@@ -63,19 +64,24 @@ struct Shitheaden: ParsableCommand {
   #endif
 
   private func startServer() async {
+    let group = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount / 2)
     let games = AtomicDictionary<String, MultiplayerHandler>()
     async {
       do {
         print("START! websocket")
-        let server = Server(games: games)
-        try await server.server()
+        let server = WebsocketServer(games: games)
+        try await server.server(group: group)
       } catch {
         print(error)
       }
     }
     async {
       let server = TelnetServer(games: games)
-      await server.startServer()
+      try await server.start(group: group)
+    }
+    async {
+      let server = SSHServer(games: games)
+      try await server.start(group: group)
     }
     return await withUnsafeContinuation { _ in }
   }

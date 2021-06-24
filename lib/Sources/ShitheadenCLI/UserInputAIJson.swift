@@ -55,7 +55,7 @@ actor UserInputAIJson: GameAi {
       return (cards[0], cards[1], cards[2])
 
     default:
-      throw PlayerError.debug("Only cardIndexes or concreteCards permitted")
+      throw PlayerError.debug("Only cardIndexes or concreteCards permitted, \(string)")
     }
   }
 

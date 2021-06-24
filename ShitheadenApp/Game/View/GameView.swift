@@ -21,14 +21,14 @@ struct GameView: View {
 
   var body: some View {
     VStack {
-      if let snapshot = game.gameSnapshot {
+      if let snapshot = game.gameState.gameSnapshot {
         VStack(spacing: 0) {
           VStack {
             if let player = snapshot.players.first { $0.position == .noord }, !player.done {
               PlayerView(
                 player: player,
                 orientation: .horizontal,
-                playerOnTurn: game.gameSnapshot?.playersOnTurn.contains(player.id) ?? false
+                playerOnTurn: game.gameState.gameSnapshot?.playersOnTurn.contains(player.id) ?? false
               )
             }
             Spacer()
@@ -37,7 +37,7 @@ struct GameView: View {
                 PlayerView(
                   player: player,
                   orientation: .vertical,
-                  playerOnTurn: game.gameSnapshot?.playersOnTurn.contains(player.id) ?? false
+                  playerOnTurn: game.gameState.gameSnapshot?.playersOnTurn.contains(player.id) ?? false
                 )
               }
 
@@ -47,7 +47,7 @@ struct GameView: View {
                 PlayerView(
                   player: player,
                   orientation: .vertical,
-                  playerOnTurn: game.gameSnapshot?.playersOnTurn.contains(player.id) ?? false
+                  playerOnTurn: game.gameState.gameSnapshot?.playersOnTurn.contains(player.id) ?? false
                 )
               }
             }
@@ -57,7 +57,7 @@ struct GameView: View {
               PlayerView(
                 player: player,
                 orientation: .horizontal,
-                playerOnTurn: game.gameSnapshot?.playersOnTurn.contains(player.id) ?? false
+                playerOnTurn: game.gameState.gameSnapshot?.playersOnTurn.contains(player.id) ?? false
               )
             }
           }
@@ -78,13 +78,13 @@ struct GameView: View {
             alignment: Alignment.topTrailing
           )
           LocalPlayerView(
-            closedCards: game.localClosedCards,
-            phase: game.localPhase,
-            error: game.error,
-            cards: game.localCards,
+            closedCards: game.gameState.localClosedCards,
+            phase: game.gameState.localPhase,
+            error: game.gameState.error,
+            cards: game.gameState.localCards,
             selectedCards: game.selectedCards,
-            isOnTurn: game.isOnTurn,
-            canPass: game.canPass,
+            isOnTurn: game.gameState.isOnTurn,
+            canPass: game.gameState.canPass,
             playClosedCard: { i in
               game.playClosedCard(i)
             }, select: {
@@ -98,9 +98,18 @@ struct GameView: View {
         .animation(.linear, value: snapshot)
       }
     }
-    .navigationBarItems(trailing: Button("Menu", action: {
-//        state = nil
-      showMenu = true
+    .overlay(Button("Menu", action: {
+            showMenu = true
+    }).foregroundColor(Color.green).padding(), alignment: .topTrailing)
+    .overlay(EndStateView(endState: game.gameState.endState, restart: {
+      switch gameType {
+      case .offline:
+        await game.start(restart: true)
+      case let .online(handler):
+        await game.startOnline(handler, restart: true)
+      }
+    }, quit: {
+      self.state = nil
     }))
     .actionSheet(isPresented: $showMenu, content: {
       ActionSheet(title: Text("Weet je zeker dat je wilt stoppen?"), message: nil, buttons: [
@@ -121,7 +130,7 @@ struct GameView: View {
         case .offline:
           await game.start()
         case let .online(handler):
-          await game.startOnline(handler)
+          await game.startOnline(handler, restart: false)
         }
       }
     #else
@@ -131,7 +140,7 @@ struct GameView: View {
           case .offline:
             await game.start()
           case let .online(handler, code):
-            await game.startOnline(handler, code: code)
+            await game.startOnline(handler, code: code, restart: false)
           }
         }
       }
