@@ -9,7 +9,7 @@ RUN apt-get update -y && apt-get install -y git curl libatomic1 libxml2 netcat-o
 COPY lib/Package.swift ./Package.swift
 COPY lib/Sources ./Sources
 COPY lib/Tests ./Tests
-RUN find lib/Sources -type f -exec md5sum {} \; | sort -k 2 | md5sum > lib.sig
+RUN find Sources -type f -exec md5sum {} \; | sort -k 2 | md5sum > lib.sig
 
 RUN swift build -v -c release
 
