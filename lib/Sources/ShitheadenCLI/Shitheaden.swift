@@ -49,7 +49,6 @@ struct Shitheaden: ParsableCommand {
     await interactive()
   }
 
-  #if os(macOS)
     private func playTournament() async {
       return await withUnsafeContinuation { d in
         DispatchQueue.global().async {
@@ -61,7 +60,6 @@ struct Shitheaden: ParsableCommand {
         }
       }
     }
-  #endif
 
   private func startServer() async {
     let group = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount / 2)
