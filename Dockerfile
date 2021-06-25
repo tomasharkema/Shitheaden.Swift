@@ -42,7 +42,7 @@ RUN swift build -v -c release
 
 FROM tomasharkema7/swift-5.5:1804-snapshot
 
-# RUN apt-get update -y && \ apt-get install -y git curl libatomic1 libxml2 netcat-openbsd lsof perl && \ rm -rf /var/lib/apt/lists/*
+RUN apt-get update -y && apt-get install -y git curl libatomic1 libxml2 netcat-openbsd lsof perl && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 COPY --from=builder /app/.build/release/shitheaden /app/shitheaden
