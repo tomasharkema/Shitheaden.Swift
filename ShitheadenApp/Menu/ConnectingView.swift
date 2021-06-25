@@ -5,6 +5,7 @@
 //  Created by Tomas Harkema on 21/06/2021.
 //
 
+import Logging
 import ShitheadenRuntime
 import ShitheadenShared
 import SwiftUI
@@ -20,6 +21,7 @@ enum ConnectionState {
 
 @MainActor
 class Connecting: ObservableObject {
+  private let logger = Logger(label: "app.Connecting")
   private let websocket = WebSocketGameClient()
   public private(set) var client: WebSocketClient?
   @Published var connection: ConnectionState = .connecting
@@ -37,7 +39,7 @@ class Connecting: ObservableObject {
       connection = .connecting
       do {
         let client = try await websocket.start()
-        print("CLIENT!")
+        logger.debug("CLIENT! \(String(describing: client))")
         self.client = client
         dataHandler = client.data.on {
           self.onData($0, client)
@@ -72,7 +74,8 @@ class Connecting: ObservableObject {
       connection = .gameNotFound
 
     case let .error(error: error):
-      print(error)
+      logger.error("Received error: \(String(describing: error))")
+
     case .requestMultiplayerChoice:
       connection = .makeChoice
 
@@ -80,7 +83,8 @@ class Connecting: ObservableObject {
       connection = .gameSnapshot(snapshot, client)
 
     case let .multiplayerEvent(multiplayerEvent: multiplayerEvent):
-      print(event)
+      logger.info("MultiplayerEvent: \(String(describing: multiplayerEvent))")
+
     case let .joined(numberOfPlayers: numberOfPlayers):
 
       connection = .waiting(users: numberOfPlayers)
@@ -88,10 +92,15 @@ class Connecting: ObservableObject {
     case let .codeCreate(code: code):
       connection = .codeCreated(code)
     case .start:
-      print(event)
-
+      logger.info("START!")
     case .quit:
       connection = .gameNotFound
+
+    case .requestSignature:
+      break
+
+    case let .signatureCheck(succeeded):
+      logger.notice("SIGNATURE SUCCEEDED! \(succeeded)")
     }
   }
 }

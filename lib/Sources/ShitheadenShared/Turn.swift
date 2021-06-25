@@ -31,14 +31,8 @@ public enum Turn: Equatable, Hashable, Codable {
         throw PlayerError.notEmpty
       }
       if cards.contains(where: { $0.number != cards.first?.number }) {
-        print(cards)
         throw PlayerError.notSameNumber
       }
-
-//    case let .putOnTable(a, b, c):
-//      if [a, b, c].doubles() {
-//        throw PlayerError(text: "Found double")
-//      }
 
     case .closedCardIndex, .pass:
       return

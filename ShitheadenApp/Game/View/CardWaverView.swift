@@ -20,10 +20,10 @@ struct CardWaverView: View {
     if let select = select {
       StatedButton(
         action: { selected in
-        select(Set(arrayLiteral:  c), selected)
-      }, label: {
-        CardView(card: c)
-      }, isSelected: selectedCards.contains(c)
+          select(Set(arrayLiteral: c), selected)
+        }, label: {
+          CardView(card: c)
+        }, isSelected: selectedCards.contains(c)
       ).onLongPressGesture {
         select(Set(cards.filter { $0.card?.number == c.card?.number }), true)
       }

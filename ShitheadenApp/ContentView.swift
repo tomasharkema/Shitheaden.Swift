@@ -21,18 +21,18 @@ struct ContentView: View {
   @State var appState: AppState?
 
   var body: some View {
-      switch appState {
-      case .singlePlayer:
-        GameView(state: $appState, gameType: .offline)
-      case .multiplayerChallenger:
+    switch appState {
+    case .singlePlayer:
+      GameView(state: $appState, gameType: .offline)
+    case .multiplayerChallenger:
 //        GameView(state: $appState)
-        ConnectingView(state: $appState, code: nil)
-      case let .multiplayerJoin(code):
+      ConnectingView(state: $appState, code: nil)
+    case let .multiplayerJoin(code):
 //        GameView(state: $appState, gameType: .offline)
-        ConnectingView(state: $appState, code: code)
-      case .none:
-        MenuView(state: $appState)
-      }
+      ConnectingView(state: $appState, code: code)
+    case .none:
+      MenuView(state: $appState)
+    }
   }
 }
 

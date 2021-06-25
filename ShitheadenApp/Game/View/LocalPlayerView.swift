@@ -5,10 +5,13 @@
 //  Created by Tomas Harkema on 21/06/2021.
 //
 
+import Logging
 import ShitheadenShared
 import SwiftUI
 
 struct LocalPlayerView: View {
+  let logger = Logger(label: "app.LocalPlayerView")
+
   let closedCards: [RenderCard]
   let phase: Phase?
   let error: String?
@@ -24,15 +27,14 @@ struct LocalPlayerView: View {
 
   var body: some View {
     VStack {
-
-        Text(isOnTurn ? explain ?? " " : " ")
+      Text(isOnTurn ? explain ?? " " : " ")
 
       if let error = error {
         Text(error)
           .bold()
           .foregroundColor(Color.red)
           .onAppear {
-            print("HEAVY HAPTIC!!")
+            logger.debug("HEAVY HAPTIC!!")
             let impactHeavy = UIImpactFeedbackGenerator(style: .heavy)
             impactHeavy.impactOccurred()
           }
@@ -79,7 +81,7 @@ struct LocalPlayerView: View {
             .disabled(!isOnTurn)
             .onChange(of: isOnTurn, perform: {
               if $0 {
-                print("HAPTIC!!")
+                logger.debug("HAPTIC!!")
                 let impactHeavy = UIImpactFeedbackGenerator(style: .light)
                 impactHeavy.impactOccurred()
               }

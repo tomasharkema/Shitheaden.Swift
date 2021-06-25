@@ -17,11 +17,8 @@ struct GameState: Equatable {
   var localCards = [RenderCard]()
   var localPhase: Phase? = nil
   var localClosedCards = [RenderCard]()
-  var isOnTurn = false {
-    didSet {
-      print("IS ON TURN!", isOnTurn)
-    }
-  }
+  var isOnTurn = false
+
   var canPass = false
   var endState: EndState? = nil
   var explain: String? = nil

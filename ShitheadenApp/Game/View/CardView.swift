@@ -14,15 +14,18 @@ struct CardView: View {
   var body: some View {
     VStack {
       if let card = card.card {
-        HStack {
-          //      Text(card.symbol.string)
+        HStack(alignment: .bottom) {
           Spacer()
           Text(card.number.string)
             .foregroundColor(card.numberColor)
+//            .font(.title3.monospacedDigit())
             .font(Font.custom("CardCharacters", size: 20))
-//            .font(.subheadline.monospaced().bold())
         }
         Text(card.symbol.string).font(.title2)
+          .background(
+            Circle().foregroundColor(card.backgroundColor ?? Color.clear)
+          )
+
       } else {
         Text("💩")
       }
@@ -80,6 +83,19 @@ extension Card {
 //    default:
     return color
 //    }
+  }
+
+  var backgroundColor: Color? {
+    switch number {
+    case .gold:
+      return Color.yellow
+    case .silver:
+      return Color.gray.opacity(0.6)
+    case .bronze:
+      return Color.orange
+    default:
+      return nil
+    }
   }
 }
 

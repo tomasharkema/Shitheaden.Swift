@@ -7,15 +7,18 @@
 
 import CustomAlgo
 import Foundation
+import Logging
 import ShitheadenRuntime
 import ShitheadenShared
 import SwiftUI
 
 @MainActor
-class GameContainer: ObservableObject {
+final class GameContainer: ObservableObject {
+  private let logger = Logger(label: "app.GameContainer")
+
   private var appInput: AppInputUserInputAI?
   private var game: Game?
-  @Published var gameState: GameState = GameState()
+  @Published var gameState = GameState()
   @Published var selectedCards = Set<RenderCard>()
 
   private(set) var beginMoveHandler: (((Card, Card, Card)) async throws -> Void)?
@@ -29,8 +32,8 @@ class GameContainer: ObservableObject {
 
   var onDataId: UUID?
   var client: WebSocketClient?
-  func startOnline(_ client: WebSocketClient, restart: Bool) async {
-    self.gameState = GameState()
+  func startOnline(_ client: WebSocketClient, restart _: Bool) async {
+    gameState = GameState()
     self.client = client
     client.data.removeOnDataHandler(id: onDataId)
     onDataId = client.data.on { ob in
@@ -45,45 +48,45 @@ class GameContainer: ObservableObject {
   private func handleOnlineObject(_ ob: ServerEvent, client: WebSocketClient) {
     switch ob {
     case .requestMultiplayerChoice:
-      print("START ONLINE")
+      logger.info("START ONLINE")
 
     case let .multiplayerEvent(multiplayerEvent):
       switch multiplayerEvent {
       case let .error(error):
-        self.gameState.error = error.localizedDescription
+        gameState.error = error.localizedDescription
 
       case .action(.requestBeginTurn):
-        self.gameState.isOnTurn = true
-        self.gameState.canPass = false
+        gameState.isOnTurn = true
+        gameState.canPass = false
 
         moveHandler = nil
         beginMoveHandler = {
-          print($0)
+          self.logger.debug("\(String(describing: $0))")
           self.gameState.isOnTurn = false
           try await client.write(.multiplayerRequest(.concreteCards([$0.0, $0.1, $0.2])))
         }
 
       case .action(action: .requestNormalTurn):
-        self.gameState.isOnTurn = true
-        self.gameState.canPass = true
+        gameState.isOnTurn = true
+        gameState.canPass = true
 
         beginMoveHandler = nil
         moveHandler = {
-          print($0)
+          self.logger.debug("\(String(describing: $0))")
           self.gameState.isOnTurn = false
           try await client.write(.multiplayerRequest(.concreteTurn($0)))
         }
 
       case let .string(string):
-        print(string)
+        logger.debug("\(string)")
 
       case let .gameSnapshot(snapshot):
         handle(snapshot: snapshot)
       }
     case let .error(error):
-      self.gameState.error = error.localizedDescription
+      gameState.error = error.localizedDescription
     default:
-      print("DERP \(ob)")
+      logger.error("DERP \(String(describing: ob))")
     }
   }
 
@@ -92,7 +95,7 @@ class GameContainer: ObservableObject {
       return
     }
 
-    var newState = self.gameState
+    var newState = gameState
     newState.gameSnapshot = snapshot
     newState.localPhase = localPlayer.phase
     if !localPlayer.handCards.isEmpty {
@@ -109,7 +112,6 @@ class GameContainer: ObservableObject {
 
     newState.endState = snapshot.currentRequest?.endState
 
-
     switch localPlayer.phase {
     case .hand:
       newState.explain = "Speel een kaart uit je hand"
@@ -119,14 +121,13 @@ class GameContainer: ObservableObject {
       newState.explain = "Speel een kaart van je dichte stapel"
     }
 
-    if self.gameState != newState {
-      self.gameState = newState
+    if gameState != newState {
+      gameState = newState
     }
   }
 
   var gameTask: Task.Handle<GameSnapshot?, Never>?
   func start(restart: Bool = false) async {
-
     if restart {
       appInput = nil
       game = nil
@@ -137,7 +138,7 @@ class GameContainer: ObservableObject {
     guard appInput == nil, game == nil else {
       return
     }
-    self.gameState = GameState()
+    gameState = GameState()
     let id = UUID()
     let appInput = AppInputUserInputAI(
       beginMoveHandler: { h in
@@ -194,9 +195,9 @@ class GameContainer: ObservableObject {
       do {
         snapshot = try await game.startGame()
       } catch {
-        print(error)
+        self.logger.error("\(String(describing: error))")
       }
-      print("DONE!", snapshot)
+      self.logger.info("DONE! \(String(describing: snapshot))")
       return snapshot
     }
     self.gameTask = gameTask
@@ -262,7 +263,7 @@ class GameContainer: ObservableObject {
   }
 
   func stop() async {
-    print("STOP!", client)
+    logger.info("STOP game controller for client \(String(describing: client))")
     try? await client?.write(.quit)
   }
 }

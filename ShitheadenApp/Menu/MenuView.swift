@@ -5,9 +5,12 @@
 //  Created by Tomas Harkema on 21/06/2021.
 //
 
+import Logging
 import SwiftUI
 
 struct MenuView: View {
+  private let logger = Logger(label: "app.MenuView")
+
   @Binding var state: AppState?
   @State var showAlert: Bool = false
   @State var joinCode: String = ""
@@ -46,7 +49,8 @@ struct MenuView: View {
         )
       }
     }.onChange(of: joinCode, perform: { code in
-      print("\(code)")
+      logger.info("joincode: \(code)")
+
       if code.count > 1 {
         state = .multiplayerJoin(code)
       }

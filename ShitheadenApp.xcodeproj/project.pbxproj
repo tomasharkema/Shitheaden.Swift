@@ -30,6 +30,8 @@
 		C398542A26837F8200D64483 /* card.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C398542926837F8200D64483 /* card.ttf */; };
 		C398542D268472C300D64483 /* EndStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C398542C268472C300D64483 /* EndStateView.swift */; };
 		C39A09572682159C00F011BB /* AlertView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C39A09562682159C00F011BB /* AlertView.swift */; };
+		C3DBF4F92685CD470027D011 /* lib.sig in Resources */ = {isa = PBXBuildFile; fileRef = C3DBF4F82685CD470027D011 /* lib.sig */; };
+		C3DBF4FD2685E8B20027D011 /* AppDependencies in Frameworks */ = {isa = PBXBuildFile; productRef = C3DBF4FC2685E8B20027D011 /* AppDependencies */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -57,6 +59,7 @@
 		C398542C268472C300D64483 /* EndStateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EndStateView.swift; sourceTree = "<group>"; };
 		C398B203267CA35D00AAD375 /* lib */ = {isa = PBXFileReference; lastKnownFileType = folder; path = lib; sourceTree = "<group>"; };
 		C39A09562682159C00F011BB /* AlertView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertView.swift; sourceTree = "<group>"; };
+		C3DBF4F82685CD470027D011 /* lib.sig */ = {isa = PBXFileReference; lastKnownFileType = file; path = lib.sig; sourceTree = SOURCE_ROOT; };
 		C3FFA11C267CA6C3007972BA /* ShitheadenApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ShitheadenApp.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -66,6 +69,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				C314E6B3267CF97500A50A98 /* ShitheadenRuntime in Frameworks */,
+				C3DBF4FD2685E8B20027D011 /* AppDependencies in Frameworks */,
 				C33A6C17267CD04800FCF8C5 /* CustomAlgo in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -141,6 +145,7 @@
 			isa = PBXGroup;
 			children = (
 				C398542B268380C600D64483 /* Info.plist */,
+				C3DBF4F82685CD470027D011 /* lib.sig */,
 				C398542926837F8200D64483 /* card.ttf */,
 				C303CC4A2680B27700201FEF /* Menu */,
 				C303CC472680B22D00201FEF /* Game */,
@@ -186,6 +191,7 @@
 				C3812A4E267C816400397E65 /* Sources */,
 				C3812A4F267C816400397E65 /* Frameworks */,
 				C3812A50267C816400397E65 /* Resources */,
+				C3DBF4F72685CB810027D011 /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -195,6 +201,7 @@
 			packageProductDependencies = (
 				C33A6C16267CD04800FCF8C5 /* CustomAlgo */,
 				C314E6B2267CF97500A50A98 /* ShitheadenRuntime */,
+				C3DBF4FC2685E8B20027D011 /* AppDependencies */,
 			);
 			productName = ShitheadenApp;
 			productReference = C3812A52267C816400397E65 /* ShitheadenApp.app */;
@@ -241,10 +248,31 @@
 				C3812A5D267C816500397E65 /* Preview Assets.xcassets in Resources */,
 				C3812A5A267C816500397E65 /* Assets.xcassets in Resources */,
 				C398542A26837F8200D64483 /* card.ttf in Resources */,
+				C3DBF4F92685CD470027D011 /* lib.sig in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		C3DBF4F72685CB810027D011 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Type a script or drag a script file from your workspace to insert its path.\ncd lib && find Sources/ShitheadenRuntime Sources/ShitheadenShared -type f -exec shasum -a 256 {} \\; | sort -k 2 | shasum -a 256 > ../lib.sig\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		C3812A4E267C816400397E65 /* Sources */ = {
@@ -502,6 +530,10 @@
 		C33A6C16267CD04800FCF8C5 /* CustomAlgo */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = CustomAlgo;
+		};
+		C3DBF4FC2685E8B20027D011 /* AppDependencies */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = AppDependencies;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

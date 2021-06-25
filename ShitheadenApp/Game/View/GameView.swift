@@ -28,7 +28,8 @@ struct GameView: View {
               PlayerView(
                 player: player,
                 orientation: .horizontal,
-                playerOnTurn: game.gameState.gameSnapshot?.playersOnTurn.contains(player.id) ?? false
+                playerOnTurn: game.gameState.gameSnapshot?.playersOnTurn
+                  .contains(player.id) ?? false
               )
             }
             Spacer()
@@ -37,7 +38,8 @@ struct GameView: View {
                 PlayerView(
                   player: player,
                   orientation: .vertical,
-                  playerOnTurn: game.gameState.gameSnapshot?.playersOnTurn.contains(player.id) ?? false
+                  playerOnTurn: game.gameState.gameSnapshot?.playersOnTurn
+                    .contains(player.id) ?? false
                 )
               }
 
@@ -47,7 +49,8 @@ struct GameView: View {
                 PlayerView(
                   player: player,
                   orientation: .vertical,
-                  playerOnTurn: game.gameState.gameSnapshot?.playersOnTurn.contains(player.id) ?? false
+                  playerOnTurn: game.gameState.gameSnapshot?.playersOnTurn
+                    .contains(player.id) ?? false
                 )
               }
             }
@@ -57,7 +60,8 @@ struct GameView: View {
               PlayerView(
                 player: player,
                 orientation: .horizontal,
-                playerOnTurn: game.gameState.gameSnapshot?.playersOnTurn.contains(player.id) ?? false
+                playerOnTurn: game.gameState.gameSnapshot?.playersOnTurn
+                  .contains(player.id) ?? false
               )
             }
           }
@@ -100,7 +104,7 @@ struct GameView: View {
       }
     }
     .overlay(Button("Menu", action: {
-            showMenu = true
+      showMenu = true
     }).foregroundColor(Color.green).padding(), alignment: .topTrailing)
     .overlay(EndStateView(endState: game.gameState.endState, restart: {
       switch gameType {
@@ -115,12 +119,12 @@ struct GameView: View {
     .actionSheet(isPresented: $showMenu, content: {
       ActionSheet(title: Text("Weet je zeker dat je wilt stoppen?"), message: nil, buttons: [
         .destructive(Text("Stoppen"), action: {
-        async {
-          await game.stop()
-          await MainActor.run {
-            state = nil
+          async {
+            await game.stop()
+            await MainActor.run {
+              state = nil
+            }
           }
-        }
         }),
         .cancel(),
       ])
