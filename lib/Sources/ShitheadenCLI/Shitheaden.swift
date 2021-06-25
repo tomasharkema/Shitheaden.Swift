@@ -36,11 +36,13 @@ struct Shitheaden: ParsableCommand {
     if server {
       await startServer()
       return
-    } else if testAi {
-        await playTournament()
-        return
-      }
-
+    }
+#if os(macOS)
+    if testAi {
+      await playTournament()
+      return
+    }
+    #endif
 #if os(Linux)
     await startServer()
     return
@@ -48,7 +50,7 @@ struct Shitheaden: ParsableCommand {
 
     await interactive()
   }
-
+#if os(macOS)
     private func playTournament() async {
       return await withUnsafeContinuation { d in
         DispatchQueue.global().async {
@@ -60,7 +62,8 @@ struct Shitheaden: ParsableCommand {
         }
       }
     }
-
+  #endif
+  
   private func startServer() async {
     let group = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount / 2)
     let games = AtomicDictionary<String, MultiplayerHandler>()

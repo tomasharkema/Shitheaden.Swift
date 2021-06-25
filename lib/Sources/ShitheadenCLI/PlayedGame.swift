@@ -5,48 +5,20 @@
 //  Created by Tomas Harkema on 19/06/2021.
 //
 
+#if os(macOS)
+
 import CustomAlgo
 import Dispatch
 import Foundation
 import ShitheadenRuntime
 import ShitheadenShared
 
-/*
- struct PlayedGame {
- let scores: [Score]
-
- func winnigs() -> [String: Int] {
- var playerAndScores = [String: Int]()
-
- for score in scores {
- let winner = score.winner()
-
- playerAndScores[winner.0.ai.dynamicType.algoName] = (playerAndScores[winner.0.ai.dynamicType.algoName] ?? 0) + 1
- }
-
- return playerAndScores
- }
-
- func winningsFrom() -> [String: [String: Int]] {
- var playerAndScores = [String: [String: Int]]()
-
- for score in scores {
- let winner = score.winner()
- var arr = [String: Int]()
- for winn in winner.1 {
- arr = playerAndScores[winner.0.ai.dynamicType.algoName] ?? [:]
- arr[winn] = (arr[winn] ?? 0) + 1
- playerAndScores[winner.0.ai.dynamicType.algoName] = arr
- }
- }
-
- return playerAndScores
- }
- }
- */
-
-struct PlayedGame {
+class PlayedGame {
   let games: [GameSnapshot]
+
+  init(games: [GameSnapshot]) {
+    self.games = games
+  }
 
   func winnigs() async -> [String: Int] {
     var playerAndScores = [String: Int]()
@@ -101,3 +73,5 @@ struct PlayedGame {
     return playerAndScores
   }
 }
+
+#endif

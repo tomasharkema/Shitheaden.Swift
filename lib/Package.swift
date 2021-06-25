@@ -41,7 +41,6 @@ let package = Package(
     ),
     .package(url: "https://github.com/apple/swift-nio", from: "2.29.0"),
     .package(url: "https://github.com/apple/swift-nio-ssh", from: "0.3.0"),
-//    .package(url: "https://github.com/apple/swift-nio-ssl", from: "2.13.1"),
     .package(url: "https://github.com/flintprocessor/ANSIEscapeCode", branch: "master"),
     .package(url: "https://github.com/apple/swift-log", from: "1.4.2"),
     .package(url: "https://github.com/chrisaljoudi/swift-log-oslog.git", from: "0.2.1"),
@@ -83,7 +82,6 @@ let package = Package(
         .product(name: "NIOSSH", package: "swift-nio-ssh"),
         .product(name: "NIO", package: "swift-nio"),
         .product(name: "NIOHTTP1", package: "swift-nio"),
-        .product(name: "NIOWebSocket", package: "swift-nio"),
         .product(name: "NIOWebSocket", package: "swift-nio"),
         .product(name: "Logging", package: "swift-log"),
       ]

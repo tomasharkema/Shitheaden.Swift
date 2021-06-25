@@ -6,7 +6,7 @@
 //  Copyright © 2015 Tomas Harkema. All rights reserved.
 //
 
-
+#if os(macOS)
   import CustomAlgo
   import Dispatch
   import Foundation
@@ -172,3 +172,5 @@ import Logging
       self.logger.notice("Tijd: \(watch.getLap())\n")
     }
   }
+
+#endif

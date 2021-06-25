@@ -91,3 +91,4 @@ iOSInjectionProject/
 
 .build
 node_modules
+/lib.sig
