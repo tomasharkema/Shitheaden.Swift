@@ -42,6 +42,28 @@ class WebsocketClient: Client {
   }
 
   func start() async {
+    do {
+      await send(.requestSignature)
+      guard case let .signature(signature) = try await data.once() else {
+        throw NSError(domain: "SIG", code: 0, userInfo: nil)
+      }
+
+      print(signature)
+      let url = Bundle.main.url(forResource: "lib", withExtension: "sig")
+      print(url)
+      let localSignature = try String(contentsOf: url!).replacingOccurrences(of: "  -\n", with: "")
+
+      if signature == localSignature {
+        await send(.signatureCheck(true))
+      } else {
+        throw NSError(domain: "SIG", code: 0, userInfo: nil)
+      }
+
+    } catch {
+      print("SIGNATURE NOT SUCCEDED!")
+      await send(.signatureCheck(false))
+    }
+
     await send(.requestMultiplayerChoice)
 
     do {
@@ -62,6 +84,8 @@ class WebsocketClient: Client {
         print("GOT QUIT!!!!")
       case .startGame:
         print("OJOO!")
+      case .signature:
+        break
 
       case .none:
         return await start()

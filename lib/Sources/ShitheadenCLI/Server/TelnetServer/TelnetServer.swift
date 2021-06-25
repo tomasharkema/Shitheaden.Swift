@@ -8,9 +8,9 @@
 import ANSIEscapeCode
 import CustomAlgo
 import Foundation
+import NIO
 import ShitheadenRuntime
 import ShitheadenShared
-import NIO
 
 class TelnetServer {
   let games: AtomicDictionary<String, MultiplayerHandler>
@@ -25,7 +25,7 @@ class TelnetServer {
       .serverChannelOption(ChannelOptions.backlog, value: 256)
       .serverChannelOption(ChannelOptions.socketOption(.so_reuseaddr), value: 1)
       .childChannelInitializer { channel in
-        channel.pipeline.addHandler( BackPressureHandler()).flatMap {
+        channel.pipeline.addHandler(BackPressureHandler()).flatMap {
           channel.pipeline.addHandler(TelnetServerHandler(games: self.games))
         }
       }
@@ -51,4 +51,3 @@ class TelnetServer {
     return channel
   }
 }
-

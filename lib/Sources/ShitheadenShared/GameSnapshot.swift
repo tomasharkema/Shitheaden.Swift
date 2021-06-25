@@ -34,7 +34,6 @@ public struct GameSnapshot: Equatable, Codable {
     currentRequest = requestFor != nil ? players.first { $0.id == requestFor } : nil
   }
 
-
   public var winner: TurnRequest? {
     return players.first { $0.endState == .winner }
   }

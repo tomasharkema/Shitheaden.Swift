@@ -11,7 +11,7 @@ public actor CardRankingAlgo: GameAi {
   private var passes = 0
   public required init() {}
 
-  public func render(snapshot _: GameSnapshot) async {}
+  public func render(snapshot _: GameSnapshot) async throws {}
 
   public func beginMove(request: TurnRequest) async -> (Card, Card, Card) {
     let putOnTable = request.handCards.unobscure().map {
@@ -42,16 +42,18 @@ public actor CardRankingAlgo: GameAi {
       }
 
       guard let leastImportantTurn = pt.min(by: { l, r in
-        guard let leftCard = l.playedCards.first, let rightScore = r.playedCards.first?.number.importanceScore else {
+        guard let leftCard = l.playedCards.first,
+              let rightScore = r.playedCards.first?.number.importanceScore
+        else {
           return 10000 < 10000
         }
-        
+
         let leftScore = leftCard.number.importanceScore
 
-        if leftScore == rightScore && (request.deckCards.count < 3 || leftCard.number < .nine) {
+        if leftScore == rightScore, request.deckCards.count < 3 || leftCard.number < .nine {
           return l.playedCards.count > r.playedCards.count
         }
-        
+
         return leftScore < rightScore
       }) else {
         return .pass

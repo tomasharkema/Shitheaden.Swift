@@ -22,7 +22,7 @@ public enum PlayerError: LocalizedError, Codable, Equatable {
 
   case inputNotRecognized(input: String, hint: String?)
 
-  case integrityDoubleCardEncountered
+  case integrityDoubleCardEncountered(Card)
   case integrityCardCount
 
   case unknown

@@ -1,6 +1,6 @@
 //
 //  TelnetServerHandler.swift
-//  
+//
 //
 //  Created by Tomas Harkema on 24/06/2021.
 //
@@ -27,7 +27,13 @@ final class TelnetServerHandler: ChannelInboundHandler {
   private let handler = EventHandler<TelnetClient>()
 
   func channelActive(context: ChannelHandlerContext) {
-    let c = TelnetClient(context: context, handler: self, quit: quit.readOnly, data: data.readOnly, games: games)
+    let c = TelnetClient(
+      context: context,
+      handler: self,
+      quit: quit.readOnly,
+      data: data.readOnly,
+      games: games
+    )
     handler.emit(c)
     async {
       try await c.start()
@@ -62,7 +68,7 @@ final class TelnetServerHandler: ChannelInboundHandler {
     context.flush()
   }
 
-  func channelInactive(context: ChannelHandlerContext) {
+  func channelInactive(context _: ChannelHandlerContext) {
     print("channelInactive!")
     quit.emit(())
   }

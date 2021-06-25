@@ -103,13 +103,12 @@ public class EventHandler<T> {
   }
 }
 
-extension EventHandler {
-
-  public var readOnly: ReadOnly {
+public extension EventHandler {
+  var readOnly: ReadOnly {
     return ReadOnly(e: self)
   }
 
-  public class ReadOnly {
+  class ReadOnly {
     private let e: EventHandler<T>
 
     init(e: EventHandler<T>) {

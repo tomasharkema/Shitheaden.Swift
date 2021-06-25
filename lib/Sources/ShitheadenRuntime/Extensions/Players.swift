@@ -1,6 +1,6 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Tomas Harkema on 23/06/2021.
 //
@@ -10,8 +10,7 @@ import ShitheadenShared
 
 extension Array where Element == Player {
   func sortPlayerLowestCard() -> [Player] {
-
-    let m = self.min { l, r in
+    let m = min { l, r in
       let lFilter = l.handCards.filter { $0.number >= .four }
       let rFilter = r.handCards.filter { $0.number >= .four }
       print("FILTER", lFilter, rFilter)
@@ -32,9 +31,9 @@ extension Array where Element == Player {
       return lMin < rMin
     }
 
-    guard let player = m,  let place = firstIndex(of: player) else {
+    guard let player = m, let place = firstIndex(of: player) else {
       return self
     }
-    return self.shifted(by: -place)
+    return shifted(by: -place)
   }
 }

@@ -30,6 +30,9 @@ let package = Package(
     .library(name: "ShitheadenSharedDynamic", type: .dynamic, targets: ["ShitheadenRuntime"]),
     .library(name: "CustomAlgo", type: .static, targets: ["CustomAlgo"]),
     .library(name: "CustomAlgoDynamic", type: .dynamic, targets: ["CustomAlgo"]),
+    .library(name: "DependenciesTarget", type: .static, targets: ["DependenciesTarget"]),
+    .library(name: "AppDependencies", type: .static, targets: ["AppDependencies"]),
+    .library(name: "AppDependenciesDynamic", type: .dynamic, targets: ["AppDependencies"]),
   ],
   dependencies: [
     .package(
@@ -40,6 +43,8 @@ let package = Package(
     .package(url: "https://github.com/apple/swift-nio-ssh", from: "0.3.0"),
 //    .package(url: "https://github.com/apple/swift-nio-ssl", from: "2.13.1"),
     .package(url: "https://github.com/flintprocessor/ANSIEscapeCode", branch: "master"),
+    .package(url: "https://github.com/apple/swift-log", from: "1.4.2"),
+    .package(url: "https://github.com/chrisaljoudi/swift-log-oslog.git", from: "0.2.1"),
   ],
   targets: [
     .executableTarget(
@@ -48,12 +53,17 @@ let package = Package(
         .target(name: "ShitheadenRuntime"),
         .target(name: "CustomAlgo"),
         .product(name: "ArgumentParser", package: "swift-argument-parser"),
-        // , condition: .when(platforms: [.macOS, .macCatalyst])),
         .product(name: "ANSIEscapeCode", package: "ANSIEscapeCode"),
         .product(name: "NIOSSH", package: "swift-nio-ssh"),
         .product(name: "NIO", package: "swift-nio"),
         .product(name: "NIOHTTP1", package: "swift-nio"),
         .product(name: "NIOWebSocket", package: "swift-nio"),
+        .product(name: "Logging", package: "swift-log"),
+        .product(
+          name: "LoggingOSLog",
+          package: "swift-log-oslog",
+          condition: .when(platforms: [.iOS, .macOS, .macCatalyst, .tvOS, .watchOS])
+        ),
       ],
       path: "./Sources/ShitheadenCLI",
       swiftSettings: [
@@ -74,12 +84,26 @@ let package = Package(
         .product(name: "NIO", package: "swift-nio"),
         .product(name: "NIOHTTP1", package: "swift-nio"),
         .product(name: "NIOWebSocket", package: "swift-nio"),
+        .product(name: "NIOWebSocket", package: "swift-nio"),
+        .product(name: "Logging", package: "swift-log"),
+      ]
+    ),
+    .target(
+      name: "AppDependencies",
+      dependencies: [
+        .product(name: "Logging", package: "swift-log"),
+        .product(
+          name: "LoggingOSLog",
+          package: "swift-log-oslog",
+          condition: .when(platforms: [.iOS, .macOS, .macCatalyst, .tvOS, .watchOS])
+        ),
       ]
     ),
     .target(
       name: "ShitheadenRuntime",
       dependencies: [
         .target(name: "ShitheadenShared"),
+        .product(name: "Logging", package: "swift-log"),
       ],
       swiftSettings: [
         .unsafeFlags([
@@ -99,7 +123,9 @@ let package = Package(
     ),
     .target(
       name: "ShitheadenShared",
-      dependencies: [],
+      dependencies: [
+        .product(name: "Logging", package: "swift-log"),
+      ],
       swiftSettings: [
         .unsafeFlags([
           "-Xfrontend",
@@ -112,6 +138,7 @@ let package = Package(
       name: "CustomAlgo",
       dependencies: [
         .target(name: "ShitheadenShared"),
+        .product(name: "Logging", package: "swift-log"),
       ],
       swiftSettings: [
         .unsafeFlags([

@@ -40,7 +40,7 @@ final class WebSocketServerHandler: ChannelInboundHandler {
     }
   }
 
-  func channelActive(context: ChannelHandlerContext) {
+  func channelActive(context _: ChannelHandlerContext) {
     print("HANDLER ACTIVE")
   }
 

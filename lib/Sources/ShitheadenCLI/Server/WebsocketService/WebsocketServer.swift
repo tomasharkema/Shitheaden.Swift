@@ -27,7 +27,7 @@ actor WebsocketServer {
         channel.eventLoop.makeSucceededFuture(HTTPHeaders())
       },
       upgradePipelineHandler: { (channel: Channel, _: HTTPRequestHead) in
-        channel.pipeline.addHandler( BackPressureHandler()).flatMap {
+        channel.pipeline.addHandler(BackPressureHandler()).flatMap {
           channel.pipeline.addHandler(WebSocketServerHandler(games: self.games))
         }
       }

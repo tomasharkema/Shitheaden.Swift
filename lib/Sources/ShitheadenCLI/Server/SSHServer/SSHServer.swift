@@ -1,24 +1,26 @@
 //
 //  SSHServer.swift
-//  
+//
 //
 //  Created by Tomas Harkema on 24/06/2021.
 //
 
-import Foundation
 import CustomAlgo
 import Foundation
-import ShitheadenRuntime
-import ShitheadenShared
 import NIO
 import NIOSSH
+import ShitheadenRuntime
+import ShitheadenShared
 
 final class HardcodedPasswordDelegate: NIOSSHServerUserAuthenticationDelegate {
   var supportedAuthenticationMethods: NIOSSHAvailableUserAuthenticationMethods {
-      .all
+    .all
   }
 
-  func requestReceived(request: NIOSSHUserAuthenticationRequest, responsePromise: EventLoopPromise<NIOSSHUserAuthenticationOutcome>) {
+  func requestReceived(
+    request _: NIOSSHUserAuthenticationRequest,
+    responsePromise: EventLoopPromise<NIOSSHUserAuthenticationOutcome>
+  ) {
     responsePromise.succeed(.success)
   }
 }
@@ -54,15 +56,16 @@ final class DataToBufferCodec: ChannelDuplexHandler {
   typealias OutboundOut = SSHChannelData
 
   func handlerAdded(context: ChannelHandlerContext) {
-    context.channel.setOption(ChannelOptions.allowRemoteHalfClosure, value: true).whenFailure { error in
-      context.fireErrorCaught(error)
-    }
+    context.channel.setOption(ChannelOptions.allowRemoteHalfClosure, value: true)
+      .whenFailure { error in
+        context.fireErrorCaught(error)
+      }
   }
 
   func channelRead(context: ChannelHandlerContext, data: NIOAny) {
-    let data = self.unwrapInboundIn(data)
+    let data = unwrapInboundIn(data)
 
-    guard case .byteBuffer(let bytes) = data.data else {
+    guard case let .byteBuffer(bytes) = data.data else {
       fatalError("Unexpected read type")
     }
 
@@ -70,13 +73,16 @@ final class DataToBufferCodec: ChannelDuplexHandler {
       context.fireErrorCaught(SSHServerError.invalidDataType)
       return
     }
-    let b = self.wrapInboundOut(bytes)
+    let b = wrapInboundOut(bytes)
     context.fireChannelRead(b)
   }
 
   func write(context: ChannelHandlerContext, data: NIOAny, promise: EventLoopPromise<Void>?) {
-    let data = self.unwrapOutboundIn(data)
-    context.write(self.wrapOutboundOut(SSHChannelData(type: .channel, data: .byteBuffer(data))), promise: promise)
+    let data = unwrapOutboundIn(data)
+    context.write(
+      wrapOutboundOut(SSHChannelData(type: .channel, data: .byteBuffer(data))),
+      promise: promise
+    )
   }
 }
 
@@ -88,12 +94,15 @@ class SSHServer {
     self.games = games
   }
 
-  private func sshChildChannelInitializer(_ channel: Channel, _ channelType: SSHChannelType) -> EventLoopFuture<Void> {
+  private func sshChildChannelInitializer(_ channel: Channel,
+                                          _ channelType: SSHChannelType) -> EventLoopFuture<Void>
+  {
     print(channel, channelType)
     switch channelType {
     case .session:
-      return channel.pipeline.addHandlers([DataToBufferCodec(), Writeback(), TelnetServerHandler(games: games)])
-    case .directTCPIP(let target):
+      return channel.pipeline
+        .addHandlers([DataToBufferCodec(), Writeback(), TelnetServerHandler(games: games)])
+    case let .directTCPIP(target):
       return channel.eventLoop.makeFailedFuture(SSHServerError.invalidChannelType)
     case .forwardedTCPIP:
       return channel.eventLoop.makeFailedFuture(SSHServerError.invalidChannelType)
@@ -101,7 +110,6 @@ class SSHServer {
   }
 
   func start(group: MultiThreadedEventLoopGroup) async throws -> Channel {
-
     let hostKey = NIOSSHPrivateKey(ed25519Key: .init())
     let bootstrap = ServerBootstrap(group: group)
       .childChannelInitializer { channel in
@@ -109,13 +117,20 @@ class SSHServer {
           role: .server(.init(
             hostKeys: [hostKey],
             userAuthDelegate: HardcodedPasswordDelegate(),
-            globalRequestDelegate: nil)),
+            globalRequestDelegate: nil
+          )),
           allocator: channel.allocator,
           inboundChildChannelInitializer: self.sshChildChannelInitializer
         ))
       }
-      .serverChannelOption(ChannelOptions.socket(SocketOptionLevel(SOL_SOCKET), SO_REUSEADDR), value: 1)
-      .serverChannelOption(ChannelOptions.socket(SocketOptionLevel(IPPROTO_TCP), TCP_NODELAY), value: 1)
+      .serverChannelOption(
+        ChannelOptions.socket(SocketOptionLevel(SOL_SOCKET), SO_REUSEADDR),
+        value: 1
+      )
+      .serverChannelOption(
+        ChannelOptions.socket(SocketOptionLevel(IPPROTO_TCP), TCP_NODELAY),
+        value: 1
+      )
 
     let bind = bootstrap.bind(host: "0.0.0.0", port: 3332)
 
@@ -138,4 +153,3 @@ class SSHServer {
     return channel
   }
 }
-

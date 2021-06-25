@@ -9,7 +9,7 @@
 public protocol GameAi: Actor {
   init()
 
-  func render(snapshot: GameSnapshot) async -> Void
+  func render(snapshot: GameSnapshot) async throws
   func beginMove(request: TurnRequest) async throws
     -> (Card, Card, Card)
   func move(request: TurnRequest) async throws -> Turn

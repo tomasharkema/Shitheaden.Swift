@@ -22,8 +22,6 @@ actor MultiplayerHandler {
   var competitors: [(UUID, Client)]
   var gameTask: Task<GameSnapshot, Error>?
 
-  let promise = Promise()
-
   init(challenger: (UUID, Client)) {
     self.challenger = challenger
     code = UUID().uuidString.prefix(5).lowercased()
@@ -41,17 +39,18 @@ actor MultiplayerHandler {
     }
     competitors.forEach { d in
       d.1.quit.on {
-      print("onQuitRead", self.gameTask)
-      self.gameTask?.cancel()
-      async {
-        await challenger.1.send(.quit)
-      }
-        self.competitors.filter { $0.0 != d.0 }.forEach { c in
+        print("onQuitRead", self.gameTask)
+        self.gameTask?.cancel()
         async {
-          await c.1.send(.quit)
+          await challenger.1.send(.quit)
+        }
+        self.competitors.filter { $0.0 != d.0 }.forEach { c in
+          async {
+            await c.1.send(.quit)
+          }
         }
       }
-    }}
+    }
   }
 
   nonisolated func send(_ event: ServerEvent) async {
@@ -88,7 +87,7 @@ actor MultiplayerHandler {
   }
 
   nonisolated func finished() async throws {
-    return try await promise.task.get()
+    try await gameTask!.get()
   }
 
   private func startMultiplayerGame() async throws -> GameSnapshot {
@@ -154,7 +153,6 @@ actor MultiplayerHandler {
     )
     let gameTask: Task<GameSnapshot, Error> = async {
       let result = try await game.startGame()
-      promise.resolve()
       return result
     }
 
@@ -163,7 +161,9 @@ actor MultiplayerHandler {
     return try await withTaskCancellationHandler(operation: {
       try await gameTask.get()
     }, onCancel: {
-      promise.resolve()
+      print("CANCEL")
+      assertionFailure("SHOULD BEHANDLED")
+//      promise.resolve()
     })
   }
 }

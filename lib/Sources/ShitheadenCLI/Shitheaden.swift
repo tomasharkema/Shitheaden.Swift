@@ -10,8 +10,8 @@ import ANSIEscapeCode
 import ArgumentParser
 import CustomAlgo
 import Foundation
-import ShitheadenRuntime
 import NIO
+import ShitheadenRuntime
 
 @main
 struct Shitheaden: ParsableCommand {
@@ -78,7 +78,7 @@ struct Shitheaden: ParsableCommand {
     }
     async {
       let server = TelnetServer(games: games)
-      let channel =  try await server.start(group: group)
+      let channel = try await server.start(group: group)
       try channel.closeFuture.wait()
     }
     async {

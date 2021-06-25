@@ -31,10 +31,12 @@ public enum ServerEvent: Equatable, Codable {
   case multiplayerEvent(multiplayerEvent: MultiplayerEvent)
   case joined(numberOfPlayers: Int)
   case codeCreate(code: String)
+  case signatureCheck(Bool)
 
   case start
   case waiting
   case quit
+  case requestSignature
 
   public func getMultiplayerEvent() throws -> MultiplayerEvent {
     switch self {
@@ -67,6 +69,7 @@ public enum ServerRequest: Equatable, Codable {
   case startGame
   case quit
   case singlePlayer
+  case signature(String)
 
   public func getMultiplayerRequest() throws -> MultiplayerRequest {
     switch self {
