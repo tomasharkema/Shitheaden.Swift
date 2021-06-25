@@ -18,35 +18,34 @@ struct CardWaverView: View {
   @State var hasLongPressed = false
 
   @ViewBuilder
-  func v(c: RenderCard) -> some View {
+  private func view(card: RenderCard) -> some View {
     if let select = select {
       StatedButton(
         action: { selected in
           if !hasLongPressed {
-            select([c], selected)
+            select([card], selected)
           }
           hasLongPressed = false
         }, label: {
-          CardView(card: c)
-        }, isSelected: selectedCards.contains(c)
+          CardView(card: card)
+        }, isSelected: selectedCards.contains(card)
       )
       .simultaneousGesture(LongPressGesture().onEnded {
-        print($0)
         if $0 {
           hasLongPressed = true
-          select(cards.filter { $0.card?.number == c.card?.number }, true)
+          select(cards.filter { $0.card?.number == card.card?.number }, true)
         }
       })
       .buttonStyle(PlainButtonStyle())
     } else {
-      CardView(card: c)
+      CardView(card: card)
     }
   }
 
   var body: some View {
     OrientationStack(orientation: orientation, spacing: -20) {
-      ForEach(Array(cards.enumerated()), id: \.element) { index, c in
-        v(c: c).zIndex(Double(-index))
+      ForEach(Array(cards.enumerated()), id: \.element) { index, card in
+        view(card: card).zIndex(Double(-index))
       }
     }
   }

@@ -7,12 +7,15 @@
 
 import CustomAlgo
 import Foundation
+import Logging
 import NIO
 import NIOHTTP1
 import NIOWebSocket
 import ShitheadenRuntime
 
 actor WebsocketServer {
+  private let logger = Logger(label: "cli.WebsocketServer")
+
   let games: AtomicDictionary<String, MultiplayerHandler>
 
   private var channel: Channel?
@@ -56,14 +59,14 @@ actor WebsocketServer {
 
     let bind = bootstrap.bind(host: "0.0.0.0", port: 3338)
 
-    let channel: Channel = try await withUnsafeThrowingContinuation { g in
+    let channel: Channel = try await withUnsafeThrowingContinuation { cont in
       bind.whenSuccess {
-        print("LISTINGIN!")
-        g.resume(returning: $0)
+        self.logger.info("LISTENING!")
+        cont.resume(returning: $0)
       }
       bind.whenFailure {
-        print("ERROR!")
-        g.resume(throwing: $0)
+        self.logger.error("ERROR! \($0)")
+        cont.resume(throwing: $0)
       }
     }
 
@@ -72,7 +75,7 @@ actor WebsocketServer {
         "Address was unable to bind. Please check that the socket was not closed or that the address family was understood."
       )
     }
-    print("Server started and listening on \(localAddress)")
+    logger.info("Server started and listening on \(localAddress)")
     self.channel = channel
     return channel
   }

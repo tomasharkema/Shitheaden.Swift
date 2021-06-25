@@ -60,11 +60,10 @@ actor UserInputAIJson: GameAi {
   func move(request: TurnRequest) async throws -> Turn {
     let string = try await reader(.requestNormalTurn, request.playerError)
 
-    let turn: Turn
     switch string {
     case let .string(string):
       if string.contains("p") {
-        turn = .pass
+        return .pass
       } else {
         throw PlayerError.inputNotRecognized(
           input: string,
@@ -78,12 +77,12 @@ actor UserInputAIJson: GameAi {
       case .hand:
         let elements = request.handCards.unobscure().lazy.enumerated().filter {
           keuze.contains($0.offset + 1)
-        }.map { $0.element }
+        }.map(\.element)
 
         if elements.count > 1, !elements.sameNumber() {
           throw PlayerError.sameNumber
         }
-        turn = .play(Set(elements))
+        return .play(Set(elements))
 
       case .tableClosed:
         if keuze.count != 1 {
@@ -91,7 +90,7 @@ actor UserInputAIJson: GameAi {
         }
 
         guard let int = keuze.first,
-              let i = (1 ... request.closedCards.count).first(where: {
+              let closedCardsIndex = (1 ... request.closedCards.count).first(where: {
                 $0 == int
               })
         else {
@@ -101,21 +100,19 @@ actor UserInputAIJson: GameAi {
           )
         }
 
-        turn = .closedCardIndex(i)
+        return .closedCardIndex(closedCardsIndex)
 
       case .tableOpen:
-        turn = .play(Set(request.openTableCards.unobscure().lazy.enumerated().filter {
+        return .play(Set(request.openTableCards.unobscure().lazy.enumerated().filter {
           keuze.contains($0.offset + 1)
-        }.map { $0.element }))
+        }.map(\.element)))
       }
 
-    case let .concreteTurn(t):
-      turn = t
+    case let .concreteTurn(cTurn):
+      return cTurn
 
     default:
       throw PlayerError.debug("Only string or cardIndexes or turn permitted")
     }
-
-    return turn
   }
 }

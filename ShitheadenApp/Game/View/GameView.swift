@@ -94,8 +94,8 @@ struct GameView: View {
             isOnTurn: game.gameState.isOnTurn,
             canPass: game.gameState.canPass,
             explain: game.gameState.explain,
-            playClosedCard: { i in
-              game.playClosedCard(i)
+            playClosedCard: { index in
+              game.playClosedCard(index)
             }, select: {
               game.select(
                 $0,

@@ -27,7 +27,7 @@ extension TurnRequest {
 
 enum Renderer {
   static func error(error: PlayerError) -> String {
-    return RenderPosition.input.down(n: 1)
+    RenderPosition.input.down(yAxisDown: 1)
       .cliRep + (error.errorDescription ?? error.localizedDescription)
   }
 
@@ -36,9 +36,9 @@ enum Renderer {
       if !player.done {
         return [
           player.renderPosition >>> "\(player.name) \(player.handCards.count) kaarten",
-//          player.renderPosition.down(n: 1) >>> player.latestState,
-          player.renderPosition.down(n: 2) >>> player.showedTable,
-          player.renderPosition.down(n: 3) >>> "\(player.closedCards.count)",
+//          player.renderPosition.down(yAxisDown: 1) >>> player.latestState,
+          player.renderPosition.down(yAxisDown: 2) >>> player.showedTable,
+          player.renderPosition.down(yAxisDown: 3) >>> "\(player.closedCards.count)",
         ]
       } else {
         return [player.renderPosition >>> "\(player.name) KLAAR"]
@@ -70,7 +70,7 @@ enum Renderer {
 
     let cursor: String = game.playersOnTurn.contains(userPlayer?.id ?? UUID()) ? ANSIEscapeCode
       .Cursor.showCursor + ANSIEscapeCode.Cursor.position(
-        row: RenderPosition.input.y + 2,
+        row: RenderPosition.input.yAxis + 2,
         column: 0
       ) : ANSIEscapeCode.Cursor.hideCursor
 
@@ -80,12 +80,12 @@ enum Renderer {
       [
         CLI.setBackground(),
         CLI.clear(),
-        RenderPosition.header.down(n: 1) >>> " Shitheaden",
-        RenderPosition.header.down(n: 3) >>> " Deck: \(game.deckCards.count) kaarten",
-        RenderPosition.header.down(n: 4) >>> " Burnt: \(game.burntCards.count) kaarten",
-        RenderPosition.tafel >>> game.tableCards.unobscure().map { $0.description }
+        RenderPosition.header.down(yAxisDown: 1) >>> " Shitheaden",
+        RenderPosition.header.down(yAxisDown: 3) >>> " Deck: \(game.deckCards.count) kaarten",
+        RenderPosition.header.down(yAxisDown: 4) >>> " Burnt: \(game.burntCards.count) kaarten",
+        RenderPosition.tafel >>> game.tableCards.unobscure().map(\.description)
           .joined(separator: " "),
-        RenderPosition.tafel.down(n: 1) >>> "\(game.tableCards.count)",
+        RenderPosition.tafel.down(yAxisDown: 1) >>> "\(game.tableCards.count)",
         hand,
         status,
       ],

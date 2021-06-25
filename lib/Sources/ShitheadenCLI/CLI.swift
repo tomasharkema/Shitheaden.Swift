@@ -18,38 +18,25 @@ enum CLI {
   static let HideCursor = "\\e[?25h"
 
   static func clear() -> String {
-    return ClearChar
+    ClearChar
   }
 
-  static func setBackground() -> String { return "\u{1B}[\(CLI.TextColor);\(CLI.Background);m"
+  static func setBackground() -> String { "\u{1B}[\(CLI.TextColor);\(CLI.Background);m"
   }
-
-  //  static func print(pos: RenderPosition, string: String) {
-//    if shouldPrintGlbl {
-//      Swift.print("\u{001B}[\(CLI.TextColor);\(CLI.Background);m\(pos.cliRep)\(string)")
-//    }
-  //  }
 }
 
 func >>> (lhs: RenderPosition, rhs: String) -> String {
-  //  CLI.print(pos: lhs, string: rhs)
-  return "\u{001B}[\(CLI.TextColor);\(CLI.Background);m\(lhs.cliRep)\(rhs)"
+  "\u{001B}[\(CLI.TextColor);\(CLI.Background);m\(lhs.cliRep)\(rhs)"
 }
 
 func >>> (color: Color, string: String) -> String {
-  return "\u{001B}[47;\(color.rawValue)m\(string)\u{001B}[\(CLI.TextColor);\(CLI.Background)m"
+  "\u{001B}[47;\(color.rawValue)m\(string)\u{001B}[\(CLI.TextColor);\(CLI.Background)m"
 }
 
 infix operator >>>
 
 public extension RenderPosition {
   var cliRep: String {
-    return "\u{1B}[\(y);\(x)H"
-  }
-}
-
-extension String {
-  func print() {
-    Swift.print(self)
+    "\u{1B}[\(yAxis);\(xAxis)H"
   }
 }

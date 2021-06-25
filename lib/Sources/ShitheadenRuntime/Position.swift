@@ -9,30 +9,30 @@
 // TODO: x,y coords belong to CLI module
 
 public struct RenderPosition: Equatable {
-  public static let header = RenderPosition(x: 0, y: 0)
-  public static let tafel = RenderPosition(x: 50, y: 10)
-  public static let status = RenderPosition(x: 100, y: 10)
-  public static let verliezer = RenderPosition(x: 50, y: 10)
-  public static let input = RenderPosition(x: 0, y: 25)
-  public static let debug = RenderPosition(x: 0, y: 40)
+  public static let header = RenderPosition(xAxis: 0, yAxis: 0)
+  public static let tafel = RenderPosition(xAxis: 50, yAxis: 10)
+  public static let status = RenderPosition(xAxis: 100, yAxis: 10)
+  public static let verliezer = RenderPosition(xAxis: 50, yAxis: 10)
+  public static let input = RenderPosition(xAxis: 0, yAxis: 25)
+  public static let debug = RenderPosition(xAxis: 0, yAxis: 40)
 
-  public static let noord = RenderPosition(x: 50, y: 5)
-  public static let oost = RenderPosition(x: 75, y: 10)
-  public static let zuid = RenderPosition(x: 50, y: 15)
-  public static let west = RenderPosition(x: 25, y: 10)
+  public static let noord = RenderPosition(xAxis: 50, yAxis: 5)
+  public static let oost = RenderPosition(xAxis: 75, yAxis: 10)
+  public static let zuid = RenderPosition(xAxis: 50, yAxis: 15)
+  public static let west = RenderPosition(xAxis: 25, yAxis: 10)
 
   public static let allCases: [RenderPosition] = [.noord, .oost, .zuid, .west]
 
-  public static let hand = input.down(n: -3)
+  public static let hand = input.down(yAxisDown: -3)
 
-  public let x: Int
-  public let y: Int
+  public let xAxis: Int
+  public let yAxis: Int
 
-  public func down(n: Int) -> RenderPosition {
-    return RenderPosition(x: x, y: y + n)
+  public func down(yAxisDown: Int) -> RenderPosition {
+    RenderPosition(xAxis: xAxis, yAxis: yAxis + yAxisDown)
   }
 
-  public func right(n: Int) -> RenderPosition {
-    return RenderPosition(x: x + n, y: y)
+  public func right(xAxisAside: Int) -> RenderPosition {
+    RenderPosition(xAxis: xAxis + xAxisAside, yAxis: yAxis)
   }
 }

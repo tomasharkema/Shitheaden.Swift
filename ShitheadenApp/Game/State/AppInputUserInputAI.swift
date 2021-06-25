@@ -41,28 +41,28 @@ actor AppInputUserInputAI: GameAi {
   }
 
   func beginMove(request: TurnRequest) async -> (Card, Card, Card) {
-    if let e = request.playerError {
-      await errorHandler(e.errorDescription ?? e.localizedDescription)
+    if let error = request.playerError {
+      await errorHandler(error.errorDescription ?? error.localizedDescription)
     }
 
-    return await withUnsafeContinuation { g in
+    return await withUnsafeContinuation { cont in
       async {
         await beginMoveHandler {
-          g.resume(returning: $0)
+          cont.resume(returning: $0)
         }
       }
     }
   }
 
   func move(request: TurnRequest) async -> Turn {
-    if let e = request.playerError {
-      await errorHandler(e.errorDescription ?? e.localizedDescription)
+    if let error = request.playerError {
+      await errorHandler(error.errorDescription ?? error.localizedDescription)
     }
 
-    return await withUnsafeContinuation { g in
+    return await withUnsafeContinuation { cont in
       async {
         await moveHandler {
-          g.resume(returning: $0)
+          cont.resume(returning: $0)
         }
       }
     }

@@ -57,29 +57,10 @@
         self.logger.info("receive: \(result)")
         async {
           do {
-            let d: Data
-            switch result {
-            case let .success(.data(data)):
-              d = data
-            case let .success(.string(string)):
-              if let data = string.data(using: .utf8) {
-                d = data
-              }
-
-              self.logger.error("error: \(result)")
-              return
-            case let .failure(e):
-              self.logger.error("Error: \(e)")
-              return
-            case .success:
-              self.logger.debug("Success: \(result)")
-              return
-            }
-
-            let o = try JSONDecoder().decode(ServerEvent.self, from: d)
-            self.logger.debug("Received: \(o)")
+            let object = try JSONDecoder().decode(ServerEvent.self, from: try result.getData())
+            self.logger.debug("Received: \(object)")
             await MainActor.run {
-              self.onData.emit(o)
+              self.onData.emit(object)
             }
           } catch {
             self.logger.error("\(error)")
@@ -94,16 +75,16 @@
     }
 
     func connected() async throws -> Self {
-      let _: Void = try await withUnsafeThrowingContinuation { g in
+      let result: Void = try await withUnsafeThrowingContinuation { cont in
         task.sendPing(pongReceiveHandler: {
           if let error = $0 {
-            g.resume(throwing: error)
+            cont.resume(throwing: error)
           } else {
-            g.resume()
+            cont.resume()
           }
         })
       }
-      logger.info("CONNECTED!")
+      logger.info("CONNECTED! \(result)")
       return self
     }
 
@@ -111,11 +92,11 @@
     public func urlSession(
       _: URLSession,
       webSocketTask: URLSessionWebSocketTask,
-      didOpenWithProtocol p: String?
+      didOpenWithProtocol proto: String?
     ) {
-      logger.info("didOpenWithProtocol: \(p)")
-      webSocketTask.sendPing(pongReceiveHandler: {
-        self.logger.info("pongReceiveHandler: \($0)")
+      logger.info("didOpenWithProtocol: \(proto)")
+      webSocketTask.sendPing(pongReceiveHandler: { pong in
+        self.logger.info("pongReceiveHandler: \(proto) \(pong)")
       })
     }
 
@@ -129,26 +110,46 @@
       closed = true
     }
 
-    public func write(_ req: ServerRequest) async throws {
-      return try await withUnsafeThrowingContinuation { c in
+    public func write(_ req: ServerRequest) async throws -> ServerRequest {
+      try await withUnsafeThrowingContinuation { cont in
         logger.info("Write request: \(req)")
-        let d = try! JSONEncoder().encode(req)
+        do {
+          let data = try JSONEncoder().encode(req)
 
-        task.send(.data(d), completionHandler: {
-          if let error = $0 {
-            c.resume(throwing: error)
-          } else {
-            c.resume()
-          }
-        })
+          task.send(.data(data), completionHandler: {
+            if let error = $0 {
+              cont.resume(throwing: error)
+            } else {
+              cont.resume(returning: req)
+            }
+          })
+        } catch {
+          logger.error("Encoding error: \(error)")
+          cont.resume(throwing: error)
+        }
       }
     }
 
-    public func close() async {
-      return await withUnsafeContinuation { g in
-        task.cancel()
-        closed = true
-        g.resume()
+    public func close() {
+      task.cancel()
+      closed = true
+    }
+  }
+
+  struct DataError: Error {}
+
+  extension Result where Success == URLSessionWebSocketTask.Message {
+    func getData() throws -> Data {
+      switch try get() {
+      case let .data(data):
+        return data
+      case let .string(string):
+        guard let data = string.data(using: .utf8) else {
+          throw DataError()
+        }
+        return data
+      @unknown default:
+        throw DataError()
       }
     }
   }

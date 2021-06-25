@@ -28,20 +28,20 @@ public enum Number: CaseIterable, Equatable, Hashable, Codable {
   static let nonSpecials: [Self] = Number.allCases.filter { !specials.contains($0) }
 
   public init(from decoder: Decoder) throws {
-    let d = try decoder.singleValueContainer()
-    let s = try d.decode(String.self)
+    let decode = try decoder.singleValueContainer()
+    let string = try decode.decode(String.self)
 
-    guard let n = Number.allCases.first(where: {
-      $0.string == s
+    guard let number = Number.allCases.first(where: {
+      $0.string == string
     }) else {
       throw NSError(domain: "", code: 0, userInfo: nil)
     }
-    self = n
+    self = number
   }
 
   public func encode(to encoder: Encoder) throws {
-    var e = encoder.singleValueContainer()
-    try e.encode(string)
+    var encode = encoder.singleValueContainer()
+    try encode.encode(string)
   }
 
   public var string: String {
@@ -274,6 +274,6 @@ public extension Number {
 
 extension Number: Comparable {
   public static func < (lhs: Number, rhs: Number) -> Bool {
-    return lhs.order < rhs.order
+    lhs.order < rhs.order
   }
 }

@@ -35,6 +35,6 @@ public struct GameSnapshot: Equatable, Codable {
   }
 
   public var winner: TurnRequest? {
-    return players.first { $0.endState == .winner }
+    players.first { $0.endState == .winner }
   }
 }

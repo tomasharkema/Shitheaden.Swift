@@ -36,22 +36,22 @@ actor MultiplayerHandler {
         .info("onQuitRead, challenger \(challenger) \(self.gameTask) \(self.finishEvent)")
       self.gameTask?.cancel()
 
-      self.competitors.forEach { c in
+      self.competitors.forEach { competitor in
         async {
-          await c.1.send(.quit)
+          await competitor.1.send(.quit)
         }
       }
     }
-    competitors.forEach { d in
-      d.1.quit.on {
-        self.logger.info("onQuitRead, \(d) \(self.gameTask) \(self.finishEvent)")
+    competitors.forEach { competitor in
+      competitor.1.quit.on {
+        self.logger.info("onQuitRead, \(competitor) \(self.gameTask) \(self.finishEvent)")
         self.gameTask?.cancel()
         async {
           await challenger.1.send(.quit)
         }
-        self.competitors.filter { $0.0 != d.0 }.forEach { c in
+        self.competitors.filter { $0.0 != competitor.0 }.forEach { competitor in
           async {
-            await c.1.send(.quit)
+            await competitor.1.send(.quit)
           }
         }
       }
@@ -60,8 +60,8 @@ actor MultiplayerHandler {
 
   nonisolated func send(_ event: ServerEvent) async {
     await challenger.1.send(event)
-    for s in await competitors {
-      await s.1.send(event)
+    for competitor in await competitors {
+      await competitor.1.send(event)
     }
   }
 
@@ -79,8 +79,8 @@ actor MultiplayerHandler {
   nonisolated func waitForStart() async throws {
     await challenger.1.send(.codeCreate(code: code))
 
-    let r = try await challenger.1.data.once()
-    guard case let .multiplayerRequest(read) = r, let string = read.string,
+    let readEvent = try await challenger.1.data.once()
+    guard case let .multiplayerRequest(read) = readEvent, let string = read.string,
           string.contains("start")
     else {
       return try await waitForStart()
@@ -93,7 +93,7 @@ actor MultiplayerHandler {
   }
 
   nonisolated func finished() async throws -> Result<GameSnapshot, Error> {
-    return try await finishEvent.once()
+    try await finishEvent.once()
   }
 
   private func startMultiplayerGame() async throws -> GameSnapshot {

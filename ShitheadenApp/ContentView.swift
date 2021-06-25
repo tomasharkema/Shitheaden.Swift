@@ -48,6 +48,6 @@ extension Card: Identifiable {}
 
 extension Card: CustomStringConvertible {
   public var description: String {
-    return "\(symbol.string)\(number.string)"
+    "\(symbol.string)\(number.string)"
   }
 }

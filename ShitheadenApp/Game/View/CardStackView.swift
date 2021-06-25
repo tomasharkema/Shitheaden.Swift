@@ -13,14 +13,14 @@ struct CardStackView: View {
   let offset: CGFloat
   let alignment = Alignment.center
 
-  func offsetCalc(_ n: CGFloat) -> CGFloat {
-    (min(n, 4) * offset) + (max(0, n - 4) * offset * 0.1)
+  func offsetCalc(_ number: CGFloat) -> CGFloat {
+    (min(number, 4) * offset) + (max(0, number - 4) * offset * 0.1)
   }
 
   var body: some View {
-    let d = Array(cards)
+    let cardsArray = Array(cards)
     ZStack(alignment: alignment) {
-      ForEach(Array(d.enumerated()), id: \.element) { el in
+      ForEach(Array(cardsArray.enumerated()), id: \.element) { el in
         CardView(card: el.element)
           .offset(
             x: CGFloat(el.offset) + offsetCalc(CGFloat(el.offset)),

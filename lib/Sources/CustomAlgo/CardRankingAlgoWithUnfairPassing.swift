@@ -23,7 +23,7 @@ public actor CardRankingAlgoWithUnfairPassing: GameAi {
     let turn = await old.move(request: request)
 
     if request.phase == .hand, request.deckCards.count > 3, request.tableCards.count < 6 {
-      let playThreeOrThen = turn.playedCards.map { $0.number }.contains {
+      let playThreeOrThen = turn.playedCards.map(\.number).contains {
         [.ten, .three].contains($0)
       }
       if playThreeOrThen {

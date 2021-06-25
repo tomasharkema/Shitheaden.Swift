@@ -18,9 +18,9 @@ public enum Turn: Equatable, Hashable, Codable {
       hasher.combine(cards)
     case .pass:
       hasher.combine("pass")
-    case let .closedCardIndex(i):
+    case let .closedCardIndex(index):
       hasher.combine("closedCardIndex")
-      hasher.combine(i)
+      hasher.combine(index)
     }
   }
 
@@ -44,9 +44,9 @@ public extension Array where Element: Equatable {
   func unique() -> [Element] {
     var found = [Element]()
 
-    for e in self {
-      if !found.contains(e) {
-        found.append(e)
+    for element in self {
+      if !found.contains(element) {
+        found.append(element)
       }
     }
 
@@ -58,18 +58,17 @@ public extension Array where Element == Turn {
   func includeDoubles() -> [Turn] {
     var turns = [Turn]()
 
-    for el in self {
-      turns.append(el)
-      if case let .play(cards) = el {
+    for element in self {
+      turns.append(element)
+      if case let .play(cards) = element {
         for card in cards {
           for case let .play(otherCards) in turns {
-            var a = Set([card])
-            // a.insert(contentsOf: otherCards.filter { $0.number == card.number })
-            for e in otherCards.filter({ $0.number == card.number }) {
-              a.insert(e)
+            var cardSet = Set([card])
+            for element in otherCards.filter({ $0.number == card.number }) {
+              cardSet.insert(element)
             }
-            if a.count > 1 {
-              turns.append(Turn.play(a))
+            if cardSet.count > 1 {
+              turns.append(Turn.play(cardSet))
             }
           }
         }

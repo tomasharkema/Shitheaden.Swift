@@ -11,6 +11,6 @@ public typealias Table = [Card]
 
 extension Table {
   var lastCard: Card? {
-    return lazy.filter { $0.number != .three }.last
+    lazy.filter { $0.number != .three }.last
   }
 }

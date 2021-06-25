@@ -44,13 +44,13 @@ public struct Card: Equatable, Hashable, Codable {
 
 public extension Array where Element == Card {
   func sortNumbers() -> [Card] {
-    return sorted {
+    sorted {
       $0 < $1
     }
   }
 
   func sameNumber() -> Bool {
-    return !contains {
+    !contains {
       $0.number != first?.number
     }
   }
@@ -64,6 +64,6 @@ public extension Card {
 
 extension Card: Comparable {
   public static func < (lhs: Card, rhs: Card) -> Bool {
-    return lhs.number < rhs.number
+    lhs.number < rhs.number
   }
 }

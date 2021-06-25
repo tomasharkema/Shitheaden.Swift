@@ -22,27 +22,27 @@ public class EventHandler<T> {
     }
   }
 
-  public func once(_ fn: @escaping (T) async -> Void) {
+  public func once(_ handler: @escaping (T) async -> Void) {
     let uuid = UUID()
     var hasSend = false
-    let f = { (el: T) in
+    let function = { (element: T) in
       if !hasSend {
         hasSend = true
-        await fn(el)
+        await handler(element)
       }
     }
     DispatchQueue.global().async {
       async {
-        await self.dataHandlers.insert(uuid, value: f)
+        await self.dataHandlers.insert(uuid, value: function)
       }
     }
   }
 
-  public func on(_ fn: @escaping (T) async -> Void) -> UUID {
-    events.forEach { el in
+  public func on(_ handler: @escaping (T) async -> Void) -> UUID {
+    events.forEach { element in
       DispatchQueue.global().async {
         async {
-          await fn(el)
+          await handler(element)
         }
       }
     }
@@ -51,20 +51,20 @@ public class EventHandler<T> {
 
     let uuid = UUID()
     async {
-      await dataHandlers.insert(uuid, value: fn)
+      await dataHandlers.insert(uuid, value: handler)
     }
     return uuid
   }
 
-  public func emit(_ v: T) {
+  public func emit(_ value: T) {
     async {
       if await dataHandlers.isEmpty() {
-        events.append(v)
+        events.append(value)
       }
-      await dataHandlers.values().forEach { fn in
+      await dataHandlers.values().forEach { handler in
         DispatchQueue.global().async {
           async {
-            await fn(v)
+            await handler(value)
           }
         }
       }
@@ -81,12 +81,12 @@ public class EventHandler<T> {
     return try await withTaskCancellationHandler(handler: {
       handler.emit(())
     }, operation: {
-      try await withUnsafeThrowingContinuation { g in
+      try await withUnsafeThrowingContinuation { cont in
         handler.once { _ in
-          g.resume(throwing: PlayerError.debug("QUIT"))
+          cont.resume(throwing: PlayerError.debug("QUIT"))
         }
-        self.once { d in
-          g.resume(returning: d)
+        self.once { event in
+          cont.resume(returning: event)
         }
       }
     })
@@ -103,34 +103,34 @@ public class EventHandler<T> {
 
 public extension EventHandler {
   var readOnly: ReadOnly {
-    return ReadOnly(e: self)
+    ReadOnly(event: self)
   }
 
   class ReadOnly {
-    private let e: EventHandler<T>
+    private let event: EventHandler<T>
 
-    init(e: EventHandler<T>) {
-      self.e = e
+    init(event: EventHandler<T>) {
+      self.event = event
     }
 
     public func removeOnDataHandler(id: UUID?) {
-      return e.removeOnDataHandler(id: id)
+      event.removeOnDataHandler(id: id)
     }
 
     public func once(_ fn: @escaping (T) async -> Void) {
-      return e.once(fn)
+      event.once(fn)
     }
 
     public func once() async throws -> T {
-      return try await e.once()
+      try await event.once()
     }
 
     public func on(_ fn: @escaping (T) async -> Void) -> UUID {
-      return e.on(fn)
+      event.on(fn)
     }
 
     public func map<N>(_ fn: @escaping (T) -> N) -> EventHandler<N>.ReadOnly {
-      return e.map(fn)
+      event.map(fn)
     }
   }
 }

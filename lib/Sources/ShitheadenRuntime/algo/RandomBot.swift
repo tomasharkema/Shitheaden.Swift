@@ -23,11 +23,11 @@ public actor RandomBot: GameAi {
   }
 
   public func move(request: TurnRequest) async -> Turn {
-    let p = Array(request._possibleTurns())
-    if p.isEmpty {
+    let possibleTurns = Array(request.privatePossibleTurns())
+    if possibleTurns.isEmpty {
       return .pass
     } else {
-      return p[Int.random(in: 0 ..< p.count)]
+      return possibleTurns[Int.random(in: 0 ..< possibleTurns.count)]
     }
   }
 }

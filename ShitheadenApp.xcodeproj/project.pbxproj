@@ -189,6 +189,7 @@
 			buildConfigurationList = C3812A60267C816500397E65 /* Build configuration list for PBXNativeTarget "ShitheadenApp" */;
 			buildPhases = (
 				C3DBF4FE2686550D0027D011 /* ShellScript */,
+				C3DBF4FF2686601E0027D011 /* ShellScript */,
 				C3812A4E267C816400397E65 /* Sources */,
 				C3812A4F267C816400397E65 /* Frameworks */,
 				C3812A50267C816400397E65 /* Resources */,
@@ -288,7 +289,24 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "SDKROOT=macosx\n#swift package update #Uncomment this line temporarily to update the version used to the latest matching your BuildTools/Package.swift file\necho $SRCROOT\nswift run --package-path lib -c release swiftformat \"$SRCROOT\" --indent 2 --maxwidth 100\n";
+			shellScript = "SDKROOT=macosx\n#swift package update #Uncomment this line temporarily to update the version used to the latest matching your BuildTools/Package.swift file\n\nswift run --package-path lib -c release swiftformat \"$SRCROOT\" --indent 2 --maxwidth 100\n";
+		};
+		C3DBF4FF2686601E0027D011 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if which swiftlint >/dev/null; then\n  swiftlint\nelse\n  echo \"warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint\"\nfi\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

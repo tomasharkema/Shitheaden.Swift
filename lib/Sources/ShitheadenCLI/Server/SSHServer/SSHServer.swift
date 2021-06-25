@@ -7,6 +7,7 @@
 
 import CustomAlgo
 import Foundation
+import Logging
 import NIO
 import NIOSSH
 import ShitheadenRuntime
@@ -73,8 +74,8 @@ final class DataToBufferCodec: ChannelDuplexHandler {
       context.fireErrorCaught(SSHServerError.invalidDataType)
       return
     }
-    let b = wrapInboundOut(bytes)
-    context.fireChannelRead(b)
+    let wrappedBytes = wrapInboundOut(bytes)
+    context.fireChannelRead(wrappedBytes)
   }
 
   func write(context: ChannelHandlerContext, data: NIOAny, promise: EventLoopPromise<Void>?) {
@@ -86,7 +87,8 @@ final class DataToBufferCodec: ChannelDuplexHandler {
   }
 }
 
-class SSHServer {
+final class SSHServer {
+  private let logger = Logger(label: "cli.SSHServer")
   let games: AtomicDictionary<String, MultiplayerHandler>
   private var channel: Channel?
 
@@ -97,7 +99,6 @@ class SSHServer {
   private func sshChildChannelInitializer(_ channel: Channel,
                                           _ channelType: SSHChannelType) -> EventLoopFuture<Void>
   {
-    print(channel, channelType)
     switch channelType {
     case .session:
       return channel.pipeline
@@ -134,12 +135,12 @@ class SSHServer {
 
     let bind = bootstrap.bind(host: "0.0.0.0", port: 3332)
 
-    let channel: Channel = try await withUnsafeThrowingContinuation { g in
+    let channel: Channel = try await withUnsafeThrowingContinuation { cont in
       bind.whenSuccess {
-        g.resume(returning: $0)
+        cont.resume(returning: $0)
       }
       bind.whenFailure {
-        g.resume(throwing: $0)
+        cont.resume(throwing: $0)
       }
     }
 
@@ -148,7 +149,7 @@ class SSHServer {
         "Address was unable to bind. Please check that the socket was not closed or that the address family was understood."
       )
     }
-    print("Server started and listening on \(localAddress)")
+    logger.info("Server started and listening on \(localAddress)")
     self.channel = channel
     return channel
   }

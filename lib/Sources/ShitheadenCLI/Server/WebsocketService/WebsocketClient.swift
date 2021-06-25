@@ -93,9 +93,9 @@ class WebsocketClient: Client {
         return try await startSinglePlayer()
 
       case .quit:
-        print("GOT QUIT!!!!")
+        logger.error("GOT QUIT!!!!")
       case .startGame:
-        print("OJOO!")
+        logger.info("startGame!")
       case .signature:
         break
 
@@ -170,7 +170,7 @@ class WebsocketClient: Client {
   }
 
   func send(_ event: ServerEvent) async {
-    return await withUnsafeContinuation { g in
+    let _: Void = await withUnsafeContinuation { cont in
       self.context.eventLoop.execute {
         // We can't really check for error here, but it's also not the purpose of the
         // example so let's not worry about it.
@@ -181,14 +181,13 @@ class WebsocketClient: Client {
           buffer.writeBytes(data)
 
           let frame = WebSocketFrame(fin: true, opcode: .binary, data: buffer)
-          self.context.writeAndFlush(self.handler.wrapOutboundOut(frame)).whenComplete {
-            print($0)
+          self.context.writeAndFlush(self.handler.wrapOutboundOut(frame)).whenComplete { _ in
             asyncDetached {
-              g.resume()
+              cont.resume()
             }
           }
         } catch {
-          print(error)
+          self.logger.error("\(error)")
         }
       }
     }

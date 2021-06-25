@@ -5,11 +5,13 @@
 //  Created by Tomas Harkema on 24/06/2021.
 //
 
+import Logging
 import NIO
 import ShitheadenRuntime
 import ShitheadenShared
 
 final class TelnetServerHandler: ChannelInboundHandler {
+  private let logger = Logger(label: "cli.TelnetServerHandler")
   typealias InboundIn = ByteBuffer
   typealias OutboundOut = ByteBuffer
 
@@ -27,16 +29,16 @@ final class TelnetServerHandler: ChannelInboundHandler {
   private let handler = EventHandler<TelnetClient>()
 
   func channelActive(context: ChannelHandlerContext) {
-    let c = TelnetClient(
+    let client = TelnetClient(
       context: context,
       handler: self,
       quit: quit.readOnly,
       data: data.readOnly,
       games: games
     )
-    handler.emit(c)
+    handler.emit(client)
     async {
-      try await c.start()
+      try await client.start()
     }
   }
 
@@ -64,16 +66,16 @@ final class TelnetServerHandler: ChannelInboundHandler {
   }
 
   public func channelReadComplete(context: ChannelHandlerContext) {
-    print("FLUSH")
+    logger.info("FLUSH")
     context.flush()
   }
 
   func channelInactive(context _: ChannelHandlerContext) {
-    print("channelInactive!")
+    logger.info("channelInactive!")
     quit.emit(())
   }
 
   deinit {
-    print("DEINIT!")
+    logger.info("DEINIT!")
   }
 }

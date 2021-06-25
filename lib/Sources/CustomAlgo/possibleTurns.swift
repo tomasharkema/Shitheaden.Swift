@@ -12,15 +12,18 @@ extension TurnRequest {
     switch phase {
     case .hand:
       let actions = handCards.unobscure()
-        .filter { h in lastTableCard?.number.afters.contains { $0 == h.number } ?? true }
+        .filter { handCard in
+          lastTableCard?.number.afters.contains { $0 == handCard.number } ?? true
+        }
         .map { Turn.play([$0]) }
-      print(actions)
-      let e = Array([actions, [.pass]].joined()).includeDoubles()
-      return e
+
+      return Array([actions, [.pass]].joined()).includeDoubles()
 
     case .tableOpen:
       let actions = openTableCards.unobscure()
-        .filter { h in lastTableCard?.number.afters.contains { $0 == h.number } ?? true }
+        .filter { handCard in
+          lastTableCard?.number.afters.contains { $0 == handCard.number } ?? true
+        }
         .map { Turn.play([$0]) }
       if actions.isEmpty {
         return [Turn.pass]

@@ -1,12 +1,9 @@
 import Dispatch
 
-// extension Task {
 public func delay(_ priority: DispatchQoS.QoSClass = .default, for delay: DispatchTime) async {
-  return await withUnsafeContinuation { g in
+  await withUnsafeContinuation { cont in
     DispatchQueue.global(qos: priority).asyncAfter(deadline: delay) {
-      g.resume()
+      cont.resume()
     }
   }
 }
-
-// }

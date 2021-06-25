@@ -34,23 +34,27 @@ import ShitheadenShared
 extension TurnRequest {
   #if DEBUG
     public func possibleTurns() -> [Turn] {
-      return _possibleTurns()
+      privatePossibleTurns()
     }
   #endif
 
-  func _possibleTurns() -> [Turn] {
+  func privatePossibleTurns() -> [Turn] {
     switch phase {
     case .hand:
 
       let actions = handCards.unobscure()
-        .filter { h in lastTableCard?.number.afters.contains { $0 == h.number } ?? true }
+        .filter { handCard in
+          lastTableCard?.number.afters.contains { $0 == handCard.number } ?? true
+        }
         .map { Turn.play([$0]) }
 
       return Array([actions, [.pass]].joined()).includeDoubles()
 
     case .tableOpen:
       let actions = openTableCards.unobscure()
-        .filter { h in lastTableCard?.number.afters.contains { $0 == h.number } ?? true }
+        .filter { handCard in
+          lastTableCard?.number.afters.contains { $0 == handCard.number } ?? true
+        }
         .map { Turn.play([$0]) }
       if actions.isEmpty {
         return [Turn.pass]

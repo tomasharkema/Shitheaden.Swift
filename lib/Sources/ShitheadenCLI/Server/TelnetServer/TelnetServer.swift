@@ -8,11 +8,13 @@
 import ANSIEscapeCode
 import CustomAlgo
 import Foundation
+import Logging
 import NIO
 import ShitheadenRuntime
 import ShitheadenShared
 
 class TelnetServer {
+  private let logger = Logger(label: "cli.TelnetServer")
   let games: AtomicDictionary<String, MultiplayerHandler>
   private var channel: Channel?
 
@@ -32,12 +34,12 @@ class TelnetServer {
 
     let bind = bootstrap.bind(host: "0.0.0.0", port: 3333)
 
-    let channel: Channel = try await withUnsafeThrowingContinuation { g in
+    let channel: Channel = try await withUnsafeThrowingContinuation { cont in
       bind.whenSuccess {
-        g.resume(returning: $0)
+        cont.resume(returning: $0)
       }
       bind.whenFailure {
-        g.resume(throwing: $0)
+        cont.resume(throwing: $0)
       }
     }
 
@@ -46,7 +48,7 @@ class TelnetServer {
         "Address was unable to bind. Please check that the socket was not closed or that the address family was understood."
       )
     }
-    print("Server started and listening on \(localAddress)")
+    logger.info("Server started and listening on \(localAddress)")
     self.channel = channel
     return channel
   }

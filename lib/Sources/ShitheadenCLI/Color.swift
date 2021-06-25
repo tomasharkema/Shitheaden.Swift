@@ -11,17 +11,17 @@ import ShitheadenRuntime
 import ShitheadenShared
 
 enum Color: String {
-  case Red = "31"
-  case Black = "30"
+  case red = "31"
+  case black = "30"
 }
 
 extension Symbol {
   var color: Color {
     switch self {
     case .klaver, .schoppen:
-      return .Black
+      return .black
     case .ruiten, .harten:
-      return .Red
+      return .red
     }
   }
 }
@@ -36,17 +36,17 @@ extension Card: CustomStringConvertible {
 
 extension TurnRequest {
   var closedTable: String {
-    return (0 ..< closedCards.count).map { _ in "0" }.joined(separator: " ")
+    (0 ..< closedCards.count).map { _ in "0" }.joined(separator: " ")
   }
 
   var closedTableShowed: String {
-    return (0 ..< closedCards.count).map { $0.description }.joined(separator: " ")
+    (0 ..< closedCards.count).map(\.description).joined(separator: " ")
   }
 }
 
 extension TurnRequest {
   var showedTable: String {
-    return openTableCards.unobscure().map { $0.description }.joined(separator: " ")
+    openTableCards.unobscure().map(\.description).joined(separator: " ")
   }
 }
 
@@ -60,7 +60,7 @@ public extension Number {
 //    case .bronze:
 //      return ANSIEscapeCode.Decoration.textColor(.lightRed) + "B"
 //    default:
-    return string
+    string
 //    }
   }
 }

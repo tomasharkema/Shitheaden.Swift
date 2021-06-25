@@ -52,12 +52,12 @@ struct Shitheaden: ParsableCommand {
 
   #if os(macOS)
     private func playTournament() async {
-      return await withUnsafeContinuation { d in
+      let _: Void = await withUnsafeContinuation { cont in
         DispatchQueue.global().async {
           async {
             await Tournament(roundsPerGame: rounds, parallelization: parallelization)
               .playTournament()
-            d.resume()
+            cont.resume()
           }
         }
       }
@@ -114,6 +114,7 @@ struct Shitheaden: ParsableCommand {
           name: "Zuid (JIJ)",
           position: .zuid,
           ai: UserInputAIJson.cli(id: id, print: {
+            // swiftlint:disable:next disable_print
             print($0) // print to stout
           }, read: {
             await Keyboard.getKeyboardInput()
@@ -129,15 +130,18 @@ struct Shitheaden: ParsableCommand {
   }
 }
 
+// swiftlint:disable disable_print
+
 extension UserInputAIJson {
   static func cli(
     id: UUID,
     print: @escaping (String) async -> Void,
     read: @escaping () async -> String
   ) -> UserInputAIJson {
-    return UserInputAIJson(id: id, reader: { _, error in
+    UserInputAIJson(id: id, reader: { _, error in
+
       await print(ANSIEscapeCode.Cursor.showCursor + ANSIEscapeCode.Cursor.position(
-        row: RenderPosition.input.y + 1,
+        row: RenderPosition.input.yAxis + 1,
         column: 0
       ))
       if let error = error {

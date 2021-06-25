@@ -7,6 +7,7 @@
 
 import CustomAlgo
 import Foundation
+import Logging
 import NIO
 import NIOHTTP1
 import NIOWebSocket
@@ -14,6 +15,7 @@ import ShitheadenRuntime
 import ShitheadenShared
 
 final class WebSocketServerHandler: ChannelInboundHandler {
+  private let logger = Logger(label: "cli.WebSocketServerHandler")
   typealias InboundIn = WebSocketFrame
   typealias OutboundOut = WebSocketFrame
 
@@ -32,71 +34,73 @@ final class WebSocketServerHandler: ChannelInboundHandler {
   private let handler = EventHandler<WebsocketClient>()
 
   public func handlerAdded(context: ChannelHandlerContext) {
-    print("HANDLER ADDED")
-    let c = WebsocketClient(
+    logger.info("HANDLER ADDED")
+    let client = WebsocketClient(
       context: context,
       handler: self,
       quit: quit,
       data: data,
       games: games
     )
-    handler.emit(c)
+    handler.emit(client)
     async {
-      await c.start()
+      await client.start()
     }
   }
 
   func channelActive(context _: ChannelHandlerContext) {
-    print("HANDLER ACTIVE")
+    logger.debug("HANDLER ACTIVE")
   }
 
   public func channelRead(context: ChannelHandlerContext, data: NIOAny) {
     let frame = unwrapInboundIn(data)
+    do {
+      switch frame.opcode {
+      case .connectionClose:
+        receivedClose(context: context, frame: frame)
+      case .ping:
+        pong(context: context, frame: frame)
+      case .binary:
+        var buffer = frame.unmaskedData
+        guard let data = buffer
+          .readBytes(length: buffer.readableBytes)
+        else {
+          throw NSError(domain: "", code: 0, userInfo: nil)
+        }
+        let serverRequest = try JSONDecoder().decode(ServerRequest.self, from: Data(data))
+        self.data.emit(serverRequest)
 
-    switch frame.opcode {
-    case .connectionClose:
-      receivedClose(context: context, frame: frame)
-    case .ping:
-      pong(context: context, frame: frame)
-    case .binary:
-      var data = frame.unmaskedData
-      let d = data
-        .readBytes(length: data
-          .readableBytes)! // data.readString(length: data.readableBytes) ?? ""
-      print(d)
-      let sr = try! JSONDecoder().decode(ServerRequest.self, from: Data(d))
-      print(sr)
+      case .text:
+        var buffer = frame.unmaskedData
+        guard let data = buffer
+          .readString(length: buffer
+            .readableBytes)
+        else {
+          throw NSError(domain: "", code: 0, userInfo: nil)
+        }
+        let serverRequest = try JSONDecoder()
+          .decode(ServerRequest.self, from: data.data(using: .utf8)!)
+        self.data.emit(serverRequest)
 
-      self.data.emit(sr)
-
-//      handleData?(sr)
-    case .text:
-
-      var data = frame.unmaskedData
-      let d = data.readString(length: data.readableBytes)!
-      print(d)
-      let sr = try! JSONDecoder().decode(ServerRequest.self, from: d.data(using: .utf8)!)
-      print(sr)
-      print("READ!", context.name)
-
-      self.data.emit(sr)
-
-    case .continuation, .pong:
-      // We ignore these frames.
-      break
-    default:
-      // Unknown frames are errors.
-      closeOnError(context: context)
+      case .continuation, .pong:
+        // We ignore these frames.
+        break
+      default:
+        // Unknown frames are errors.
+        closeOnError(context: context)
+      }
+    } catch {
+      logger.error("error: \(error)")
     }
   }
 
   public func channelReadComplete(context: ChannelHandlerContext) {
-    print("FLUSH")
+    logger.debug("FLUSH")
     context.flush()
   }
 
   deinit {
-    print("DEINIT!")
+    logger.info("DEINIT!")
   }
 
   private func receivedClose(context: ChannelHandlerContext, frame: WebSocketFrame) {

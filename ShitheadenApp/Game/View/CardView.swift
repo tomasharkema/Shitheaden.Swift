@@ -81,7 +81,7 @@ extension Card {
 //    case .bronze:
 //      return Color.orange
 //    default:
-    return color
+    color
 //    }
   }
 

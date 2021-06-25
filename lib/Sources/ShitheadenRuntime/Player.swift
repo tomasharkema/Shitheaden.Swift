@@ -42,7 +42,7 @@ public struct Player: CustomStringConvertible, Equatable, Hashable {
   }
 
   public var description: String {
-    return "SPELER_description"
+    "SPELER_description"
   }
 
   public func hash(into hasher: inout Hasher) {
@@ -51,16 +51,16 @@ public struct Player: CustomStringConvertible, Equatable, Hashable {
 
   public var latestState: String {
     switch turns.last {
-    case let .play(t):
-      return "played \(t)"
+    case let .play(cards):
+      return "played \(cards)"
     case .pass:
       return "took all cards"
 //    case let .putOnTable(cards):
 //
 //      return "put on table"
 
-    case let .closedCardIndex(i):
-      return "put on table card \(i)"
+    case let .closedCardIndex(index):
+      return "put on table card \(index)"
 
     case .none:
       return ""
@@ -68,7 +68,7 @@ public struct Player: CustomStringConvertible, Equatable, Hashable {
   }
 
   public var done: Bool {
-    return handCards.isEmpty && openTableCards.isEmpty && closedTableCards
+    handCards.isEmpty && openTableCards.isEmpty && closedTableCards
       .isEmpty
   }
 
@@ -77,7 +77,7 @@ public struct Player: CustomStringConvertible, Equatable, Hashable {
   }
 
   public static func == (lhs: Player, rhs: Player) -> Bool {
-    return lhs.handCards == rhs.handCards &&
+    lhs.handCards == rhs.handCards &&
       lhs.closedTableCards == rhs.closedTableCards &&
       lhs.openTableCards == rhs.openTableCards &&
       lhs.name == rhs.name

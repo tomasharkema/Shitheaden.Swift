@@ -11,7 +11,7 @@ public actor AtomicDictionary<Key: Hashable, Value> {
   public init() {}
 
   public func values() -> [Value] {
-    return Array(dict.values)
+    Array(dict.values)
   }
 
   public func insert(_ key: Key, value: Value?) {
@@ -19,11 +19,11 @@ public actor AtomicDictionary<Key: Hashable, Value> {
   }
 
   public func get(_ key: Key) -> Value? {
-    return dict[key]
+    dict[key]
   }
 
   public func isEmpty() -> Bool {
-    return dict.isEmpty
+    dict.isEmpty
   }
   //  subscript(_ key: Key) -> Value? {
 //    get {

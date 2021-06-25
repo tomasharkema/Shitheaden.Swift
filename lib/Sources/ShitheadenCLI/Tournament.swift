@@ -33,13 +33,13 @@
     }
 
     func peformanceOfAI(ai: [(GameAi.Type, String)], gameId: String = "0") async -> PlayedGame {
-      let playedGames: [GameSnapshot] = await withTaskGroup(of: [GameSnapshot].self) { g in
+      let playedGames: [GameSnapshot] = await withTaskGroup(of: [GameSnapshot].self) { group in
         for idx in 1 ... roundsPerGame {
           let unlock = await roundEaser.wait()
           if Task.isCancelled {
             return []
           }
-          g.async {
+          group.async {
             if Task.isCancelled {
               return []
             }
@@ -69,7 +69,7 @@
             }
           }
         }
-        return await g.reduce([], +)
+        return await group.reduce([], +)
       }
       return PlayedGame(games: playedGames)
     }
@@ -83,7 +83,7 @@
       watch.start()
 
       let stats = await withTaskGroup(of: ([String: Int], [String: [String: Int]])
-        .self) { g -> ([String: Int], [String: [String: Int]]) in
+        .self) { group -> ([String: Int], [String: [String: Int]]) in
           for (index1, ai1) in AIs.enumerated() {
             for (index2, ai2) in AIs.enumerated() {
               for (index3, ai3) in AIs.enumerated() {
@@ -92,7 +92,7 @@
                   if Task.isCancelled {
                     return ([:], [:])
                   }
-                  g.async {
+                  group.async {
                     if Task.isCancelled {
                       return ([:], [:])
                     }
@@ -121,9 +121,7 @@
 
                     let winnings = await res.winnigs()
 
-                    let aisPrint = ais.map {
-                      $0.1
-                    }
+                    let aisPrint = ais.map(\.1)
                     self.logger.notice(
                       "\(potjeIndex) \(winnings) : \(aisPrint)\ntime: \(watch.getLap()) - \(duration.getLap())"
                     )
@@ -136,7 +134,7 @@
             }
           }
 
-          return await g
+          return await group
             .reduce(([String: Int](), [String: [String: Int]]())) { prev, curr in
               var new = prev
 
@@ -150,29 +148,29 @@
             }
       }
 
-      let scores = stats.0.sorted { lhs, rhs in
+      let scoresSorted = stats.0.sorted { lhs, rhs in
         lhs.1 > rhs.1
       }
 
       logger.notice("\n\nSCORES: (potjes van \(roundsPerGame) gewonnen)\n")
 
-      let s = scores.reduce("") { prev, el in
-        prev + "\(el.0): \(el.1)\n"
+      let scores = scoresSorted.reduce("") { prev, element in
+        prev + "\(element.0): \(element.1)\n"
       }
-      logger.notice("\(s)")
+      logger.notice("\(scores)")
 
       // winnings from
-      let d = stats.1.reduce("Performance:\n") { prev, el in
+      let line = stats.1.reduce("Performance:\n") { prev, element in
 
-        let ranks = el.1.sorted { l, r in
-          l.1 > r.1
-        }.reduce("") { prev, el in
-          prev + "     \(el.0): \(el.1)\n"
+        let ranks = element.1.sorted { left, right in
+          left.1 > right.1
+        }.reduce("") { prev, elementRed in
+          prev + "     \(element.0): \(elementRed.1)\n"
         }
 
-        return prev + "\(el.0): wint van\n\(ranks)\n"
+        return prev + "\(element.0): wint van\n\(ranks)\n"
       }
-      logger.notice("\(d)")
+      logger.notice("\(line)")
 
       logger.notice("Tijd: \(watch.getLap())\n")
     }

@@ -15,7 +15,7 @@
     public init() {}
 
     public func start() async throws -> WebSocketClient {
-      return try await WebSocketClient(task: URLSession.shared.webSocketTask(with: address))
+      try await WebSocketClient(task: URLSession.shared.webSocketTask(with: address))
         .connected()
     }
   }

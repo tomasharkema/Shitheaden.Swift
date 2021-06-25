@@ -133,6 +133,8 @@ final class GameContainer: ObservableObject {
       game = nil
       gameTask?.cancel()
       gameTask = nil
+      beginMoveHandler = nil
+      moveHandler = nil
     }
 
     guard appInput == nil, game == nil else {
@@ -141,25 +143,25 @@ final class GameContainer: ObservableObject {
     gameState = GameState()
     let id = UUID()
     let appInput = AppInputUserInputAI(
-      beginMoveHandler: { h in
+      beginMoveHandler: { handler in
         await MainActor.run {
           var newState = self.gameState
           newState.isOnTurn = true
           newState.canPass = false
           self.gameState = newState
-          self.beginMoveHandler = h
+          self.beginMoveHandler = handler
         }
-      }, moveHandler: { h in
+      }, moveHandler: { handler in
         await MainActor.run {
           var newState = self.gameState
           newState.isOnTurn = true
           newState.canPass = true
           self.gameState = newState
-          self.moveHandler = h
+          self.moveHandler = handler
         }
-      }, errorHandler: { e in
+      }, errorHandler: { error in
         await MainActor.run {
-          self.gameState.error = e
+          self.gameState.error = error
         }
       }, renderHandler: { game in
         self.handle(snapshot: game)
@@ -211,10 +213,10 @@ final class GameContainer: ObservableObject {
       {
         selectedCards = cards
       } else {
-        let c = max((selectedCards.count + cards.count) - 3, 0)
-        logger.debug("items: \(selectedCards.count), \(cards.count), \(c)")
+        let cardIndex = max((selectedCards.count + cards.count) - 3, 0)
+        logger.debug("items: \(selectedCards.count), \(cards.count), \(cardIndex)")
 
-        selectedCards = Array(selectedCards.dropFirst(c))
+        selectedCards = Array(selectedCards.dropFirst(cardIndex))
 
         for card in cards {
           selectedCards.append(card)
@@ -223,8 +225,8 @@ final class GameContainer: ObservableObject {
 
     } else {
       for card in cards {
-        if let c = selectedCards.firstIndex(of: card) {
-          selectedCards.remove(at: c)
+        if let cardIndex = selectedCards.firstIndex(of: card) {
+          selectedCards.remove(at: cardIndex)
         }
       }
     }
@@ -261,9 +263,9 @@ final class GameContainer: ObservableObject {
     }
   }
 
-  func playClosedCard(_ i: Int) {
+  func playClosedCard(_ index: Int) {
     async {
-      try await moveHandler?(.closedCardIndex(i + 1))
+      try await moveHandler?(.closedCardIndex(index + 1))
     }
   }
 

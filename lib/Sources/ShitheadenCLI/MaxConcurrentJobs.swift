@@ -26,22 +26,23 @@ class MaxConcurrentJobs {
     }
 
     let jobCurrent = await jobs.current
-    let s = await spawn
-    await logger.notice("========== START!!!!!!!!, \(jobCurrent), \(s)")
+    let spawned = await spawn
+    await logger.notice("========== START!!!!!!!!, \(jobCurrent), \(spawned)")
 
     if await jobs.hasPlace() {
       let jobCurrent = await jobs.current
-      let s = await spawn
-      await logger.notice("========== CONTINUE, \(jobCurrent), \(s)")
+      await logger.notice("========== CONTINUE, \(jobCurrent), \(spawn)")
       return fun
     }
 
-    await print("========== WAIT, \(jobs.current), \(spawn)")
+    let jobCurrent3 = await jobs.current
+    let spawned3 = await spawn
+    await logger.notice("========== WAIT, \(jobCurrent3), \(spawned3)")
 
-    await withCheckedContinuation { r in
+    await withCheckedContinuation { cont in
       DispatchQueue.global().async { // fix to not be needed?
         async {
-          await self.jobs.insert(r: r)
+          await self.jobs.insert(continuationTask: cont)
         }
       }
     }
@@ -84,9 +85,9 @@ extension MaxConcurrentJobs {
       }
     }
 
-    func insert(r: CheckedContinuation<Void, Never>) {
+    func insert(continuationTask: CheckedContinuation<Void, Never>) {
       logger.notice("INSERT")
-      tasks.append(r)
+      tasks.append(continuationTask)
     }
   }
 }

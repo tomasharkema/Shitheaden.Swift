@@ -10,6 +10,7 @@ import Foundation
 import Logging
 import ShitheadenShared
 
+// swiftlint:disable:next type_body_length
 public final actor Game {
   private let logger = Logger(label: "runtime.Game")
 
@@ -32,11 +33,11 @@ public final actor Game {
   }
 
   var lastCard: Card? {
-    return table.lastCard
+    table.lastCard
   }
 
   var notDonePlayers: [Player] {
-    return Array(players.filter { !$0.done })
+    Array(players.filter { !$0.done })
   }
 
   public var done: Bool {
@@ -100,7 +101,7 @@ public final actor Game {
   }
 
   public func getSnapshot(for uuid: UUID?, includeEndState: Bool) -> GameSnapshot {
-    return GameSnapshot(
+    GameSnapshot(
       deckCards: deck.cards.map { .hidden(id: $0.id) },
       players: players.map {
         getPlayerSnapshot($0.id != uuid, player: $0, includeEndState: includeEndState)
@@ -214,6 +215,7 @@ public final actor Game {
     }
   }
 
+  // swiftlint:disable:next cyclomatic_complexity function_body_length
   func commitTurn(
     playerIndex: Int,
     player oldP: Player,
@@ -260,7 +262,7 @@ public final actor Game {
         if !type(of: player.ai).algoName.contains("UserInputAI") {
           logger
             .error(
-              "TURN IS NOT POSSIBLE \(numberCalled), \(player.ai.algoName), \(String(describing: player.phase)), \(String(describing: turn)), \(String(describing: req._possibleTurns()))"
+              "TURN IS NOT POSSIBLE \(numberCalled), \(player.ai.algoName), \(String(describing: player.phase)), \(String(describing: turn)), \(String(describing: req.privatePossibleTurns()))"
             )
           assertionFailure("This is not possible \(type(of: player.ai))")
         }
@@ -276,11 +278,11 @@ public final actor Game {
         )
       }
 
-      guard req._possibleTurns().contains(turn) else {
+      guard req.privatePossibleTurns().contains(turn) else {
         if !type(of: player.ai).algoName.contains("UserInputAI") {
           logger
             .error(
-              "TURN IS NOT POSSIBLE \(numberCalled), \(player.ai.algoName), \(String(describing: player.phase)), \(String(describing: turn)), \(String(describing: req._possibleTurns()))"
+              "TURN IS NOT POSSIBLE \(numberCalled), \(player.ai.algoName), \(String(describing: player.phase)), \(String(describing: turn)), \(String(describing: req.privatePossibleTurns()))"
             )
           assertionFailure("This is not possible \(type(of: player.ai))")
         }
@@ -341,8 +343,8 @@ public final actor Game {
         case .hand:
           assert(!possibleBeurt.contains { !player.handCards.contains($0) }, "WTF")
 
-          for p in possibleBeurt {
-            player.handCards.remove(at: player.handCards.firstIndex(of: p)!)
+          for turn in possibleBeurt {
+            player.handCards.remove(at: player.handCards.firstIndex(of: turn)!)
           }
 
           for _ in 0 ..< 3 {
@@ -355,8 +357,8 @@ public final actor Game {
 
         case .tableOpen:
           assert(!possibleBeurt.contains { !player.openTableCards.contains($0) }, "WTF")
-          for p in possibleBeurt {
-            player.openTableCards.remove(at: player.openTableCards.firstIndex(of: p)!)
+          for turn in possibleBeurt {
+            player.openTableCards.remove(at: player.openTableCards.firstIndex(of: turn)!)
           }
 
         case .tableClosed:
@@ -471,10 +473,14 @@ public final actor Game {
           numberCalled: 0,
           previousError: nil
         )
-        await removePlayerOnSet(player: player)
+        removePlayerOnSet(player: player)
         await updatePlayer(player: newPlayer)
-        try! await checkIntegrity()
-        try! await sendRender(error: nil)
+        do {
+          try await checkIntegrity()
+          try await sendRender(error: nil)
+        } catch {
+          assertionFailure("\(error)")
+        }
       } catch {
         assertionFailure("\(error)")
       }
@@ -483,7 +489,7 @@ public final actor Game {
     }
   }
 
-  func turn(n: Int = 0) async throws {
+  func turn(number: Int = 0) async throws {
     try Task.checkCancellation()
 
     for (index, player) in players.enumerated() {
@@ -494,12 +500,16 @@ public final actor Game {
           playerIndex: index, player: player,
           numberCalled: 0, previousError: nil
         )
-        try! checkIntegrity()
+        do {
+          try checkIntegrity()
+        } catch {
+          assertionFailure("checkIntegrity: \(error)")
+        }
         playersOnTurn.remove(player.id)
         try await sendRender(error: nil)
       }
     }
-    if n > 1000 {
+    if number > 1000 {
       logger
         .error(
           "ERROR! GAME REACHED MAXIMUM OF 1000 TURNS! \(String(describing: getSnapshot(for: nil, includeEndState: true)))"
@@ -508,18 +518,18 @@ public final actor Game {
     }
 
     if !done {
-      return try await turn(n: n + 1)
+      return try await turn(number: number + 1)
     }
   }
 
   func pickDonePlayers() -> [Player] {
-    return players.filter { el -> Bool in
+    players.filter { el -> Bool in
       el.done
     }
   }
 
   func shouldDoAnotherRound() -> Bool {
-    return pickDonePlayers().count != (players.count - 1) && pickDonePlayers().count != players
+    pickDonePlayers().count != (players.count - 1) && pickDonePlayers().count != players
       .count
   }
 
@@ -580,25 +590,25 @@ public final actor Game {
         }
       }
 
-      for c in table {
-        if let found = pastCards.first(where: { $0.0 == c }) {
+      for card in table {
+        if let found = pastCards.first(where: { $0.0 == card }) {
           throw PlayerError.integrityDoubleCardEncountered(found.0)
         }
-        pastCards.append((c, "table"))
+        pastCards.append((card, "table"))
       }
 
-      for c in deck.cards {
-        if let card = pastCards.first(where: { $0.0 == c }) {
+      for card in deck.cards {
+        if let card = pastCards.first(where: { $0.0 == card }) {
           throw PlayerError.integrityDoubleCardEncountered(card.0)
         }
-        pastCards.append((c, "deck"))
+        pastCards.append((card, "deck"))
       }
 
-      for c in burnt {
-        if let card = pastCards.first(where: { $0.0 == c }) {
+      for card in burnt {
+        if let card = pastCards.first(where: { $0.0 == card }) {
           throw PlayerError.integrityDoubleCardEncountered(card.0)
         }
-        pastCards.append((c, "burnt"))
+        pastCards.append((card, "burnt"))
       }
 
       if pastCards.count != 52 {
@@ -615,7 +625,7 @@ public final actor Game {
 
 public extension String {
   nonisolated var isUser: Bool {
-    return contains("UserInputAI")
+    contains("UserInputAI")
   }
 }
 

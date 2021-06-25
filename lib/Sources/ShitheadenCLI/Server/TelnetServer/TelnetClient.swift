@@ -92,9 +92,9 @@ class TelnetClient: Client {
 
         Typ je code in:
     """)
-    let s = try await data.once()
+    let event = try await data.once()
 
-    guard let code = try await s.getMultiplayerRequest().string?
+    guard let code = try await event.getMultiplayerRequest().string?
       .trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     else {
       return try await joinGame()
@@ -121,18 +121,18 @@ class TelnetClient: Client {
   func send(_ event: ServerEvent) async {
     switch event {
     case let .multiplayerEvent(.string(string)):
-      let _: Void = await withUnsafeContinuation { g in
+      let _: Void = await withUnsafeContinuation { cont in
         self.context.eventLoop.execute {
-          let s = string.trimmingCharacters(in: .whitespacesAndNewlines)
+          let trimmedString = string.trimmingCharacters(in: .whitespacesAndNewlines)
             .replacingOccurrences(of: "\n", with: "\n\r") + "\n\r"
 
-          var buffer = self.context.channel.allocator.buffer(capacity: s.count)
-          buffer.writeString(s)
+          var buffer = self.context.channel.allocator.buffer(capacity: trimmedString.count)
+          buffer.writeString(trimmedString)
 
           self.context.writeAndFlush(self.handler.wrapOutboundOut(buffer))
             .whenComplete { _ in
               async {
-                g.resume()
+                cont.resume()
               }
             }
         }
@@ -171,15 +171,15 @@ class TelnetClient: Client {
       await send(string: await Renderer.error(error: error))
 
     case .requestMultiplayerChoice:
-      print("START", event)
+      logger.info("START \(event)")
     case let .error(error: .text(text: text)):
-      print("START", event)
+      logger.info("START \(event)")
     case let .error(error: .gameNotFound(code: code)):
-      print("START", event)
+      logger.info("START, \(event)")
     case let .multiplayerEvent(multiplayerEvent: .action(action: action)):
 
       await send(string: ANSIEscapeCode.Cursor.showCursor + ANSIEscapeCode.Cursor.position(
-        row: RenderPosition.input.y + 2,
+        row: RenderPosition.input.yAxis + 2,
         column: 0
       ))
 
@@ -191,7 +191,7 @@ class TelnetClient: Client {
   }
 
   private func singlePlayer() async throws -> GameSnapshot {
-    let id = UUID()
+    let identifier = UUID()
     let game = Game(
       players: [
         Player(
@@ -210,10 +210,10 @@ class TelnetClient: Client {
           ai: CardRankingAlgo()
         ),
         Player(
-          id: id,
+          id: identifier,
           name: "Zuid (JIJ)",
           position: .zuid,
-          ai: UserInputAIJson(id: id, reader: {
+          ai: UserInputAIJson(id: identifier, reader: {
             await self.send(.multiplayerEvent(multiplayerEvent: .action(action: $0)))
             if let error = $1 {
               await self

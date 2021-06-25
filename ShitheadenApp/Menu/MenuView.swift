@@ -54,6 +54,7 @@ struct MenuView: View {
       if code.count > 1 {
         state = .multiplayerJoin(code)
       }
-    })
+    }).buttonStyle(.bordered)
+      .controlSize(.large).controlProminence(.increased)
   }
 }

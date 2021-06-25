@@ -18,6 +18,6 @@ class StopWatch {
   }
 
   func getLap() -> Double {
-    return abs(startDate.timeIntervalSinceNow)
+    abs(startDate.timeIntervalSinceNow)
   }
 }

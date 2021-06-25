@@ -13,13 +13,13 @@ import SwiftUI
 
 struct GameState: Equatable {
   var gameSnapshot: GameSnapshot?
-  var error: String? = nil
+  var error: String?
   var localCards = [RenderCard]()
-  var localPhase: Phase? = nil
+  var localPhase: Phase?
   var localClosedCards = [RenderCard]()
   var isOnTurn = false
 
   var canPass = false
-  var endState: EndState? = nil
-  var explain: String? = nil
+  var endState: EndState?
+  var explain: String?
 }

@@ -35,14 +35,14 @@ public enum RenderCard: Equatable, Hashable, Codable, Comparable {
 
   public static func < (lhs: RenderCard, rhs: RenderCard) -> Bool {
     switch (lhs, rhs) {
-    case let (.card(l), .card(r)):
-      return l < r
+    case let (.card(left), .card(right)):
+      return left < right
     case (.hidden, .card):
       return true
-    case (.card, .hidden(_)):
+    case (.card, .hidden):
       return false
-    case let (.hidden(l), .hidden(r)):
-      return l.uuidString < r.uuidString
+    case let (.hidden(left), .hidden(right)):
+      return left.uuidString < right.uuidString
     }
   }
 }
@@ -67,13 +67,13 @@ public extension Array where Element == RenderCard {
   //  }
 
   func unobscure() -> [Card] {
-    return flatMap { $0.card }
+    flatMap(\.card)
   }
 }
 
 public extension Array where Element == RenderCard {
   func sortNumbers() -> [RenderCard] {
-    return sorted {
+    sorted {
       $0 < $1
     }
   }
