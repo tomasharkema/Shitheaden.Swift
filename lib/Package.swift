@@ -121,6 +121,13 @@ let package = Package(
         "CustomAlgo",
       ]
     ),
+    .testTarget(
+      name: "ShitheadenSharedTests",
+      dependencies: [
+        "ShitheadenRuntime",
+        "CustomAlgo",
+      ]
+    ),
     .target(
       name: "ShitheadenShared",
       dependencies: [

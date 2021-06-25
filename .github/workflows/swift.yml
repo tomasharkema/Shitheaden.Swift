@@ -40,14 +40,14 @@ jobs:
       - name: Deploy
         run: docker push tomasharkema7/shitheaden
 
-  # run-test-ai:
-  #   runs-on: ubuntu-18.04
-  #   needs: swift
-  #   steps:
-  #     - uses: actions/checkout@v2
-  #     - uses: docker/login-action@v1
-  #       with:
-  #         username: ${{ secrets.DOCKER_HUB_USERNAME }}
-  #         password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-  #     - name: Build
-  #       run: docker pull tomasharkema7/shitheaden && docker run --rm tomasharkema7/shitheaden --test-ai --parallelization 2
+  run-test-ai:
+    runs-on: ubuntu-18.04
+    needs: swift
+    steps:
+      - uses: actions/checkout@v2
+      - uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+      - name: Build
+        run: docker pull tomasharkema7/shitheaden && docker run --rm tomasharkema7/shitheaden --test-ai --parallelization 2

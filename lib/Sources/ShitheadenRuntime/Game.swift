@@ -164,6 +164,8 @@ public final actor Game {
     try await sendRender(error: previousError)
 
     do {
+
+      logger.info("REQUEST beginMove for \(player.ai)")
       let (card1, card2, card3) = try await player.ai
         .beginMove(request: req)
 
@@ -249,6 +251,7 @@ public final actor Game {
     try await sendRender(error: previousError)
 
     do {
+      logger.info("REQUEST MOVE for \(player.ai)")
       let turn = try await player.ai.move(request: req)
 
       do {
@@ -323,7 +326,6 @@ public final actor Game {
             }
           }
         } else {
-//        throw PlayerError(text: "Can not throw closedCardIndex")
           fatalError("Can not throw closedCardIndex")
         }
       case let .play(possibleBeurt):

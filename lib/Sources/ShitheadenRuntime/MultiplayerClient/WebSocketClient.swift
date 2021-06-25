@@ -8,9 +8,11 @@
 #if !os(Linux)
 
   import Foundation
+  import Logging
   import ShitheadenShared
 
   public class WebSocketClient: NSObject, URLSessionWebSocketDelegate {
+    private let logger = Logger(label: "runtime.WebSocketClient")
     let task: URLSessionWebSocketTask
     private let onQuit: EventHandler<Void>
     private let onData: EventHandler<ServerEvent>
@@ -38,21 +40,21 @@
               .replacingOccurrences(of: "  -\n", with: "")
             try await self.write(.signature(string))
           } catch {
-            print(error)
+            self.logger.error("\(error)")
           }
         default:
-          print($0)
+          self.logger.info("\($0)")
         }
       }
     }
 
     private func receive() {
       guard !closed else {
-        print("STOP READING!")
+        logger.info("Stop reading")
         return
       }
       task.receive { result in
-        print(result)
+        self.logger.info("receive: \(result)")
         async {
           do {
             let d: Data
@@ -63,24 +65,24 @@
               if let data = string.data(using: .utf8) {
                 d = data
               }
-              print("ERROR!")
+
+              self.logger.error("error: \(result)")
               return
             case let .failure(e):
-              print(e)
+              self.logger.error("Error: \(e)")
               return
             case .success:
-              print(result)
+              self.logger.debug("Success: \(result)")
               return
             }
-            print("d", d)
 
             let o = try JSONDecoder().decode(ServerEvent.self, from: d)
-            print("d", o)
+            self.logger.debug("Received: \(o)")
             await MainActor.run {
               self.onData.emit(o)
             }
           } catch {
-            print(error)
+            self.logger.error("\(error)")
           }
         }
         self.receive()
@@ -88,7 +90,7 @@
     }
 
     deinit {
-      print("DERP!")
+      logger.info("DEINIT")
     }
 
     func connected() async throws -> Self {
@@ -101,7 +103,7 @@
           }
         })
       }
-      print("CONNECTED!")
+      logger.info("CONNECTED!")
       return self
     }
 
@@ -111,21 +113,25 @@
       webSocketTask: URLSessionWebSocketTask,
       didOpenWithProtocol p: String?
     ) {
-      print("didOpenWithProtocol \(p)")
+      logger.info("didOpenWithProtocol: \(p)")
       webSocketTask.sendPing(pongReceiveHandler: {
-        print("PONSTAERT \(p), \($0)")
+        self.logger.info("pongReceiveHandler: \($0)")
       })
     }
 
-    public func urlSession(_: URLSession, task _: URLSessionTask, didCompleteWithError _: Error?) {
+    public func urlSession(
+      _: URLSession,
+      task _: URLSessionTask,
+      didCompleteWithError error: Error?
+    ) {
+      logger.error("didCompleteWithError: \(error)")
       onQuit.emit(())
       closed = true
     }
 
     public func write(_ req: ServerRequest) async throws {
-      print("WRITE", req)
       return try await withUnsafeThrowingContinuation { c in
-        print("WRITE turn", req)
+        logger.info("Write request: \(req)")
         let d = try! JSONEncoder().encode(req)
 
         task.send(.data(d), completionHandler: {

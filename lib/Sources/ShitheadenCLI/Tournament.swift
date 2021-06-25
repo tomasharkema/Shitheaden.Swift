@@ -6,15 +6,16 @@
 //  Copyright © 2015 Tomas Harkema. All rights reserved.
 //
 
-#if os(macOS)
 
   import CustomAlgo
   import Dispatch
   import Foundation
   import ShitheadenRuntime
   import ShitheadenShared
+import Logging
 
   class Tournament {
+    private let logger = Logger(label: "cli.Tournament")
     let roundsPerGame: Int
     let parallelization: Int
     let easer: MaxConcurrentJobs
@@ -25,7 +26,7 @@
       self.parallelization = parallelization
 
       let spawn = max(2, parallelization)
-      print("Spawning \(spawn) threads")
+      self.logger.notice("Spawning \(spawn) threads")
 
       easer = MaxConcurrentJobs(spawn: spawn)
       roundEaser = MaxConcurrentJobs(spawn: spawn)
@@ -56,9 +57,9 @@
             )
 
             do {
-              print(" START: \(gameId) \(idx) / \(self.roundsPerGame)")
+              self.logger.notice(" START: \(gameId) \(idx) / \(self.roundsPerGame)")
               let snapshot = try await game.startGame()
-              print(
+              self.logger.notice(
                 " END: \(gameId) \(idx) / \(self.roundsPerGame) winner: \(snapshot.winner?.algoName ?? "")"
               )
               await unlock()
@@ -106,11 +107,11 @@
                     (ai4, "\(ai4.algoName) 4"),
                   ]
 
-                  print(
+                  self.logger.notice(
                     "START: \(index1 + index2 + index3 + index4) / \(AIs.count * 4) / \(self.roundsPerGame)"
                   )
                   let res = await self.peformanceOfAI(ai: ais, gameId: potjeIndex)
-                  print(
+                  self.logger.notice(
                     "END: \(index1 + index2 + index3 + index4) / \(AIs.count * 4) / \(self.roundsPerGame)"
                   )
 
@@ -119,10 +120,10 @@
                   let aisPrint = ais.map {
                     $0.1
                   }
-                  print(
+                  self.logger.notice(
                     "\(potjeIndex) \(winnings) : \(aisPrint)\ntime: \(watch.getLap()) - \(duration.getLap())"
                   )
-                  print("UNLOCK!!!!!")
+                  self.logger.notice("UNLOCK!!!!!")
                   await unlock()
                   return await (winnings, res.winningsFrom())
                 }
@@ -148,14 +149,15 @@
         lhs.1 > rhs.1
       }
 
-      print("\n\nSCORES: (potjes van \(roundsPerGame) gewonnen)\n")
+      self.logger.notice("\n\nSCORES: (potjes van \(roundsPerGame) gewonnen)\n")
 
-      scores.reduce("") { prev, el in
+      let s = scores.reduce("") { prev, el in
         prev + "\(el.0): \(el.1)\n"
-      }.print()
+      }
+      self.logger.notice("\(s)")
 
       // winnings from
-      print(stats.1.reduce("Performance:\n") { prev, el in
+      let d = stats.1.reduce("Performance:\n") { prev, el in
 
         let ranks = el.1.sorted { l, r in
           l.1 > r.1
@@ -164,10 +166,9 @@
         }
 
         return prev + "\(el.0): wint van\n\(ranks)\n"
-      })
+      }
+      self.logger.notice("\(d)")
 
-      print("Tijd: \(watch.getLap())\n")
+      self.logger.notice("Tijd: \(watch.getLap())\n")
     }
   }
-
-#endif

@@ -6,8 +6,11 @@
 //
 
 import Dispatch
+import Logging
 
 class MaxConcurrentJobs {
+  private let logger = Logger(label: "cli.MaxConcurrentJobs")
+
   let spawn: Int
   let jobs: Jobs
 
@@ -18,20 +21,22 @@ class MaxConcurrentJobs {
 
   func wait() async -> @Sendable () async -> Void {
     let fun: @Sendable () async -> Void = {
-      print("========== CONTINUE FUN")
-//      asyncDetached {
+      self.logger.notice("========== CONTINUE FUN")
       await self.jobs.cont()
-//      }
     }
 
-    await print("========== START!!!!!!!!", jobs.current, spawn)
+    let jobCurrent = await jobs.current
+    let s = await spawn
+    await logger.notice("========== START!!!!!!!!, \(jobCurrent), \(s)")
 
     if await jobs.hasPlace() {
-      await print("========== CONTINUE", jobs.current, spawn)
+      let jobCurrent = await jobs.current
+      let s = await spawn
+      await logger.notice("========== CONTINUE, \(jobCurrent), \(s)")
       return fun
     }
 
-    await print("========== WAIT", jobs.current, spawn)
+    await print("========== WAIT, \(jobs.current), \(spawn)")
 
     await withCheckedContinuation { r in
       DispatchQueue.global().async { // fix to not be needed?
@@ -41,13 +46,16 @@ class MaxConcurrentJobs {
       }
     }
 
-    await print("========== CONTINUE AFTER WAIT", jobs.current, spawn)
+    let jobCurrent2 = await jobs.current
+    let s2 = await spawn
+    await logger.notice("========== CONTINUE AFTER WAIT \(jobCurrent2), \(s2)")
     return await wait()
   }
 }
 
 extension MaxConcurrentJobs {
   actor Jobs {
+    private let logger = Logger(label: "cli.MaxConcurrentJobs.Jobs")
     let spawn: Int
     var current: Int = 0
     var tasks = [CheckedContinuation<Void, Never>]()
@@ -57,19 +65,17 @@ extension MaxConcurrentJobs {
     }
 
     func cont() {
-      print("========== CONTINUE FUN OJOO \(current) \(tasks.count)")
+      logger.notice("========== CONTINUE FUN OJOO \(current) \(tasks.count)")
       current -= 1
-      print("========== CONTINUE FUN OJOO less \(current) \(tasks.count)")
+      logger.notice("========== CONTINUE FUN OJOO less \(current) \(tasks.count)")
       if let task = tasks.first {
-        async {
           task.resume()
-        }
         tasks.removeFirst()
       }
     }
 
     func hasPlace() -> Bool {
-      print("HAS PLACE")
+      logger.notice("HAS PLACE")
       if current < spawn {
         current += 1
         return true
@@ -79,7 +85,7 @@ extension MaxConcurrentJobs {
     }
 
     func insert(r: CheckedContinuation<Void, Never>) {
-      print("INSERT")
+      logger.notice("INSERT")
       tasks.append(r)
     }
   }

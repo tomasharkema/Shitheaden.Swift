@@ -28,6 +28,26 @@
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       shouldUseLaunchSchemeArgsEnv = "YES">
       <Testables>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "ShitheadenRuntimeTests"
+               BuildableName = "ShitheadenRuntimeTests"
+               BlueprintName = "ShitheadenRuntimeTests"
+               ReferencedContainer = "container:lib">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "ShitheadenSharedTests"
+               BuildableName = "ShitheadenSharedTests"
+               BlueprintName = "ShitheadenSharedTests"
+               ReferencedContainer = "container:lib">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction

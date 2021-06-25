@@ -37,13 +37,12 @@ class GameTests: XCTestCase {
 
     let expectation = XCTestExpectation(description: "wait for game play")
 
-    if #available(macOS 12.0, *) {
+    if #available(macOS 12.0, iOS 15, *) {
       async {
         do {
           let snapshot = try await game.startGame()
           XCTAssertNotNil(snapshot.winner)
         } catch {
-          print(error)
           XCTFail("ERROR! \(error)")
         }
         expectation.fulfill()
@@ -68,13 +67,12 @@ class GameTests: XCTestCase {
 
     let expectation = XCTestExpectation(description: "wait for game play")
 
-    if #available(macOS 12.0, *) {
+    if #available(macOS 12.0, iOS 15, *) {
       async {
         do {
           let snapshot = try await game.startGame()
           XCTAssertNotNil(snapshot.winner)
         } catch {
-          print(error)
           XCTFail("ERROR! \(error)")
         }
         expectation.fulfill()

@@ -7,6 +7,7 @@
 
 import CustomAlgo
 import Foundation
+import Logging
 import NIO
 import NIOHTTP1
 import NIOWebSocket
@@ -14,6 +15,7 @@ import ShitheadenRuntime
 import ShitheadenShared
 
 class WebsocketClient: Client {
+  private let logger = Logger(label: "cli.WebsocketClient")
   private let context: ChannelHandlerContext
   let handler: WebSocketServerHandler
   let games: AtomicDictionary<String, MultiplayerHandler>
@@ -48,19 +50,28 @@ class WebsocketClient: Client {
         throw NSError(domain: "SIG", code: 0, userInfo: nil)
       }
 
-      print(signature)
-      let url = Bundle.main.url(forResource: "lib", withExtension: "sig")
-      print(url)
-      let localSignature = try String(contentsOf: url!).replacingOccurrences(of: "  -\n", with: "")
+      logger.info("Received signature: \(signature)")
+      logger.info("Fetch local signature")
+      guard let url = Bundle.main.url(forResource: "lib", withExtension: "sig") else {
+        logger.error("No local signature found in lib.sig")
+        throw NSError(domain: "SIG", code: 0, userInfo: nil)
+      }
+
+      logger.info("Fetch signature from \(url.absoluteString)")
+
+      let localSignature = try String(contentsOf: url).replacingOccurrences(of: "  -\n", with: "")
+
+      logger.info("Local signature: \(localSignature)")
 
       if signature == localSignature {
+        logger.info("Local signature check succeeded")
         await send(.signatureCheck(true))
       } else {
         throw NSError(domain: "SIG", code: 0, userInfo: nil)
       }
 
     } catch {
-      print("SIGNATURE NOT SUCCEDED!")
+      logger.error("Local signature not succeeded")
       await send(.signatureCheck(false))
     }
 

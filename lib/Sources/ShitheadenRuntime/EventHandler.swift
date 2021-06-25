@@ -80,10 +80,8 @@ public class EventHandler<T> {
     let handler = EventHandler<Void>()
     return try await withTaskCancellationHandler(handler: {
       handler.emit(())
-      print("CANCEL!", handler)
     }, operation: {
       try await withUnsafeThrowingContinuation { g in
-        print(" SET HANDLER!")
         handler.once { _ in
           g.resume(throwing: PlayerError.debug("QUIT"))
         }

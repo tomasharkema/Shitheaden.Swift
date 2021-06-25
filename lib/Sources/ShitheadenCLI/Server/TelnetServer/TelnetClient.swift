@@ -11,8 +11,10 @@ import Foundation
 import NIO
 import ShitheadenRuntime
 import ShitheadenShared
+import Logging
 
 class TelnetClient: Client {
+  private let logger = Logger(label: "cli.TelnetClient")
   private let context: ChannelHandlerContext
   private let handler: TelnetServerHandler
   let games: AtomicDictionary<String, MultiplayerHandler>
@@ -31,8 +33,6 @@ class TelnetClient: Client {
     self.quit = quit
     self.games = games
     self.data = data.map { input in
-      print("DERO: \(input)")
-
       if input.contains("quit") {
         return .quit
       }
@@ -60,14 +60,14 @@ class TelnetClient: Client {
     else {
       return try await start()
     }
-    print(choice)
 
     if choice.hasPrefix("j") {
       // join
       try await joinGame()
     } else if choice.hasPrefix("s") {
       // single
-      print(try await singlePlayer())
+      let single = try await singlePlayer()
+      logger.info("single game \(single)")
     } else if choice.hasPrefix("m") {
       // muliplayer
       try await startMultiplayer()
@@ -93,7 +93,7 @@ class TelnetClient: Client {
         Typ je code in:
     """)
     let s = try await data.once()
-    print(s)
+
     guard let code = try await s.getMultiplayerRequest().string?
       .trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     else {
@@ -121,18 +121,16 @@ class TelnetClient: Client {
   func send(_ event: ServerEvent) async {
     switch event {
     case let .multiplayerEvent(.string(string)):
-      //          await context.send(string: string.trimmingCharacters(in: .whitespacesAndNewlines) + "\r\n")
       let _: Void = await withUnsafeContinuation { g in
         self.context.eventLoop.execute {
           let s = string.trimmingCharacters(in: .whitespacesAndNewlines)
             .replacingOccurrences(of: "\n", with: "\n\r") + "\n\r"
-          print("WRITE: '\(s)'")
-          var buffer = self.context.channel.allocator.buffer(capacity: s.count)
-          buffer.writeString(s) // + "\n\r")
 
+          var buffer = self.context.channel.allocator.buffer(capacity: s.count)
+          buffer.writeString(s)
+          
           self.context.writeAndFlush(self.handler.wrapOutboundOut(buffer))
-            .whenComplete {
-              print($0)
+            .whenComplete { _ in
               async {
                 g.resume()
               }
@@ -186,7 +184,7 @@ class TelnetClient: Client {
       ))
 
     case .quit:
-      print("QUIT")
+      logger.info("quit")
     case .requestSignature, .signatureCheck:
       break
     }

@@ -12,13 +12,15 @@ import CustomAlgo
 import Foundation
 import NIO
 import ShitheadenRuntime
+import Logging
+
+private let logger = Logger(label: "cli")
 
 @main
 struct Shitheaden: ParsableCommand {
-  #if os(macOS)
+
     @Flag(help: "Test all the AI's")
     var testAi = false
-  #endif
 
   @Flag(help: "Start a server")
   var server = false
@@ -30,22 +32,20 @@ struct Shitheaden: ParsableCommand {
   var rounds: Int = 10
 
   mutating func run() async throws {
-    #if os(Linux)
-      await startServer()
-      return
-    #endif
-
-    print("START! \(server)")
+    logger.notice("START! \(server)")
     if server {
       await startServer()
       return
-    }
-    #if os(macOS)
-      if testAi {
+    } else if testAi {
         await playTournament()
         return
       }
-    #endif
+
+#if os(Linux)
+    await startServer()
+    return
+#endif
+
     await interactive()
   }
 
@@ -68,12 +68,12 @@ struct Shitheaden: ParsableCommand {
     let games = AtomicDictionary<String, MultiplayerHandler>()
     async {
       do {
-        print("START! websocket")
+        logger.notice("START! websocket")
         let server = WebsocketServer(games: games)
         let channel = try await server.server(group: group)
         try channel.closeFuture.wait()
       } catch {
-        print(error)
+        logger.error("\(error)")
       }
     }
     async {
@@ -113,7 +113,7 @@ struct Shitheaden: ParsableCommand {
           name: "Zuid (JIJ)",
           position: .zuid,
           ai: UserInputAIJson.cli(id: id, print: {
-            print($0)
+            print($0) // print to stout
           }, read: {
             await Keyboard.getKeyboardInput()
           })
@@ -123,7 +123,7 @@ struct Shitheaden: ParsableCommand {
     do {
       try await game.startGame()
     } catch {
-      print(error)
+      logger.error("\(error)")
     }
   }
 }
@@ -148,9 +148,6 @@ extension UserInputAIJson {
         Int($0.trimmingCharacters(in: .whitespacesAndNewlines))
       }
       if inputs.contains(nil) {
-        //      await renderHandler(RenderPosition.input.down(n: 1)
-        //                            .cliRep + "Je moet p of een aantal cijfers invullen...")
-        //      throw PlayerError(text: "Je moet p of een aantal cijfers invullen...")
         return .string(input)
       }
 

@@ -11,13 +11,12 @@ import SwiftUI
 
 @main
 struct ShitheadenAppApp: App {
-  init() {
-    LoggingSystem.bootstrap(LoggingOSLog.init)
-  }
-
   var body: some Scene {
     WindowGroup {
       ContentView()
+        .onAppear {
+          LoggingSystem.bootstrap(LoggingOSLog.init)
+        }
     }
   }
 }

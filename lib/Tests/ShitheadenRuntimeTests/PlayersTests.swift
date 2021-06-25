@@ -37,7 +37,6 @@ class PlayersTests: XCTestCase {
       player2,
       player3,
     ]
-    print(players)
 
     let sorted = players.sortPlayerLowestCard()
 
