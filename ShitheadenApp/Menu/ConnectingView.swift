@@ -143,7 +143,8 @@ struct ConnectingView: View {
             .onAppear {
               async {
                 if let code = code {
-                  try await self.connection.client?.write(.joinMultiplayer(code: code))
+                  try await self.connection.client?
+                    .write(.joinMultiplayer(code: code))
                 } else {
                   try await self.connection.client?.write(.startMultiplayer)
                 }
@@ -160,7 +161,8 @@ struct ConnectingView: View {
         Text("\(int) waiting to start")
         Button("Start!") {
           async {
-            try await self.connection.client?.write(.multiplayerRequest(.string("start")))
+            try await self.connection.client?
+              .write(.multiplayerRequest(.string("start")))
           }
         }.buttonStyle(.bordered)
 

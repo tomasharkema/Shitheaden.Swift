@@ -59,7 +59,8 @@ class WebsocketClient: Client {
 
       logger.info("Fetch signature from \(url.absoluteString)")
 
-      let localSignature = try String(contentsOf: url).replacingOccurrences(of: "  -\n", with: "")
+      let localSignature = try String(contentsOf: url)
+        .replacingOccurrences(of: "  -\n", with: "")
 
       logger.info("Local signature: \(localSignature)")
 
@@ -142,11 +143,13 @@ class WebsocketClient: Client {
           position: .zuid,
           ai: UserInputAIJson(id: id, reader: { _, error in
             if let error = error {
-              await self.send(.multiplayerEvent(multiplayerEvent: .error(error: error)))
+              await self
+                .send(.multiplayerEvent(multiplayerEvent: .error(error: error)))
             }
             return try await self.data.once().getMultiplayerRequest()
           }, renderHandler: {
-            await self.send(.multiplayerEvent(multiplayerEvent: .gameSnapshot(snapshot: $0)))
+            await self
+              .send(.multiplayerEvent(multiplayerEvent: .gameSnapshot(snapshot: $0)))
             //            if let error = $1 {
             //              await self.send(.multiplayerEvent(multiplayerEvent: .error(error: error)))
             //            }

@@ -19,7 +19,7 @@ final class GameContainer: ObservableObject {
   private var appInput: AppInputUserInputAI?
   private var game: Game?
   @Published var gameState = GameState()
-  @Published var selectedCards = Set<RenderCard>()
+  @Published var selectedCards = [RenderCard]()
 
   private(set) var beginMoveHandler: (((Card, Card, Card)) async throws -> Void)?
   private(set) var moveHandler: ((Turn) async throws -> Void)?
@@ -204,15 +204,20 @@ final class GameContainer: ObservableObject {
     await gameTask.get()
   }
 
-  func select(_ cards: Set<RenderCard>, selected: Bool, deleteNotSameNumber: Bool) {
+  func select(_ cards: [RenderCard], selected: Bool, deleteNotSameNumber: Bool) {
     if selected {
       if deleteNotSameNumber,
          selectedCards.contains(where: { $0.card?.number != cards.first?.card?.number })
       {
         selectedCards = cards
       } else {
+        let c = max((selectedCards.count + cards.count) - 3, 0)
+        logger.debug("items: \(selectedCards.count), \(cards.count), \(c)")
+
+        selectedCards = Array(selectedCards.dropFirst(c))
+
         for card in cards {
-          selectedCards.insert(card)
+          selectedCards.append(card)
         }
       }
 

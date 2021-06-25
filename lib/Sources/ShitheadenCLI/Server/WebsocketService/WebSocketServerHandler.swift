@@ -33,7 +33,13 @@ final class WebSocketServerHandler: ChannelInboundHandler {
 
   public func handlerAdded(context: ChannelHandlerContext) {
     print("HANDLER ADDED")
-    let c = WebsocketClient(context: context, handler: self, quit: quit, data: data, games: games)
+    let c = WebsocketClient(
+      context: context,
+      handler: self,
+      quit: quit,
+      data: data,
+      games: games
+    )
     handler.emit(c)
     async {
       await c.start()
@@ -55,7 +61,8 @@ final class WebSocketServerHandler: ChannelInboundHandler {
     case .binary:
       var data = frame.unmaskedData
       let d = data
-        .readBytes(length: data.readableBytes)! // data.readString(length: data.readableBytes) ?? ""
+        .readBytes(length: data
+          .readableBytes)! // data.readString(length: data.readableBytes) ?? ""
       print(d)
       let sr = try! JSONDecoder().decode(ServerRequest.self, from: Data(d))
       print(sr)
@@ -110,7 +117,11 @@ final class WebSocketServerHandler: ChannelInboundHandler {
       // peer sent us, unless they didn't send one at all.
       var data = frame.unmaskedData
       let closeDataCode = data.readSlice(length: 2) ?? ByteBuffer()
-      let closeFrame = WebSocketFrame(fin: true, opcode: .connectionClose, data: closeDataCode)
+      let closeFrame = WebSocketFrame(
+        fin: true,
+        opcode: .connectionClose,
+        data: closeDataCode
+      )
       _ = context.write(wrapOutboundOut(closeFrame)).map { () in
         context.close(promise: nil)
       }

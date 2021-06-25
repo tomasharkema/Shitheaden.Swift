@@ -25,21 +25,21 @@ public struct Card: Equatable, Hashable, Codable {
     }
   }
 
-//  public var afters: [Self] {
+  //  public var afters: [Self] {
 //    Symbol.allCases.flatMap { symbol in
 //      self.number.afters.map {
 //        Card(id: UUID(), symbol: symbol, number: $0)
 //      }
 //    }
-//  }
+  //  }
 
   public func apply(_ other: Self) -> Bool {
     number.afters.contains(other.number)
   }
 
-//  public static func ==(lhs: Card, rhs :Card) -> Bool {
+  //  public static func ==(lhs: Card, rhs :Card) -> Bool {
 //    return lhs.symbol == rhs.symbol && lhs.number == rhs.number
-//  }
+  //  }
 }
 
 public extension Array where Element == Card {

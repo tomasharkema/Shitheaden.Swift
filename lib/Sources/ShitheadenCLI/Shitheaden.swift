@@ -10,17 +10,16 @@ import ANSIEscapeCode
 import ArgumentParser
 import CustomAlgo
 import Foundation
+import Logging
 import NIO
 import ShitheadenRuntime
-import Logging
 
 private let logger = Logger(label: "cli")
 
 @main
 struct Shitheaden: ParsableCommand {
-
-    @Flag(help: "Test all the AI's")
-    var testAi = false
+  @Flag(help: "Test all the AI's")
+  var testAi = false
 
   @Flag(help: "Start a server")
   var server = false
@@ -37,20 +36,21 @@ struct Shitheaden: ParsableCommand {
       await startServer()
       return
     }
-#if os(macOS)
-    if testAi {
-      await playTournament()
-      return
-    }
+    #if os(macOS)
+      if testAi {
+        await playTournament()
+        return
+      }
     #endif
-#if os(Linux)
-    await startServer()
-    return
-#endif
+    #if os(Linux)
+      await startServer()
+      return
+    #endif
 
     await interactive()
   }
-#if os(macOS)
+
+  #if os(macOS)
     private func playTournament() async {
       return await withUnsafeContinuation { d in
         DispatchQueue.global().async {
@@ -63,7 +63,7 @@ struct Shitheaden: ParsableCommand {
       }
     }
   #endif
-  
+
   private func startServer() async {
     let group = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount / 2)
     let games = AtomicDictionary<String, MultiplayerHandler>()

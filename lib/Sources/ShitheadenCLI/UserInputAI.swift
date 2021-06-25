@@ -63,7 +63,8 @@ actor _UserInputAI: GameAi {
 
   private func getBeurtFromUser(request: TurnRequest) async throws -> Turn {
     #if DEBUG
-      await renderHandler(RenderPosition.input.down(n: 5).cliRep + "\(request.possibleTurns())")
+      await renderHandler(RenderPosition.input.down(n: 5)
+        .cliRep + "\(request.possibleTurns())")
     #endif
 
     let input = await getInput()
@@ -104,9 +105,10 @@ actor _UserInputAI: GameAi {
         executeTurn = .closedCardIndex(i)
 
       case .tableOpen:
-        executeTurn = .play(Set(request.openTableCards.unobscure().lazy.enumerated().filter {
-          keuze.contains($0.offset + 1)
-        }.map { $0.element }))
+        executeTurn =
+          .play(Set(request.openTableCards.unobscure().lazy.enumerated().filter {
+            keuze.contains($0.offset + 1)
+          }.map { $0.element }))
       }
 
     } else {

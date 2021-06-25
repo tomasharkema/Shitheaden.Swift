@@ -67,8 +67,8 @@ actor UserInputAIJson: GameAi {
         turn = .pass
       } else {
         throw PlayerError.inputNotRecognized(
-            input: string,
-            hint: "voer p in om te passen."
+          input: string,
+          hint: "voer p in om te passen."
         )
       }
 
@@ -90,9 +90,11 @@ actor UserInputAIJson: GameAi {
           throw PlayerError.cardsCount(1)
         }
 
-        guard let int = keuze.first, let i = (1 ... request.closedCards.count).first(where: {
-          $0 == int
-        }) else {
+        guard let int = keuze.first,
+              let i = (1 ... request.closedCards.count).first(where: {
+                $0 == int
+              })
+        else {
           throw PlayerError.closedNumberNotInRange(
             choice: keuze.first,
             range: request.closedCards.count

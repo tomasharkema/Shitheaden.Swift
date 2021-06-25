@@ -164,7 +164,6 @@ public final actor Game {
     try await sendRender(error: previousError)
 
     do {
-
       logger.info("REQUEST beginMove for \(player.ai)")
       let (card1, card2, card3) = try await player.ai
         .beginMove(request: req)
@@ -272,7 +271,8 @@ public final actor Game {
           playerIndex: playerIndex,
           player: player,
           numberCalled: numberCalled + 1,
-          previousError: (error as? PlayerError) ?? PlayerError.turnNotPossible(turn: turn)
+          previousError: (error as? PlayerError) ?? PlayerError
+            .turnNotPossible(turn: turn)
         )
       }
 
@@ -300,7 +300,8 @@ public final actor Game {
           let previousTable = table
           let card = player.closedTableCards[index - 1]
 
-          player.closedTableCards.remove(at: player.closedTableCards.firstIndex(of: card)!)
+          player.closedTableCards
+            .remove(at: player.closedTableCards.firstIndex(of: card)!)
 
           table += [card]
 
@@ -629,7 +630,8 @@ extension Array where Element == TurnRequest {
     return enumerated()
       .map { index, element in
         var newElement = element
-        newElement.position = Position.allCases.shifted(by: offsetForPlayer - offsetForZuid)[index]
+        newElement.position = Position.allCases
+          .shifted(by: offsetForPlayer - offsetForZuid)[index]
         return newElement
       }
   }

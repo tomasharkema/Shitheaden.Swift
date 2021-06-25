@@ -16,13 +16,13 @@ struct LocalPlayerView: View {
   let phase: Phase?
   let error: String?
   let cards: [RenderCard]
-  let selectedCards: Set<RenderCard>
+  let selectedCards: [RenderCard]
   let isOnTurn: Bool
   let canPass: Bool
   let explain: String?
 
   let playClosedCard: (Int) -> Void
-  let select: (Set<RenderCard>, Bool) -> Void
+  let select: ([RenderCard], Bool) -> Void
   let play: () -> Void
 
   var body: some View {

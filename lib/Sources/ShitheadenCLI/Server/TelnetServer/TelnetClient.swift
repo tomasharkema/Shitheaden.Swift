@@ -8,10 +8,10 @@
 import ANSIEscapeCode
 import CustomAlgo
 import Foundation
+import Logging
 import NIO
 import ShitheadenRuntime
 import ShitheadenShared
-import Logging
 
 class TelnetClient: Client {
   private let logger = Logger(label: "cli.TelnetClient")
@@ -128,7 +128,7 @@ class TelnetClient: Client {
 
           var buffer = self.context.channel.allocator.buffer(capacity: s.count)
           buffer.writeString(s)
-          
+
           self.context.writeAndFlush(self.handler.wrapOutboundOut(buffer))
             .whenComplete { _ in
               async {
@@ -216,11 +216,13 @@ class TelnetClient: Client {
           ai: UserInputAIJson(id: id, reader: {
             await self.send(.multiplayerEvent(multiplayerEvent: .action(action: $0)))
             if let error = $1 {
-              await self.send(.multiplayerEvent(multiplayerEvent: .error(error: error)))
+              await self
+                .send(.multiplayerEvent(multiplayerEvent: .error(error: error)))
             }
             return try await self.data.once().getMultiplayerRequest()
           }, renderHandler: {
-            _ = await self.send(.multiplayerEvent(multiplayerEvent: .gameSnapshot(snapshot: $0)))
+            _ = await self
+              .send(.multiplayerEvent(multiplayerEvent: .gameSnapshot(snapshot: $0)))
           })
         ),
       ], slowMode: true

@@ -6,9 +6,9 @@
 //
 
 import Foundation
+import Logging
 import ShitheadenRuntime
 import ShitheadenShared
-import Logging
 
 protocol Client: AnyObject {
   var quit: EventHandler<Void>.ReadOnly { get }
@@ -32,7 +32,8 @@ actor MultiplayerHandler {
     competitors = []
 
     challenger.1.quit.on {
-      self.logger.info("onQuitRead, challenger \(challenger) \(self.gameTask) \(self.finishEvent)")
+      self.logger
+        .info("onQuitRead, challenger \(challenger) \(self.gameTask) \(self.finishEvent)")
       self.gameTask?.cancel()
 
       self.competitors.forEach { c in
@@ -88,7 +89,7 @@ actor MultiplayerHandler {
     await send(.start)
 
     let game = try await startMultiplayerGame()
-    self.logger.info("start multiplayer game \(game)")
+    logger.info("start multiplayer game \(game)")
   }
 
   nonisolated func finished() async throws -> Result<GameSnapshot, Error> {
@@ -108,9 +109,11 @@ actor MultiplayerHandler {
 
     let initiatorAi = UserInputAIJson(id: challenger.0) { request, error in
       if let error = error {
-        await self.challenger.1.send(.multiplayerEvent(multiplayerEvent: .error(error: error)))
+        await self.challenger.1
+          .send(.multiplayerEvent(multiplayerEvent: .error(error: error)))
       }
-      await self.challenger.1.send(.multiplayerEvent(multiplayerEvent: .action(action: request)))
+      await self.challenger.1
+        .send(.multiplayerEvent(multiplayerEvent: .action(action: request)))
       return try await self.challenger.1.data.once().getMultiplayerRequest()
     } renderHandler: { game in
       _ = await self.challenger.1
@@ -131,9 +134,11 @@ actor MultiplayerHandler {
         position: Position.allCases[index + 1],
         ai: UserInputAIJson(id: player.0) { request, error in
           if let error = error {
-            await player.1.send(.multiplayerEvent(multiplayerEvent: .error(error: error)))
+            await player.1
+              .send(.multiplayerEvent(multiplayerEvent: .error(error: error)))
           }
-          await player.1.send(.multiplayerEvent(multiplayerEvent: .action(action: request)))
+          await player.1
+            .send(.multiplayerEvent(multiplayerEvent: .action(action: request)))
           return try await player.1.data.once().getMultiplayerRequest()
         } renderHandler: { game in
           _ = await player.1

@@ -15,7 +15,7 @@
         "repositoryURL": "https://github.com/tomasharkema/swift-argument-parser.git",
         "state": {
           "branch": "swift-5.5-async",
-          "revision": "6c97ca76d9d5b2b2329c7f564c33cfd151d1f623",
+          "revision": "1c92828d434a87dea33d63e7276848e108617010",
           "version": null
         }
       },
@@ -62,6 +62,15 @@
           "branch": null,
           "revision": "bc1a91daf3ae35134fbca5655ed221668d0369d3",
           "version": "0.3.0"
+        }
+      },
+      {
+        "package": "SwiftFormat",
+        "repositoryURL": "https://github.com/nicklockwood/SwiftFormat",
+        "state": {
+          "branch": null,
+          "revision": "6f16a7c66c35cea3539becfc440b5d4822adc90f",
+          "version": "0.48.6"
         }
       }
     ]

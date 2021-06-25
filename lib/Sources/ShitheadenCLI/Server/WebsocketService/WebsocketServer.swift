@@ -47,9 +47,10 @@ actor WebsocketServer {
             channel.pipeline.removeHandler(httpHandler, promise: nil)
           }
         )
-        return channel.pipeline.configureHTTPServerPipeline(withServerUpgrade: config).flatMap {
-          channel.pipeline.addHandler(httpHandler)
-        }
+        return channel.pipeline.configureHTTPServerPipeline(withServerUpgrade: config)
+          .flatMap {
+            channel.pipeline.addHandler(httpHandler)
+          }
       }
       .childChannelOption(ChannelOptions.socketOption(.so_reuseaddr), value: 1)
 

@@ -24,15 +24,15 @@ enum CLI {
   static func setBackground() -> String { return "\u{1B}[\(CLI.TextColor);\(CLI.Background);m"
   }
 
-//  static func print(pos: RenderPosition, string: String) {
+  //  static func print(pos: RenderPosition, string: String) {
 //    if shouldPrintGlbl {
 //      Swift.print("\u{001B}[\(CLI.TextColor);\(CLI.Background);m\(pos.cliRep)\(string)")
 //    }
-//  }
+  //  }
 }
 
 func >>> (lhs: RenderPosition, rhs: String) -> String {
-//  CLI.print(pos: lhs, string: rhs)
+  //  CLI.print(pos: lhs, string: rhs)
   return "\u{001B}[\(CLI.TextColor);\(CLI.Background);m\(lhs.cliRep)\(rhs)"
 }
 

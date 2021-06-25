@@ -31,7 +31,10 @@ struct PlayerView: View {
               selectedCards: [],
               select: nil
             )
-            .offset(x: orientation == .vertical ? 5 : 0, y: orientation == .vertical ? 0 : -5)
+            .offset(
+              x: orientation == .vertical ? 5 : 0,
+              y: orientation == .vertical ? 0 : -5
+            )
           )
 
           CardStackView(cards: player.handCards, offset: 2)

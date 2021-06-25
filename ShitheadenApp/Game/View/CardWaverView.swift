@@ -12,21 +12,31 @@ struct CardWaverView: View {
   let cards: [RenderCard]
   let orientation: Orientation
 
-  let selectedCards: Set<RenderCard>
-  let select: ((Set<RenderCard>, Bool) -> Void)?
+  let selectedCards: [RenderCard]
+  let select: (([RenderCard], Bool) -> Void)?
+
+  @State var hasLongPressed = false
 
   @ViewBuilder
   func v(c: RenderCard) -> some View {
     if let select = select {
       StatedButton(
         action: { selected in
-          select(Set(arrayLiteral: c), selected)
+          if !hasLongPressed {
+            select([c], selected)
+          }
+          hasLongPressed = false
         }, label: {
           CardView(card: c)
         }, isSelected: selectedCards.contains(c)
-      ).onLongPressGesture {
-        select(Set(cards.filter { $0.card?.number == c.card?.number }), true)
-      }
+      )
+      .simultaneousGesture(LongPressGesture().onEnded {
+        print($0)
+        if $0 {
+          hasLongPressed = true
+          select(cards.filter { $0.card?.number == c.card?.number }, true)
+        }
+      })
       .buttonStyle(PlainButtonStyle())
     } else {
       CardView(card: c)

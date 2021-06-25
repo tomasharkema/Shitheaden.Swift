@@ -62,9 +62,9 @@ public extension Array where Element == RenderCard {
     self.init(cards.map { RenderCard.hidden(id: $0.id) })
   }
 
-//  init(_ count: Int) { // TODO: remove!
+  //  init(_ count: Int) { // TODO: remove!
 //    self.init((0 ..< count).map { _ in .hidden(id: UUID()) })
-//  }
+  //  }
 
   func unobscure() -> [Card] {
     return flatMap { $0.card }

@@ -38,7 +38,8 @@ public enum PlayerError: LocalizedError, Codable, Equatable {
       return "Je moet kaarten met dezelfde nummers spelen"
     case let .closedNumberNotInRange(choice, range):
       if range > 1 {
-        return "Je hebt maar \(range) kaarten." + (choice.map { " Kaart \($0) kan niet." } ?? "")
+        return "Je hebt maar \(range) kaarten." +
+          (choice.map { " Kaart \($0) kan niet." } ?? "")
       } else {
         return "Je kan alleen maar 1 kaart spelen"
       }

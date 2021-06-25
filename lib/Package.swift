@@ -44,6 +44,7 @@ let package = Package(
     .package(url: "https://github.com/flintprocessor/ANSIEscapeCode", branch: "master"),
     .package(url: "https://github.com/apple/swift-log", from: "1.4.2"),
     .package(url: "https://github.com/chrisaljoudi/swift-log-oslog.git", from: "0.2.1"),
+    .package(url: "https://github.com/nicklockwood/SwiftFormat", from: "0.48.6"),
   ],
   targets: [
     .executableTarget(

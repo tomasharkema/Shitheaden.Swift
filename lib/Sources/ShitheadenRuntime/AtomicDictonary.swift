@@ -25,12 +25,12 @@ public actor AtomicDictionary<Key: Hashable, Value> {
   public func isEmpty() -> Bool {
     return dict.isEmpty
   }
-//  subscript(_ key: Key) -> Value? {
+  //  subscript(_ key: Key) -> Value? {
 //    get {
 //      return get(key)
 //    }
 //    set(newValue) {
 //      insert(key, value: newValue)
 //    }
-//  }
+  //  }
 }
