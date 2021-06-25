@@ -56,24 +56,20 @@ final class GameContainer: ObservableObject {
         gameState.error = error.localizedDescription
 
       case .action(.requestBeginTurn):
-        gameState.isOnTurn = true
         gameState.canPass = false
 
         moveHandler = nil
         beginMoveHandler = {
           self.logger.debug("\(String(describing: $0))")
-          self.gameState.isOnTurn = false
           try await client.write(.multiplayerRequest(.concreteCards([$0.0, $0.1, $0.2])))
         }
 
       case .action(action: .requestNormalTurn):
-        gameState.isOnTurn = true
         gameState.canPass = true
 
         beginMoveHandler = nil
         moveHandler = {
           self.logger.debug("\(String(describing: $0))")
-          self.gameState.isOnTurn = false
           try await client.write(.multiplayerRequest(.concreteTurn($0)))
         }
 
@@ -120,7 +116,6 @@ final class GameContainer: ObservableObject {
     case .tableClosed:
       newState.explain = "Speel een kaart van je dichte stapel"
     }
-
     if gameState != newState {
       gameState = newState
     }
@@ -146,7 +141,6 @@ final class GameContainer: ObservableObject {
       beginMoveHandler: { handler in
         await MainActor.run {
           var newState = self.gameState
-          newState.isOnTurn = true
           newState.canPass = false
           self.gameState = newState
           self.beginMoveHandler = handler
@@ -154,7 +148,6 @@ final class GameContainer: ObservableObject {
       }, moveHandler: { handler in
         await MainActor.run {
           var newState = self.gameState
-          newState.isOnTurn = true
           newState.canPass = true
           self.gameState = newState
           self.moveHandler = handler
@@ -245,7 +238,6 @@ final class GameContainer: ObservableObject {
           selectedCards.dropFirst().first!.card!,
           selectedCards.dropFirst().dropFirst().first!.card!
         ))
-        self.gameState.isOnTurn = false
         self.beginMoveHandler = nil
       } else if let moveHandler = moveHandler {
         self.gameState.error = nil
@@ -254,7 +246,6 @@ final class GameContainer: ObservableObject {
         } else {
           try await moveHandler(.pass)
         }
-        self.gameState.isOnTurn = false
         self.moveHandler = nil
       } else {
         return
