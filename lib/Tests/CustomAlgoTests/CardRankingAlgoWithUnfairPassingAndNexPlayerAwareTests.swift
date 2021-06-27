@@ -11,7 +11,8 @@ import ShitheadenShared
 import XCTest
 
 class CardRankingAlgoWithUnfairPassingAndNexPlayerAwareTests: XCTestCase {
-  func testCardRankingAlgoWithUnfairPassingAndNexPlayerAwareTestsOpenCards() async {
+
+  func testCardRankingAlgoWithUnfairPassingAndNexPlayerAwareTestsOpenCards() {
     let currentPlayerId = UUID()
 
     let currentPlayer = TurnRequest(
@@ -47,12 +48,29 @@ class CardRankingAlgoWithUnfairPassingAndNexPlayerAwareTests: XCTestCase {
     )
 
     let algo = CardRankingAlgoWithUnfairPassingAndNexPlayerAware()
-    let turn = await algo.move(request: currentPlayer, snapshot: gameSnapShot)
 
-    XCTAssertEqual(turn.playedCards.first?.number, .nine)
+
+    let expectation = XCTestExpectation(description: "wait for game play")
+
+    if #available(macOS 12.0, iOS 15, *) {
+      async {
+        do {
+
+          let turn = await algo.move(request: currentPlayer, snapshot: gameSnapShot)
+
+          XCTAssertEqual(turn.playedCards.first?.number, .nine)
+        } catch {
+XCTFail("ERROR: \(error)")
+        }
+        expectation.fulfill()
+      }
+    }
+    wait(for: [expectation], timeout: 120.0)
+          
   }
 
-  func testCardRankingAlgoWithUnfairPassingAndNexPlayerAwareTestsClosedCards() async {
+  func testCardRankingAlgoWithUnfairPassingAndNexPlayerAwareTestsClosedCards() {
+
     let currentPlayerId = UUID()
 
     let currentPlayer = TurnRequest(
@@ -89,8 +107,26 @@ class CardRankingAlgoWithUnfairPassingAndNexPlayerAwareTests: XCTestCase {
     )
 
     let algo = CardRankingAlgoWithUnfairPassingAndNexPlayerAware()
-    let turn = await algo.move(request: currentPlayer, snapshot: gameSnapShot)
 
-    XCTAssertEqual(turn.playedCards.first?.number, .nine)
+
+    let expectation = XCTestExpectation(description: "wait for game play")
+
+    if #available(macOS 12.0, iOS 15, *) {
+      async {
+        do {
+
+
+          let turn = await algo.move(request: currentPlayer, snapshot: gameSnapShot)
+
+          XCTAssertEqual(turn.playedCards.first?.number, .nine)
+        } catch {
+          XCTFail("ERROR: \(error)")
+        }
+        expectation.fulfill()
+      }
+    }
+    wait(for: [expectation], timeout: 120.0)
+
   }
 }
+

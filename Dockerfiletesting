@@ -15,7 +15,9 @@ RUN mkdir -p ./Sources/CustomAlgo && \
     mkdir -p ./Tests/ShitheadenRuntimeTests && \
     touch ./Tests/ShitheadenRuntimeTests/main.swift && \
     mkdir -p ./Tests/ShitheadenSharedTests && \
-    touch ./Tests/ShitheadenSharedTests/main.swift 
+    touch ./Tests/ShitheadenSharedTests/main.swift && \
+    mkdir -p ./Tests/CustomAlgoTests && \
+    touch ./Tests/CustomAlgoTests/main.swift 
 
 COPY lib/Package.swift ./Package.swift
 
@@ -30,7 +32,7 @@ COPY lib/Sources ./Sources
 
 RUN swift build --product ShitheadenRuntime -v
 
-RUN rm ./Tests/ShitheadenRuntimeTests/main.swift && rm ./Tests/ShitheadenSharedTests/main.swift
+RUN rm ./Tests/ShitheadenRuntimeTests/main.swift && rm ./Tests/ShitheadenSharedTests/main.swift && rm ./Tests/CustomAlgoTests/main.swift 
 
 COPY lib/Tests ./Tests
 

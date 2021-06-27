@@ -19,7 +19,9 @@ RUN mkdir -p ./Sources/CustomAlgo && \
     mkdir -p ./Tests/ShitheadenRuntimeTests && \
     touch ./Tests/ShitheadenRuntimeTests/main.swift && \
     mkdir -p ./Tests/ShitheadenSharedTests && \
-    touch ./Tests/ShitheadenSharedTests/main.swift 
+    touch ./Tests/ShitheadenSharedTests/main.swift && \
+    mkdir -p ./Tests/CustomAlgoTests && \
+    touch ./Tests/CustomAlgoTests/main.swift 
 
 COPY lib/Package.swift ./Package.swift
 
@@ -31,7 +33,8 @@ RUN swift build --target DependenciesTarget -v -c release
 RUN rm ./Sources/CustomAlgo/main.swift && \
     rm ./Sources/ShitheadenRuntime/main.swift && \
     rm ./Sources/ShitheadenShared/main.swift && \
-    rm ./Sources/ShitheadenCLI/main.swift
+    rm ./Sources/ShitheadenCLI/main.swift && \
+    rm ./Tests/CustomAlgoTests/main.swift 
 
 COPY lib/Sources ./Sources
 COPY lib/Tests ./Tests
