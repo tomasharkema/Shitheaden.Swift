@@ -117,7 +117,9 @@ struct GameView: View {
     .overlay(EndStateView(endState: game.gameState.endState, restart: {
       switch gameType {
       case .offline:
-        await game.start(restart: true)
+        if case let .singlePlayer(contestants) = self.state {
+          await game.start(restart: true, contestants: contestants)
+        }
       case let .online(handler):
         await game.startOnline(handler, restart: true)
       }
@@ -141,7 +143,9 @@ struct GameView: View {
       .task {
         switch gameType {
         case .offline:
-          await game.start()
+          if case let .singlePlayer(contestants) = self.state {
+            await game.start(contestants: contestants)
+          }
         case let .online(handler):
           await game.startOnline(handler, restart: false)
         }
@@ -151,7 +155,9 @@ struct GameView: View {
         async {
           switch gameType {
           case .offline:
-            await game.start()
+            if case let .singlePlayer(contestants) = self.state {
+              await game.start(contestants: contestants)
+            }
           case let .online(handler, code):
             await game.startOnline(handler, code: code, restart: false)
           }

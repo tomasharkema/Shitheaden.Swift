@@ -91,6 +91,7 @@ struct Shitheaden: ParsableCommand {
   }
 
   private func interactive() async {
+    LoggingSystem.bootstrap { _ in NoopLogger() }
     let id = UUID()
     let game = Game(
       players: [

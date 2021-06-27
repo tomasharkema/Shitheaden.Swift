@@ -32,16 +32,16 @@ class PlayersTests: XCTestCase {
       .init(id: .init(), symbol: .harten, number: .five),
     ]
 
-    let players = [
+    var players = [
       player1,
       player2,
       player3,
     ]
 
-    let sorted = players.sortPlayerLowestCard()
+    players.sortPlayerLowestCard()
 
-    XCTAssertEqual(sorted.first?.id, player2.id)
-    XCTAssertEqual(sorted.dropFirst().first?.id, player3.id)
-    XCTAssertEqual(sorted.dropFirst().dropFirst().first?.id, player1.id)
+    XCTAssertEqual(players.first?.id, player2.id)
+    XCTAssertEqual(players.dropFirst().first?.id, player3.id)
+    XCTAssertEqual(players.dropFirst().dropFirst().first?.id, player1.id)
   }
 }

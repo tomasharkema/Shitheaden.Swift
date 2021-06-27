@@ -12,7 +12,9 @@ public actor RandomBot: GameAi {
 
   public func render(snapshot _: GameSnapshot) async {}
 
-  public func beginMove(request: TurnRequest) async -> (Card, Card, Card) {
+  public func beginMove(request: TurnRequest,
+                        snapshot _: GameSnapshot) async -> (Card, Card, Card)
+  {
     let hand = request.handCards.unobscure()
 
     let first = hand.randomElement()!
@@ -22,7 +24,7 @@ public actor RandomBot: GameAi {
     return (first, second, third)
   }
 
-  public func move(request: TurnRequest) async -> Turn {
+  public func move(request: TurnRequest, snapshot _: GameSnapshot) async -> Turn {
     let possibleTurns = Array(request.privatePossibleTurns())
     if possibleTurns.isEmpty {
       return .pass

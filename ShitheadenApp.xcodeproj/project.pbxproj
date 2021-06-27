@@ -59,7 +59,8 @@
 		C398542C268472C300D64483 /* EndStateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EndStateView.swift; sourceTree = "<group>"; };
 		C398B203267CA35D00AAD375 /* lib */ = {isa = PBXFileReference; lastKnownFileType = folder; path = lib; sourceTree = "<group>"; };
 		C39A09562682159C00F011BB /* AlertView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertView.swift; sourceTree = "<group>"; };
-		C3DBF4F82685CD470027D011 /* lib.sig */ = {isa = PBXFileReference; lastKnownFileType = file; path = lib.sig; sourceTree = SOURCE_ROOT; };
+		C3DBF4F82685CD470027D011 /* lib.sig */ = {isa = PBXFileReference; lastKnownFileType = text; path = lib.sig; sourceTree = SOURCE_ROOT; };
+		C3EB6C1C2688C61100D897F1 /* ShitheadenApp.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; name = ShitheadenApp.xctestplan; path = ShitheadenApp.xcodeproj/ShitheadenApp.xctestplan; sourceTree = "<group>"; };
 		C3FFA11C267CA6C3007972BA /* ShitheadenApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ShitheadenApp.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -126,6 +127,7 @@
 		C3812A49267C816400397E65 = {
 			isa = PBXGroup;
 			children = (
+				C3EB6C1C2688C61100D897F1 /* ShitheadenApp.xctestplan */,
 				C398B202267CA35D00AAD375 /* Packages */,
 				C3812A54267C816400397E65 /* ShitheadenApp */,
 				C3812A53267C816400397E65 /* Products */,
@@ -289,7 +291,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "SDKROOT=macosx\n#swift package update #Uncomment this line temporarily to update the version used to the latest matching your BuildTools/Package.swift file\n\nswift run --package-path lib -c release swiftformat \"$SRCROOT\" --indent 2 --maxwidth 100\n";
+			shellScript = "SDKROOT=macosx\n#swift package update #Uncomment this line temporarily to update the version used to the latest matching your BuildTools/Package.swift file\n\n#swift run --package-path lib -c release swiftformat \"$SRCROOT\" --indent 2 --maxwidth 100\n";
 		};
 		C3DBF4FF2686601E0027D011 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;

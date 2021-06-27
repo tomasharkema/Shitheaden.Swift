@@ -5,6 +5,7 @@
 //  Created by Tomas Harkema on 18/06/2021.
 //
 
+import Combine
 import CustomAlgo
 import Foundation
 import Logging
@@ -21,13 +22,15 @@ final class GameContainer: ObservableObject {
   @Published var gameState = GameState()
   @Published var selectedCards = [RenderCard]()
 
+  private var contestants: Int?
+
   private(set) var beginMoveHandler: (((Card, Card, Card)) async throws -> Void)?
   private(set) var moveHandler: ((Turn) async throws -> Void)?
 
   func reset() async {
     appInput = nil
     game = nil
-    await start()
+    await start(contestants: contestants ?? 3)
   }
 
   var onDataId: UUID?
@@ -122,7 +125,7 @@ final class GameContainer: ObservableObject {
   }
 
   var gameTask: Task.Handle<GameSnapshot?, Never>?
-  func start(restart: Bool = false) async {
+  func start(restart: Bool = false, contestants: Int) async {
     if restart {
       appInput = nil
       game = nil
@@ -161,29 +164,19 @@ final class GameContainer: ObservableObject {
       }
     )
     self.appInput = appInput
-    let game = Game(players: [
-      Player(
-        name: "West (Unfair)",
-        position: .west,
-        ai: CardRankingAlgoWithUnfairPassing()
-      ),
-      Player(
-        name: "Noord",
-        position: .noord,
-        ai: CardRankingAlgo()
-      ),
-      Player(
-        name: "Oost",
-        position: .oost,
-        ai: CardRankingAlgo()
-      ),
-      Player(
+
+    let game = Game(
+      contestants: contestants,
+      ai: CardRankingAlgoWithUnfairPassingAndNexPlayerAware.self,
+      localPlayer: Player(
         id: id,
         name: "Zuid (JIJ)",
         position: .zuid,
         ai: appInput
       ),
-    ], slowMode: true)
+      slowMode: true
+    )
+
     self.game = game
     let gameTask: Task.Handle<GameSnapshot?, Never> = async {
       var snapshot: GameSnapshot?
@@ -255,6 +248,9 @@ final class GameContainer: ObservableObject {
   }
 
   func playClosedCard(_ index: Int) {
+    guard gameState.isOnTurn else {
+      return
+    }
     async {
       try await moveHandler?(.closedCardIndex(index + 1))
     }

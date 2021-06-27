@@ -40,7 +40,7 @@ actor AppInputUserInputAI: GameAi {
     await renderHandler(snapshot)
   }
 
-  func beginMove(request: TurnRequest) async -> (Card, Card, Card) {
+  func beginMove(request: TurnRequest, snapshot _: GameSnapshot) async -> (Card, Card, Card) {
     if let error = request.playerError {
       await errorHandler(error.errorDescription ?? error.localizedDescription)
     }
@@ -54,7 +54,7 @@ actor AppInputUserInputAI: GameAi {
     }
   }
 
-  func move(request: TurnRequest) async -> Turn {
+  func move(request: TurnRequest, snapshot _: GameSnapshot) async -> Turn {
     if let error = request.playerError {
       await errorHandler(error.errorDescription ?? error.localizedDescription)
     }

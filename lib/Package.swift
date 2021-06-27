@@ -118,6 +118,9 @@ let package = Package(
       dependencies: [
         "ShitheadenRuntime",
         "CustomAlgo",
+      ],
+      swiftSettings: [
+        .define("TESTING"),
       ]
     ),
     .testTarget(
@@ -125,6 +128,9 @@ let package = Package(
       dependencies: [
         "ShitheadenRuntime",
         "CustomAlgo",
+      ],
+      swiftSettings: [
+        .define("TESTING"),
       ]
     ),
     .target(
@@ -144,6 +150,7 @@ let package = Package(
       name: "CustomAlgo",
       dependencies: [
         .target(name: "ShitheadenShared"),
+        .target(name: "ShitheadenRuntime"),
         .product(name: "Logging", package: "swift-log"),
       ],
       swiftSettings: [
@@ -152,6 +159,15 @@ let package = Package(
           "-enable-experimental-concurrency",
           "-Xfrontend", "-disable-availability-checking",
         ]),
+      ]
+    ),
+    .testTarget(
+      name: "CustomAlgoTests",
+      dependencies: [
+        "CustomAlgo",
+      ],
+      swiftSettings: [
+        .define("TESTING"),
       ]
     ),
   ]

@@ -14,10 +14,20 @@ import ShitheadenShared
 public final actor Game {
   private let logger = Logger(label: "runtime.Game")
 
+  let beginDate = Date()
+  var endDate: Date?
+
   private(set) var deck = Deck(cards: [])
   var players = [Player]()
   private(set) var table = Table()
   private(set) var burnt = [Card]()
+
+  #if DEBUG
+    public func privateSetBurnt(_ cards: [Card]) {
+      burnt = cards
+    }
+  #endif
+
   var turns = [(String, Turn)]()
   let rules = Rules.all
   var slowMode = false
@@ -28,8 +38,34 @@ public final actor Game {
     players: [Player],
     slowMode: Bool
   ) {
+    #if DEBUG
+      var ids = [UUID]()
+      for player in players {
+        if ids.contains(player.id) {
+          assertionFailure("DOUBLE PLAYER ID")
+        }
+        ids.append(player.id)
+      }
+    #endif
+
     self.players = players
     self.slowMode = slowMode
+  }
+
+  public convenience init(
+    contestants: Int, ai: GameAi.Type,
+    localPlayer: Player,
+    slowMode: Bool
+  ) {
+    let contestantPlayers = (0 ..< contestants).map { index in
+      Player(
+        name: "West (Unfair)",
+        position: Position.allCases.filter { $0 != localPlayer.position }[index],
+        ai: ai.init()
+      )
+    }
+
+    self.init(players: contestantPlayers + [localPlayer], slowMode: slowMode)
   }
 
   var lastCard: Card? {
@@ -45,7 +81,11 @@ public final actor Game {
   }
 
   private func getEndState(player: Player) -> EndState? {
-    let sorted = players.sorted { $0.turns.count < $1.turns.count }
+    let sorted = players.sorted {
+      let left = $0.done ? $0.turns.count : Int.max
+      let right = $1.done ? $1.turns.count : Int.max
+      return left < right
+    }
 
     guard let order = sorted.firstIndex(of: player) else {
       return nil
@@ -58,9 +98,10 @@ public final actor Game {
     }
   }
 
-  private func getPlayerSnapshot(_ obscure: Bool, player: Player,
-                                 includeEndState: Bool) -> TurnRequest
-  {
+  private func getPlayerSnapshot(
+    _ obscure: Bool, player: Player,
+    includeEndState: Bool
+  ) -> TurnRequest {
     if obscure {
       return TurnRequest(
         id: player.id,
@@ -109,7 +150,9 @@ public final actor Game {
       tableCards: .init(open: table, limit: 5),
       burntCards: burnt.map { .hidden(id: $0.id) },
       playersOnTurn: playersOnTurn,
-      requestFor: uuid
+      requestFor: uuid,
+      beginDate: beginDate,
+      endDate: endDate
     )
   }
 
@@ -167,7 +210,7 @@ public final actor Game {
     do {
       logger.info("REQUEST beginMove for \(player.ai)")
       let (card1, card2, card3) = try await player.ai
-        .beginMove(request: req)
+        .beginMove(request: req, snapshot: getSnapshot(for: player.id, includeEndState: false))
 
       // verify turn
       if [card1, card2, card3].contains(where: {
@@ -220,13 +263,13 @@ public final actor Game {
     playerIndex: Int,
     player oldP: Player,
     numberCalled: Int, previousError: PlayerError?
-  ) async throws -> Player {
+  ) async throws -> (Player, TurnNext?) {
     var player = oldP
 
     try Task.checkCancellation()
 
     guard !player.done, !done, numberCalled < 100 else {
-      return player
+      return (player, nil)
     }
 
     player.sortCards()
@@ -253,7 +296,10 @@ public final actor Game {
 
     do {
       logger.info("REQUEST MOVE for \(player.ai)")
-      let turn = try await player.ai.move(request: req)
+      let turn = try await player.ai.move(
+        request: req,
+        snapshot: getSnapshot(for: player.id, includeEndState: false)
+      )
 
       do {
         try turn.verify()
@@ -269,13 +315,14 @@ public final actor Game {
         try await sendRender(error: error as? PlayerError ?? PlayerError
           .turnNotPossible(turn: turn))
 
-        return try await commitTurn(
+        let (player, turnNext) = try await commitTurn(
           playerIndex: playerIndex,
           player: player,
           numberCalled: numberCalled + 1,
           previousError: (error as? PlayerError) ?? PlayerError
             .turnNotPossible(turn: turn)
         )
+        return (player, .turnNext(turn, turnNext))
       }
 
       guard req.privatePossibleTurns().contains(turn) else {
@@ -286,15 +333,17 @@ public final actor Game {
             )
           assertionFailure("This is not possible \(type(of: player.ai))")
         }
-        return try await commitTurn(
+
+        let (player, turnNext) = try await commitTurn(
           playerIndex: playerIndex,
           player: player,
           numberCalled: numberCalled + 1,
           previousError: PlayerError.turnNotPossible(turn: turn)
         )
+
+        return (player, .turnNext(turn, turnNext))
       }
 
-      player.turns.append(turn)
       playerAndError[player.id] = nil
       switch turn {
       case let .closedCardIndex(index):
@@ -319,13 +368,15 @@ public final actor Game {
             updatePlayer(player: player)
             try await sendRender(error: previousError)
             if rules.contains(.againAfterPass) {
-              return try await commitTurn(
+              let (player, turnNext) = try await commitTurn(
                 playerIndex: playerIndex,
                 player: player,
                 numberCalled: numberCalled + 1,
                 previousError: previousError ??
                   PlayerError.closedCardFailed(lastApplied)
               )
+
+              return (player, .turnNext(turn, turnNext))
             }
           }
         } else {
@@ -377,14 +428,17 @@ public final actor Game {
       if turn == .pass, rules.contains(.againAfterPass), !player.done, !done {
         try await sendRender(error: previousError)
         updatePlayer(player: player)
-        return try await commitTurn(
+
+        let (player, turnNext) = try await commitTurn(
           playerIndex: playerIndex,
           player: player,
           numberCalled: 0, previousError: nil
         )
+        return (player, .turnNext(turn, turnNext))
       }
 
       if lastCard?.number == .ten {
+        updatePlayer(player: player)
         try await sendRender(error: previousError)
         await playDelayIfNeeded(multiplier: 2)
 
@@ -392,14 +446,14 @@ public final actor Game {
         table = []
 
         try await sendRender(error: previousError)
-        updatePlayer(player: player)
 
         if rules.contains(.againAfterGoodBehavior), !player.done, !done {
-          return try await commitTurn(
+          let (player, turnNext) = try await commitTurn(
             playerIndex: playerIndex,
             player: player,
             numberCalled: 0, previousError: nil
           )
+          return (player, .turnNext(turn, turnNext))
         }
       } else if table.suffix(4).reduce((0, nil) as (Int, Number?), { prev, curr in
         if let prefNumber = prev.1 {
@@ -412,33 +466,35 @@ public final actor Game {
           return (1, curr.number)
         }
       }).0 == 4 {
+        updatePlayer(player: player)
         try await sendRender(error: previousError)
         await playDelayIfNeeded(multiplier: 2)
 
         burnt.append(contentsOf: table)
         table = []
         try await sendRender(error: previousError)
-        updatePlayer(player: player)
         if rules.contains(.againAfterGoodBehavior), !player.done, !done {
-          return try await commitTurn(
+          let (player, turnNext) = try await commitTurn(
             playerIndex: playerIndex,
             player: player,
             numberCalled: 0, previousError: nil
           )
+          return (player, .turnNext(turn, turnNext))
         }
       }
-      return player
+      return (player, .turn(turn))
 
     } catch {
       try Task.checkCancellation()
       try await sendRender(error: error as? PlayerError ?? previousError)
 
-      return try await commitTurn(
+      let (player, turnNext) = try await commitTurn(
         playerIndex: playerIndex,
         player: player,
         numberCalled: numberCalled + 1,
         previousError: error as? PlayerError
       )
+      return (player, turnNext)
     }
   }
 
@@ -489,23 +545,66 @@ public final actor Game {
     }
   }
 
+  var lastFirstCardAndPlayerUUID: ([Card], UUID)?
+
+  private func checkStalledCard(_ player: UUID) async throws {
+    if let lastFirstCardAndPlayerUUID = lastFirstCardAndPlayerUUID,
+       lastFirstCardAndPlayerUUID.0 == table,
+       lastFirstCardAndPlayerUUID.1 == player
+    {
+      try await sendRender(error: nil)
+      await playDelayIfNeeded()
+
+      burnt += table
+      table = []
+
+      try await sendRender(error: nil)
+      await playDelayIfNeeded()
+    }
+  }
+
+  private func saveStalledCard(_ player: UUID) {
+    if table.count <= 4 {
+      if !table.contains(where: { $0.number != table.first?.number }) {
+        if let lastFirstCardAndPlayerUUID = lastFirstCardAndPlayerUUID,
+           lastFirstCardAndPlayerUUID.0 == table
+        {
+          return
+        }
+
+        lastFirstCardAndPlayerUUID = (table, player)
+      } else { lastFirstCardAndPlayerUUID = nil }
+    } else { lastFirstCardAndPlayerUUID = nil }
+  }
+
   func turn(number: Int = 0) async throws {
     try Task.checkCancellation()
 
     for (index, player) in players.enumerated() {
       try Task.checkCancellation()
       if !player.done {
+        try await checkStalledCard(player.id)
+
         playersOnTurn.insert(player.id)
-        players[index] = try await commitTurn(
+
+        let (player, turn) = try await commitTurn(
           playerIndex: index, player: player,
           numberCalled: 0, previousError: nil
         )
+        var newPlayer = player
+        if let turn = turn {
+          newPlayer.turns.append(turn)
+        }
+        players[index] = newPlayer
         do {
           try checkIntegrity()
         } catch {
           assertionFailure("checkIntegrity: \(error)")
         }
         playersOnTurn.remove(player.id)
+
+        saveStalledCard(player.id)
+
         try await sendRender(error: nil)
       }
     }
@@ -514,7 +613,7 @@ public final actor Game {
         .error(
           "ERROR! GAME REACHED MAXIMUM OF 1000 TURNS! \(String(describing: getSnapshot(for: nil, includeEndState: true)))"
         )
-      return
+      throw PlayerError.debug("GAME REACHED MAXIMUM OF 1000 TURNS!")
     }
 
     if !done {
@@ -555,14 +654,32 @@ public final actor Game {
     try await beginRound()
 
     try Task.checkCancellation()
-    players = players.sortPlayerLowestCard()
+    players.sortPlayerLowestCard()
 
     try Task.checkCancellation()
     try await turn()
 
     try Task.checkCancellation()
     try await sendRender(error: nil, includeEndState: true)
-    return getSnapshot(for: nil, includeEndState: true)
+    endDate = Date()
+
+    let endSnapshot = getSnapshot(for: nil, includeEndState: true)
+
+    asyncDetached {
+      do {
+        try await saveSnapshot(endSnapshot)
+      } catch {
+        logger.error("Error saving snapshot")
+      }
+    }
+    return endSnapshot
+  }
+
+  private func saveSnapshot(_ snapshot: GameSnapshot) async throws {
+    let data = try JSONEncoder().encode(snapshot)
+    try data
+      .write(to: FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        .appendingPathComponent("game-\(beginDate.timeIntervalSince1970).json"))
   }
 
   func checkIntegrity() throws {
@@ -612,6 +729,7 @@ public final actor Game {
       }
 
       if pastCards.count != 52 {
+        logger.error("Card count: \(pastCards.count)")
         throw PlayerError.integrityCardCount
       }
 

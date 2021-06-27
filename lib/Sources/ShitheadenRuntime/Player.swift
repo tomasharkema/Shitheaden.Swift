@@ -16,7 +16,7 @@ public struct Player: CustomStringConvertible, Equatable, Hashable {
 
   let id: UUID
   let name: String
-  var turns: [Turn]
+  var turns: [TurnNext]
   let position: ShitheadenShared.Position
   let ai: GameAi
 
@@ -47,24 +47,6 @@ public struct Player: CustomStringConvertible, Equatable, Hashable {
 
   public func hash(into hasher: inout Hasher) {
     hasher.combine(id)
-  }
-
-  public var latestState: String {
-    switch turns.last {
-    case let .play(cards):
-      return "played \(cards)"
-    case .pass:
-      return "took all cards"
-//    case let .putOnTable(cards):
-//
-//      return "put on table"
-
-    case let .closedCardIndex(index):
-      return "put on table card \(index)"
-
-    case .none:
-      return ""
-    }
   }
 
   public var done: Bool {

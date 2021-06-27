@@ -15,6 +15,8 @@ public struct GameSnapshot: Equatable, Codable {
   public let playersOnTurn: Set<UUID>
   public let requestFor: UUID?
   public let currentRequest: TurnRequest?
+  public let beginDate: Date
+  public let endDate: Date?
 
   public init(
     deckCards: [RenderCard],
@@ -22,7 +24,7 @@ public struct GameSnapshot: Equatable, Codable {
     tableCards: [RenderCard],
     burntCards: [RenderCard],
     playersOnTurn: Set<UUID>,
-    requestFor: UUID?
+    requestFor: UUID?, beginDate: Date, endDate: Date?
   ) {
     self.deckCards = deckCards
     self.players = players
@@ -30,7 +32,8 @@ public struct GameSnapshot: Equatable, Codable {
     self.burntCards = burntCards
     self.playersOnTurn = playersOnTurn
     self.requestFor = requestFor
-
+    self.beginDate = beginDate
+    self.endDate = endDate
     currentRequest = requestFor != nil ? players.first { $0.id == requestFor } : nil
   }
 

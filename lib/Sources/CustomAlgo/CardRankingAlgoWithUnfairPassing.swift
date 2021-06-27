@@ -15,12 +15,12 @@ public actor CardRankingAlgoWithUnfairPassing: GameAi {
     try await old.render(snapshot: snapshot)
   }
 
-  public func beginMove(request: TurnRequest) async -> (Card, Card, Card) {
-    return await old.beginMove(request: request)
+  public func beginMove(request: TurnRequest, snapshot: GameSnapshot) async -> (Card, Card, Card) {
+    return await old.beginMove(request: request, snapshot: snapshot)
   }
 
-  public func move(request: TurnRequest) async -> Turn {
-    let turn = await old.move(request: request)
+  public func move(request: TurnRequest, snapshot: GameSnapshot) async -> Turn {
+    let turn = await old.move(request: request, snapshot: snapshot)
 
     if request.phase == .hand, request.deckCards.count > 3, request.tableCards.count < 6 {
       let playThreeOrThen = turn.playedCards.map(\.number).contains {

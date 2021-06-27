@@ -18,9 +18,14 @@ struct MenuView: View {
   var body: some View {
     VStack(spacing: 10) {
       Text("💩").font(.system(size: 100))
-      Button("Single Player", action: {
+      Button("Single Player 4p", action: {
         withAnimation {
-          state = .singlePlayer
+          state = .singlePlayer(contestants: 3)
+        }
+      })
+      Button("Single Player 2p", action: {
+        withAnimation {
+          state = .singlePlayer(contestants: 1)
         }
       })
       Button("Multiplayer Start", action: {

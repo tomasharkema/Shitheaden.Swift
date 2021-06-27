@@ -86,6 +86,43 @@
         .self) { group -> ([String: Int], [String: [String: Int]]) in
           for (index1, ai1) in AIs.enumerated() {
             for (index2, ai2) in AIs.enumerated() {
+              let unlock = await easer.wait()
+              group.async {
+                if Task.isCancelled {
+                  return ([:], [:])
+                }
+                let potjeIndex: String = [index1, index2]
+                  .map { "\($0)" }
+                  .joined(separator: ",")
+                let duration = StopWatch()
+                duration.start()
+                let ais = [
+                  (ai1, "\(ai1.algoName) 1"),
+                  (ai2, "\(ai2.algoName) 2"),
+                ]
+
+                self.logger.notice(
+                  "START: \(index1 + index2) / \(AIs.count * 4) / \(self.roundsPerGame)"
+                )
+                let res = await self.peformanceOfAI(
+                  ai: ais,
+                  gameId: potjeIndex
+                )
+                self.logger.notice(
+                  "END: \(index1 + index2) / \(AIs.count * 4) / \(self.roundsPerGame)"
+                )
+
+                let winnings = await res.winnigs()
+
+                let aisPrint = ais.map(\.1)
+                self.logger.notice(
+                  "\(potjeIndex) \(winnings) : \(aisPrint)\ntime: \(watch.getLap()) - \(duration.getLap())"
+                )
+                self.logger.notice("UNLOCK!!!!!")
+                await unlock()
+                return await (winnings, res.winningsFrom())
+              }
+
               for (index3, ai3) in AIs.enumerated() {
                 for (index4, ai4) in AIs.enumerated() {
                   let unlock = await easer.wait()

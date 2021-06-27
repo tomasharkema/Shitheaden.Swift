@@ -66,7 +66,7 @@ class TelnetClient: Client {
       try await joinGame()
     } else if choice.hasPrefix("s") {
       // single
-      let single = try await singlePlayer()
+      let single = try await singlePlayer(contestants: 3)
       logger.info("single game \(single)")
     } else if choice.hasPrefix("m") {
       // muliplayer
@@ -190,42 +190,29 @@ class TelnetClient: Client {
     }
   }
 
-  private func singlePlayer() async throws -> GameSnapshot {
+  private func singlePlayer(contestants: Int) async throws -> GameSnapshot {
     let identifier = UUID()
+
     let game = Game(
-      players: [
-        Player(
-          name: "West (Unfair)",
-          position: .west,
-          ai: CardRankingAlgoWithUnfairPassing()
-        ),
-        Player(
-          name: "Noord",
-          position: .noord,
-          ai: CardRankingAlgo()
-        ),
-        Player(
-          name: "Oost",
-          position: .oost,
-          ai: CardRankingAlgo()
-        ),
-        Player(
-          id: identifier,
-          name: "Zuid (JIJ)",
-          position: .zuid,
-          ai: UserInputAIJson(id: identifier, reader: {
-            await self.send(.multiplayerEvent(multiplayerEvent: .action(action: $0)))
-            if let error = $1 {
-              await self
-                .send(.multiplayerEvent(multiplayerEvent: .error(error: error)))
-            }
-            return try await self.data.once().getMultiplayerRequest()
-          }, renderHandler: {
-            _ = await self
-              .send(.multiplayerEvent(multiplayerEvent: .gameSnapshot(snapshot: $0)))
-          })
-        ),
-      ], slowMode: true
+      contestants: contestants,
+      ai: CardRankingAlgoWithUnfairPassing.self,
+      localPlayer: Player(
+        id: identifier,
+        name: "Zuid (JIJ)",
+        position: .zuid,
+        ai: UserInputAIJson(id: identifier, reader: {
+          await self.send(.multiplayerEvent(multiplayerEvent: .action(action: $0)))
+          if let error = $1 {
+            await self
+              .send(.multiplayerEvent(multiplayerEvent: .error(error: error)))
+          }
+          return try await self.data.once().getMultiplayerRequest()
+        }, renderHandler: {
+          _ = await self
+            .send(.multiplayerEvent(multiplayerEvent: .gameSnapshot(snapshot: $0)))
+        })
+      ),
+      slowMode: true
     )
 
     return try await game.startGame()

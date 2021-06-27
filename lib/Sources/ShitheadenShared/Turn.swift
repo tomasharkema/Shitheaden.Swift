@@ -40,6 +40,11 @@ public enum Turn: Equatable, Hashable, Codable {
   }
 }
 
+public enum TurnNext {
+  case turn(Turn)
+  indirect case turnNext(Turn, TurnNext?)
+}
+
 public extension Array where Element: Equatable {
   func unique() -> [Element] {
     var found = [Element]()

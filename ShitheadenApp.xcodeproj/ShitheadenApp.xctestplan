@@ -1,0 +1,48 @@
+{
+  "configurations" : [
+    {
+      "id" : "30B65FE0-DE48-432C-B3D9-C5FA59D2543A",
+      "name" : "Configuration 1",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "repeatInNewRunnerProcess" : true,
+    "targetForVariableExpansion" : {
+      "containerPath" : "container:ShitheadenApp.xcodeproj",
+      "identifier" : "C3812A51267C816400397E65",
+      "name" : "ShitheadenApp"
+    },
+    "testRepetitionMode" : "fixedIterations",
+    "threadSanitizerEnabled" : true
+  },
+  "testTargets" : [
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:lib",
+        "identifier" : "ShitheadenRuntimeTests",
+        "name" : "ShitheadenRuntimeTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:lib",
+        "identifier" : "ShitheadenSharedTests",
+        "name" : "ShitheadenSharedTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:lib",
+        "identifier" : "CustomAlgoTests",
+        "name" : "CustomAlgoTests"
+      }
+    }
+  ],
+  "version" : 1
+}

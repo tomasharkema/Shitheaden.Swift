@@ -12,7 +12,7 @@ import ShitheadenShared
 import SwiftUI
 
 enum AppState {
-  case singlePlayer
+  case singlePlayer(contestants: Int)
   case multiplayerChallenger
   case multiplayerJoin(String)
 }

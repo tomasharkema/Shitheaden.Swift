@@ -9,7 +9,7 @@ import Foundation
 import ShitheadenShared
 
 extension Array where Element == Player {
-  func sortPlayerLowestCard() -> [Player] {
+  mutating func sortPlayerLowestCard() {
     let lowest = min { left, right in
       let lFilter = left.handCards.filter { $0.number >= .four }
       let rFilter = right.handCards.filter { $0.number >= .four }
@@ -27,8 +27,8 @@ extension Array where Element == Player {
     }
 
     guard let player = lowest, let place = firstIndex(of: player) else {
-      return self
+      return
     }
-    return shifted(by: -place)
+    self = shifted(by: -place)
   }
 }
