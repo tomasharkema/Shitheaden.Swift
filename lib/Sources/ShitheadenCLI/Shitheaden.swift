@@ -13,7 +13,6 @@ import Foundation
 import Logging
 import NIO
 import ShitheadenRuntime
-import ShitheadenServer
 
 private let logger = Logger(label: "cli")
 
