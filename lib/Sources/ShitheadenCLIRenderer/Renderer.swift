@@ -25,13 +25,13 @@ extension TurnRequest {
   }
 }
 
-enum Renderer {
-  static func error(error: PlayerError) -> String {
+public enum Renderer {
+  public static func error(error: PlayerError) -> String {
     RenderPosition.input.down(yAxisDown: 1)
       .cliRep + (error.errorDescription ?? error.localizedDescription)
   }
 
-  static func render(game: GameSnapshot) async -> String {
+  public static func render(game: GameSnapshot) async -> String {
     let playersString: [String] = game.players.flatMap { player -> [String] in
       if !player.done {
         return [

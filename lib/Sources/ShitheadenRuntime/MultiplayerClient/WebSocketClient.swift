@@ -30,22 +30,22 @@
       task.delegate = self
       task.resume()
       receive()
-
-      data.on {
-        switch $0 {
-        case .requestSignature:
-          do {
-            let url = Bundle.main.url(forResource: "lib", withExtension: "sig")!
-            async let string = try String(contentsOf: url)
-              .replacingOccurrences(of: "  -\n", with: "")
-            try await self.write(.signature(string))
-          } catch {
-            self.logger.error("\(error)")
+       data.on {
+          switch $0 {
+          case .requestSignature:
+            do {
+              let url = Bundle.main.url(forResource: "lib", withExtension: "sig")!
+              async let string = try String(contentsOf: url)
+                .replacingOccurrences(of: "  -\n", with: "")
+              try await self.write(.signature(string))
+            } catch {
+              self.logger.error("\(error)")
+            }
+          default:
+            self.logger.info("\($0)")
           }
-        default:
-          self.logger.info("\($0)")
         }
-      }
+      
     }
 
     private func receive() {

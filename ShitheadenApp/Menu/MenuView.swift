@@ -23,6 +23,11 @@ struct MenuView: View {
           state = .singlePlayer(contestants: 3)
         }
       })
+      Button("Single Player 3p", action: {
+        withAnimation {
+          state = .singlePlayer(contestants: 2)
+        }
+      })
       Button("Single Player 2p", action: {
         withAnimation {
           state = .singlePlayer(contestants: 1)

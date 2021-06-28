@@ -11,7 +11,7 @@ actor AppInputUserInputAI: GameAi {
   let beginMoveHandler: (@escaping ((Card, Card, Card)) async -> Void) async -> Void
   let moveHandler: (@escaping (Turn) async -> Void) async -> Void
   let errorHandler: (String) async -> Void
-  let renderHandler: (GameSnapshot) async -> Void
+  let renderHandler: (GameSnapshot) async throws -> Void
 
   required init() {
     beginMoveHandler = { _ in }
@@ -32,12 +32,12 @@ actor AppInputUserInputAI: GameAi {
     self.renderHandler = renderHandler
   }
 
-  func render(snapshot: GameSnapshot) async {
+  func render(snapshot: GameSnapshot) async throws {
 //    if let e = snap {
 //      await errorHandler(e.errorDescription ?? e.localizedDescription)
 //    }
 
-    await renderHandler(snapshot)
+    try await renderHandler(snapshot)
   }
 
   func beginMove(request: TurnRequest, snapshot _: GameSnapshot) async -> (Card, Card, Card) {

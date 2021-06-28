@@ -8,30 +8,30 @@
 import Foundation
 import ShitheadenShared
 
-final actor UserInputAIJson: GameAi {
+public final actor UserInputAIJson: GameAi {
   let id: UUID
   let reader: (Action, PlayerError?) async throws -> MultiplayerRequest
-  let renderHandler: (GameSnapshot) async -> Void
+  let renderHandler: (GameSnapshot) async throws -> Void
 
-  required init() {
+  public required init() {
     fatalError()
   }
 
-  init(
+  public init(
     id: UUID,
     reader: @escaping ((Action, PlayerError?) async throws -> MultiplayerRequest),
-    renderHandler: @escaping ((GameSnapshot) async -> Void)
+    renderHandler: @escaping ((GameSnapshot) async throws -> Void)
   ) {
     self.id = id
     self.reader = reader
     self.renderHandler = renderHandler
   }
 
-  func render(snapshot: GameSnapshot) async {
-    await renderHandler(snapshot)
+  public func render(snapshot: GameSnapshot) async throws {
+    try await renderHandler(snapshot)
   }
 
-  func beginMove(request: TurnRequest,
+  public func beginMove(request: TurnRequest,
                  snapshot _: GameSnapshot) async throws -> (Card, Card, Card)
   {
     let string = try await reader(.requestBeginTurn, request.playerError)
@@ -59,7 +59,7 @@ final actor UserInputAIJson: GameAi {
     }
   }
 
-  func move(request: TurnRequest, snapshot _: GameSnapshot) async throws -> Turn {
+  public func move(request: TurnRequest, snapshot _: GameSnapshot) async throws -> Turn {
     let string = try await reader(.requestNormalTurn, request.playerError)
 
     switch string {

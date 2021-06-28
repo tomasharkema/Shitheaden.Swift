@@ -680,6 +680,14 @@ public final actor Game {
     try data
       .write(to: FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         .appendingPathComponent("game-\(beginDate.timeIntervalSince1970).json"))
+
+    #if !os(Linux)
+    var request = URLRequest(url: URL(string: "https://shitheaden-api.harke.ma/playedGame")!)
+    request.httpMethod = "POST"
+    request.addValue("application/json", forHTTPHeaderField: "content-type")
+    let task = URLSession.shared.uploadTask(with: request, from: data)
+    task.resume()
+    #endif
   }
 
   func checkIntegrity() throws {

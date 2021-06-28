@@ -12,6 +12,10 @@ RUN mkdir -p ./Sources/CustomAlgo && \
     touch ./Sources/CustomAlgo/main.swift && \
     mkdir -p ./Sources/ShitheadenRuntime && \
     touch ./Sources/ShitheadenRuntime/main.swift && \
+    mkdir -p ./Sources/ShitheadenServer && \
+    touch ./Sources/ShitheadenServer/main.swift && \
+    mkdir -p ./Sources/ShitheadenCLIRenderer && \
+    touch ./Sources/ShitheadenCLIRenderer/main.swift && \
     mkdir -p ./Sources/ShitheadenShared && \
     touch ./Sources/ShitheadenShared/main.swift && \
     mkdir -p ./Sources/ShitheadenCLI && \
@@ -34,6 +38,8 @@ RUN rm ./Sources/CustomAlgo/main.swift && \
     rm ./Sources/ShitheadenRuntime/main.swift && \
     rm ./Sources/ShitheadenShared/main.swift && \
     rm ./Sources/ShitheadenCLI/main.swift && \
+    rm ./Sources/ShitheadenCLIRenderer/main.swift && \
+    rm ./Sources/ShitheadenServer/main.swift && \
     rm ./Tests/CustomAlgoTests/main.swift 
 
 COPY lib/Sources ./Sources
@@ -48,9 +54,9 @@ FROM tomasharkema7/swift-5.5:1804-snapshot
 RUN apt-get update -y && apt-get install -y git curl libatomic1 libxml2 netcat-openbsd lsof perl && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-COPY --from=builder /app/.build/release/shitheaden /app/shitheaden
+COPY --from=builder /app/.build/release/ShitheadenServer /app/ShitheadenServer
 COPY --from=builder /app/lib.sig /app/lib.sig
 
-ENTRYPOINT /app/shitheaden
+ENTRYPOINT /app/ShitheadenServer
 
-CMD [ "/app/shitheaden", "--server" ]
+CMD [ "/app/ShitheadenServer" ]

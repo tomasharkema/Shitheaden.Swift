@@ -11,7 +11,6 @@ import ShitheadenShared
 import XCTest
 
 class CardRankingAlgoWithUnfairPassingAndNexPlayerAwareTests: XCTestCase {
-
   func testCardRankingAlgoWithUnfairPassingAndNexPlayerAwareTestsOpenCards() {
     let currentPlayerId = UUID()
 
@@ -49,28 +48,24 @@ class CardRankingAlgoWithUnfairPassingAndNexPlayerAwareTests: XCTestCase {
 
     let algo = CardRankingAlgoWithUnfairPassingAndNexPlayerAware()
 
-
     let expectation = XCTestExpectation(description: "wait for game play")
 
     if #available(macOS 12.0, iOS 15, *) {
       async {
         do {
-
           let turn = await algo.move(request: currentPlayer, snapshot: gameSnapShot)
 
           XCTAssertEqual(turn.playedCards.first?.number, .nine)
         } catch {
-XCTFail("ERROR: \(error)")
+          XCTFail("ERROR: \(error)")
         }
         expectation.fulfill()
       }
     }
     wait(for: [expectation], timeout: 120.0)
-          
   }
 
   func testCardRankingAlgoWithUnfairPassingAndNexPlayerAwareTestsClosedCards() {
-
     let currentPlayerId = UUID()
 
     let currentPlayer = TurnRequest(
@@ -108,14 +103,11 @@ XCTFail("ERROR: \(error)")
 
     let algo = CardRankingAlgoWithUnfairPassingAndNexPlayerAware()
 
-
     let expectation = XCTestExpectation(description: "wait for game play")
 
     if #available(macOS 12.0, iOS 15, *) {
       async {
         do {
-
-
           let turn = await algo.move(request: currentPlayer, snapshot: gameSnapShot)
 
           XCTAssertEqual(turn.playedCards.first?.number, .nine)
@@ -126,7 +118,5 @@ XCTFail("ERROR: \(error)")
       }
     }
     wait(for: [expectation], timeout: 120.0)
-
   }
 }
-

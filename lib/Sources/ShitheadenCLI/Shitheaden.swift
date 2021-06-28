@@ -13,6 +13,7 @@ import Foundation
 import Logging
 import NIO
 import ShitheadenRuntime
+import ShitheadenServer
 
 private let logger = Logger(label: "cli")
 
@@ -21,9 +22,6 @@ struct Shitheaden: ParsableCommand {
   @Flag(help: "Test all the AI's")
   var testAi = false
 
-  @Flag(help: "Start a server")
-  var server = false
-
   @Option(name: .shortAndLong, help: "The number of parallelization")
   var parallelization: Int = 8
 
@@ -31,11 +29,8 @@ struct Shitheaden: ParsableCommand {
   var rounds: Int = 10
 
   mutating func run() async throws {
-    logger.notice("START! \(server)")
-    if server {
-      await startServer()
-      return
-    }
+    logger.error("\(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0])")
+
     #if os(macOS)
       if testAi {
         await playTournament()
@@ -64,31 +59,6 @@ struct Shitheaden: ParsableCommand {
     }
   #endif
 
-  private func startServer() async {
-    let group = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount / 2)
-    let games = AtomicDictionary<String, MultiplayerHandler>()
-    async {
-      do {
-        logger.notice("START! websocket")
-        let server = WebsocketServer(games: games)
-        let channel = try await server.server(group: group)
-        try channel.closeFuture.wait()
-      } catch {
-        logger.error("\(error)")
-      }
-    }
-    async {
-      let server = TelnetServer(games: games)
-      let channel = try await server.start(group: group)
-      try channel.closeFuture.wait()
-    }
-    async {
-      let server = SSHServer(games: games)
-      let channel = try await server.start(group: group)
-      try channel.closeFuture.wait()
-    }
-    return await withUnsafeContinuation { _ in }
-  }
 
   private func interactive() async {
     LoggingSystem.bootstrap { _ in NoopLogger() }

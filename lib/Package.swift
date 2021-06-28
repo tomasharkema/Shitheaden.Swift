@@ -12,6 +12,15 @@ let package = Package(
   ],
   products: [
     .executable(name: "shitheaden", targets: ["shitheaden"]),
+    .executable(
+      name: "ShitheadenServer",
+      targets: ["ShitheadenServer"]
+    ),
+    .library(
+      name: "ShitheadenCLIRenderer",
+      type: .static,
+      targets: ["ShitheadenCLIRenderer"]
+    ),
     .library(
       name: "ShitheadenRuntime",
       type: .static,
@@ -39,31 +48,34 @@ let package = Package(
       url: "https://github.com/tomasharkema/swift-argument-parser.git",
       branch: "swift-5.5-async"
     ),
-    .package(url: "https://github.com/apple/swift-nio", from: "2.29.0"),
+//    .package(url: "https://github.com/apple/swift-nio", from: "2.29.0"),
     .package(url: "https://github.com/apple/swift-nio-ssh", from: "0.3.0"),
     .package(url: "https://github.com/flintprocessor/ANSIEscapeCode", branch: "master"),
     .package(url: "https://github.com/apple/swift-log", from: "1.4.2"),
     .package(url: "https://github.com/chrisaljoudi/swift-log-oslog.git", from: "0.2.1"),
     .package(url: "https://github.com/nicklockwood/SwiftFormat", from: "0.48.6"),
+    .package(url: "https://github.com/vapor/vapor.git", branch: "async-await"),
   ],
   targets: [
     .executableTarget(
       name: "shitheaden",
       dependencies: [
         .target(name: "ShitheadenRuntime"),
-        .target(name: "CustomAlgo"),
+        .target(name: "ShitheadenCLIRenderer"),
+//        .target(name: "ShitheadenServer"),
+//        .target(name: "CustomAlgo"),
         .product(name: "ArgumentParser", package: "swift-argument-parser"),
-        .product(name: "ANSIEscapeCode", package: "ANSIEscapeCode"),
-        .product(name: "NIOSSH", package: "swift-nio-ssh"),
-        .product(name: "NIO", package: "swift-nio"),
-        .product(name: "NIOHTTP1", package: "swift-nio"),
-        .product(name: "NIOWebSocket", package: "swift-nio"),
-        .product(name: "Logging", package: "swift-log"),
-        .product(
-          name: "LoggingOSLog",
-          package: "swift-log-oslog",
-          condition: .when(platforms: [.iOS, .macOS, .macCatalyst, .tvOS, .watchOS])
-        ),
+//        .product(name: "ANSIEscapeCode", package: "ANSIEscapeCode"),
+//        .product(name: "NIOSSH", package: "swift-nio-ssh"),
+//        .product(name: "NIO", package: "swift-nio"),
+//        .product(name: "NIOHTTP1", package: "swift-nio"),
+//        .product(name: "NIOWebSocket", package: "swift-nio"),
+//        .product(name: "Logging", package: "swift-log"),
+//        .product(
+//          name: "LoggingOSLog",
+//          package: "swift-log-oslog",
+//          condition: .when(platforms: [.iOS, .macOS, .macCatalyst, .tvOS, .watchOS])
+//        ),
       ],
       path: "./Sources/ShitheadenCLI",
       swiftSettings: [
@@ -76,14 +88,29 @@ let package = Package(
         .define("DEBUG", .when(configuration: .debug)),
       ]
     ),
+    .executableTarget(
+      name: "ShitheadenServer",
+      dependencies: [
+        .product(name: "Vapor", package: "vapor"),
+        .target(name: "CustomAlgo"),
+        .target(name: "ShitheadenCLIRenderer"),
+        .product(name: "NIOSSH", package: "swift-nio-ssh"),
+
+      ], swiftSettings: [
+        .unsafeFlags([
+        "-Xfrontend",
+        "-enable-experimental-concurrency",
+        "-Xfrontend",
+        "-disable-availability-checking",
+      ]),
+      .define("DEBUG", .when(configuration: .debug))]
+    ),
     .target(
       name: "DependenciesTarget",
       dependencies: [
         .product(name: "ANSIEscapeCode", package: "ANSIEscapeCode"),
         .product(name: "NIOSSH", package: "swift-nio-ssh"),
-        .product(name: "NIO", package: "swift-nio"),
-        .product(name: "NIOHTTP1", package: "swift-nio"),
-        .product(name: "NIOWebSocket", package: "swift-nio"),
+        .product(name: "Vapor", package: "vapor"),
         .product(name: "Logging", package: "swift-log"),
       ]
     ),
@@ -96,6 +123,21 @@ let package = Package(
           package: "swift-log-oslog",
           condition: .when(platforms: [.iOS, .macOS, .macCatalyst, .tvOS, .watchOS])
         ),
+      ]
+    ),
+    .target(
+      name: "ShitheadenCLIRenderer",
+      dependencies: [
+        .product(name: "ANSIEscapeCode", package: "ANSIEscapeCode"),
+        .target(name: "ShitheadenRuntime"),
+      ],
+      swiftSettings: [
+        .unsafeFlags([
+          "-Xfrontend",
+          "-enable-experimental-concurrency",
+          "-Xfrontend", "-disable-availability-checking",
+        ]),
+        .define("DEBUG", .when(configuration: .debug)),
       ]
     ),
     .target(
@@ -119,9 +161,13 @@ let package = Package(
         "ShitheadenRuntime",
         "CustomAlgo",
       ],
-      swiftSettings: [
-        .define("TESTING"),
-      ]
+      swiftSettings: [.unsafeFlags([
+        "-Xfrontend",
+        "-enable-experimental-concurrency",
+        "-Xfrontend", "-disable-availability-checking",
+      ]),
+      .define("DEBUG", .when(configuration: .debug)),
+      .define("TESTING")]
     ),
     .testTarget(
       name: "ShitheadenSharedTests",
@@ -129,9 +175,13 @@ let package = Package(
         "ShitheadenRuntime",
         "CustomAlgo",
       ],
-      swiftSettings: [
-        .define("TESTING"),
-      ]
+      swiftSettings: [.unsafeFlags([
+        "-Xfrontend",
+        "-enable-experimental-concurrency",
+        "-Xfrontend", "-disable-availability-checking",
+      ]),
+      .define("DEBUG", .when(configuration: .debug)),
+      .define("TESTING")]
     ),
     .target(
       name: "ShitheadenShared",
@@ -166,9 +216,13 @@ let package = Package(
       dependencies: [
         "CustomAlgo",
       ],
-      swiftSettings: [
-        .define("TESTING"),
-      ]
+      swiftSettings: [.unsafeFlags([
+        "-Xfrontend",
+        "-enable-experimental-concurrency",
+        "-Xfrontend", "-disable-availability-checking",
+      ]),
+      .define("DEBUG", .when(configuration: .debug)),
+      .define("TESTING")]
     ),
   ]
 )

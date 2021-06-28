@@ -8,44 +8,58 @@
 import CustomAlgo
 import Foundation
 import Logging
-import NIO
-import NIOHTTP1
-import NIOWebSocket
+import Vapor
 import ShitheadenRuntime
 import ShitheadenShared
+import ShitheadenCLIRenderer
 
 class WebsocketClient: Client {
   private let logger = Logger(label: "cli.WebsocketClient")
-  private let context: ChannelHandlerContext
-  let handler: WebSocketServerHandler
+  private let websocket: WebSocket
   let games: AtomicDictionary<String, MultiplayerHandler>
 
-  let quit: EventHandler<Void>.ReadOnly
-  let data: EventHandler<ServerRequest>.ReadOnly
+  let onQuit = EventHandler<Void>()
+  let onData = EventHandler<ServerRequest>()
+
+  var quit: EventHandler<Void>.ReadOnly { onQuit.readOnly }
+  var data: EventHandler<ServerRequest>.ReadOnly { onData.readOnly }
 
   init(
-    context: ChannelHandlerContext,
-    handler: WebSocketServerHandler,
-    quit: EventHandler<Void>,
-    data: EventHandler<ServerRequest>,
+    websocket: WebSocket,
     games: AtomicDictionary<String, MultiplayerHandler>
   ) {
-    self.context = context
-    self.handler = handler
-    self.quit = quit.readOnly
-    self.data = data.readOnly
+    self.websocket = websocket
     self.games = games
 
-    data.on {
-      if case .quit = $0 {
-        quit.emit(())
+    websocket.onBinary {
+      do {
+        var buffer = $1
+        guard let data = buffer
+                .readBytes(length: buffer.readableBytes)
+        else {
+          throw NSError(domain: "", code: 0, userInfo: nil)
+        }
+        let serverRequest = try JSONDecoder().decode(ServerRequest.self, from: Data(data))
+        self.onData.emit(serverRequest)
+      } catch {
+        self.logger.error("Error: \(error)")
+      }
+    }
+
+    websocket.onText {
+      do {
+        let serverRequest = try JSONDecoder()
+          .decode(ServerRequest.self, from: $1.data(using: .utf8)!)
+        self.onData.emit(serverRequest)
+      } catch {
+        self.logger.error("Error: \(error)")
       }
     }
   }
 
-  func start() async {
+  func start() async throws {
     do {
-      await send(.requestSignature)
+      try await send(.requestSignature)
       guard case let .signature(signature) = try await data.once() else {
         throw NSError(domain: "SIG", code: 0, userInfo: nil)
       }
@@ -66,17 +80,17 @@ class WebsocketClient: Client {
 
       if signature == localSignature {
         logger.info("Local signature check succeeded")
-        await send(.signatureCheck(true))
+        try await send(.signatureCheck(true))
       } else {
         throw NSError(domain: "SIG", code: 0, userInfo: nil)
       }
 
     } catch {
       logger.error("Local signature not succeeded")
-      await send(.signatureCheck(false))
+      try await send(.signatureCheck(false))
     }
 
-    await send(.requestMultiplayerChoice)
+    try await send(.requestMultiplayerChoice)
 
     do {
       let choice: ServerRequest? = try await data.once()
@@ -87,7 +101,7 @@ class WebsocketClient: Client {
         try await startMultiplayer()
 
       case .multiplayerRequest:
-        return await start()
+        return try await start()
 
       case .singlePlayer:
         return try await startSinglePlayer(contestants: 3)
@@ -100,21 +114,21 @@ class WebsocketClient: Client {
         break
 
       case .none:
-        return await start()
+        return try await start()
       }
     } catch {
-      return await start()
+      return try await start()
     }
   }
 
   private func joinGame(code: String) async throws {
     if let game = await games.get(code) {
       let id = UUID()
-      await game.join(id: id, client: self)
+      try await game.join(id: id, client: self)
       try await game.finished()
     } else {
-      await send(.error(error: .gameNotFound(code: code)))
-      return await start()
+      try await send(.error(error: .gameNotFound(code: code)))
+      return try await start()
     }
   }
 
@@ -130,12 +144,12 @@ class WebsocketClient: Client {
         position: .zuid,
         ai: UserInputAIJson(id: id, reader: { _, error in
           if let error = error {
-            await self
+            try await self
               .send(.multiplayerEvent(multiplayerEvent: .error(error: error)))
           }
           return try await self.data.once().getMultiplayerRequest()
         }, renderHandler: {
-          await self
+          try await self
             .send(.multiplayerEvent(multiplayerEvent: .gameSnapshot(snapshot: $0)))
         })
       ),
@@ -153,27 +167,25 @@ class WebsocketClient: Client {
     try await pair.waitForStart()
   }
 
-  func send(_ event: ServerEvent) async {
-    let _: Void = await withUnsafeContinuation { cont in
-      self.context.eventLoop.execute {
+  func send(_ event: ServerEvent) async throws {
+    let _: Void = try await withUnsafeThrowingContinuation { cont in async {
         // We can't really check for error here, but it's also not the purpose of the
         // example so let's not worry about it.
         do {
           let data = try JSONEncoder().encode(event)
 
-          var buffer = self.context.channel.allocator.buffer(capacity: data.count)
-          buffer.writeBytes(data)
+          let promise: EventLoopPromise<Void> = websocket.eventLoop.makePromise()
+          websocket.send(Array(data), promise: promise)
 
-          let frame = WebSocketFrame(fin: true, opcode: .binary, data: buffer)
-          self.context.writeAndFlush(self.handler.wrapOutboundOut(frame)).whenComplete { _ in
-            asyncDetached {
-              cont.resume()
-            }
+          promise.futureResult.whenSuccess {
+            cont.resume()
+          }
+          promise.futureResult.whenFailure {
+            cont.resume(throwing: $0)
           }
         } catch {
           self.logger.error("\(error)")
-        }
+        } }
       }
-    }
   }
 }

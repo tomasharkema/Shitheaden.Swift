@@ -8,7 +8,7 @@
 import Logging
 import ShitheadenShared
 
-public actor CardRankingAlgoWithUnfairPassingAndNexPlayerAware: GameAi {
+public final actor CardRankingAlgoWithUnfairPassingAndNexPlayerAware: GameAi {
   private let logger = Logger(label: "CardRankingAlgoWithUnfairPassingAndNexPlayerAware")
   private let old = CardRankingAlgoWithUnfairPassing()
   public required init() {}
@@ -26,7 +26,7 @@ public actor CardRankingAlgoWithUnfairPassingAndNexPlayerAware: GameAi {
 
     let notDonePlayers = snapshot.players.filter { !$0.done }
 
-    if let ownIndex = notDonePlayers.firstIndex { $0.id == request.id } {
+    if let ownIndex = notDonePlayers.firstIndex(where: { $0.id == request.id }) {
       let nextIndex = (ownIndex + 1) % notDonePlayers.count
       let nextPlayer = notDonePlayers[nextIndex]
       logger.info("ownIndex: \(ownIndex) \(nextIndex) \(nextPlayer.openTableCards)")

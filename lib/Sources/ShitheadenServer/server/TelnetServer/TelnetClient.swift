@@ -12,6 +12,7 @@ import Logging
 import NIO
 import ShitheadenRuntime
 import ShitheadenShared
+import ShitheadenCLIRenderer
 
 class TelnetClient: Client {
   private let logger = Logger(label: "cli.TelnetClient")
@@ -102,7 +103,7 @@ class TelnetClient: Client {
 
     if let game = await games.get(code) {
       let id = UUID()
-      await game.join(id: id, client: self)
+      try await game.join(id: id, client: self)
       try await game.finished()
       return try await start()
     } else {

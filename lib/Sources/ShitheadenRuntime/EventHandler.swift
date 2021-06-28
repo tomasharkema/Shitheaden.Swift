@@ -50,6 +50,7 @@ public class EventHandler<T> {
     events = []
 
     let uuid = UUID()
+
     async {
       await dataHandlers.insert(uuid, value: handler)
     }
@@ -117,7 +118,7 @@ public extension EventHandler {
       event.removeOnDataHandler(id: id)
     }
 
-    public func once(_ fn: @escaping (T) async -> Void) {
+    public func once(_ fn: @escaping (T) -> Void) {
       event.once(fn)
     }
 

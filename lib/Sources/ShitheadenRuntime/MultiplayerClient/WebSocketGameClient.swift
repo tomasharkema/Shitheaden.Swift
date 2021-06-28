@@ -9,8 +9,8 @@
   import ShitheadenShared
 
   public class WebSocketGameClient {
-    private let address = URL(string: "wss://shitheaden-api.harkema.io/websocket")!
-//    private let address = URL(string: "ws://192.168.1.76:3338/websocket")!
+//    private let address = URL(string: "wss://shitheaden-api.harkema.io/websocket")!
+    private let address = URL(string: "ws://192.168.1.76:3338/websocket")!
 
     public init() {}
 
