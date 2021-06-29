@@ -24,9 +24,6 @@ final class GameContainer: ObservableObject {
 
   private var contestants: Int?
 
-//  private(set) var beginMoveHandler: (((Card, Card, Card)) async throws -> Void)?
-//  private(set) var moveHandler: ((Turn) async throws -> Void)?
-
   private let requestTurn = EventHandler<Void>()
   private let beginMoveHandler = EventHandler<(Card, Card, Card)>()
   private let moveHandler = EventHandler<Turn>()
@@ -66,11 +63,11 @@ final class GameContainer: ObservableObject {
         gameState.canPass = false
         gameState.isBeginMove = true
 
-
         beginMoveHandler.once { cards in
           async {
-                    self.logger.debug("\(String(describing: cards))")
-                    try await client.write(.multiplayerRequest(.concreteCards([cards.0, cards.1, cards.2])))
+            self.logger.debug("\(String(describing: cards))")
+            try await client
+              .write(.multiplayerRequest(.concreteCards([cards.0, cards.1, cards.2])))
           }
         }
 
@@ -80,17 +77,10 @@ final class GameContainer: ObservableObject {
 
         moveHandler.once { turn in
           async {
-                    self.logger.debug("\(String(describing: turn))")
-                    try await client.write(.multiplayerRequest(.concreteTurn(turn)))
+            self.logger.debug("\(String(describing: turn))")
+            try await client.write(.multiplayerRequest(.concreteTurn(turn)))
           }
         }
-
-//        beginMoveHandler = nil
-//        moveHandler = {
-//          self.logger.debug("\(String(describing: $0))")
-//          try await client.write(.multiplayerRequest(.concreteTurn($0)))
-//        }
-
       case let .string(string):
         logger.debug("\(string)")
 
@@ -160,10 +150,9 @@ final class GameContainer: ObservableObject {
           newState.canPass = false
           newState.isBeginMove = true
           self.gameState = newState
-//          self.beginMoveHandler = handler
           self.beginMoveHandler.once { cards in
             async {
-            await handler(cards)
+              await handler(cards)
             }
           }
         }
@@ -198,7 +187,24 @@ final class GameContainer: ObservableObject {
         position: .zuid,
         ai: appInput
       ),
-      slowMode: true
+      slowMode: true, endGameHandler: { snapshot in
+        do {
+          let data = try JSONEncoder().encode(snapshot)
+          try data
+            .write(to: FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+              .appendingPathComponent(
+                "game-\(snapshot.gameId)-\(Int(snapshot.snapshot.beginDate.timeIntervalSince1970))-\(snapshot.signature).json"
+              ))
+
+          var request = URLRequest(url: URL(string: "https://shitheaden-api.harke.ma/playedGame")!)
+          request.httpMethod = "POST"
+          request.addValue("application/json", forHTTPHeaderField: "content-type")
+          let task = URLSession.shared.uploadTask(with: request, from: data)
+          task.resume()
+        } catch {
+          self.logger.error("Error: error")
+        }
+      }
     )
 
     self.game = game
@@ -259,8 +265,6 @@ final class GameContainer: ObservableObject {
       } else {
         self.gameState.error = nil
         if selectedCards.count > 0 {
-
-
           moveHandler.emit(.play(Set(selectedCards.map { $0.card! })))
         } else {
           moveHandler.emit(.pass)

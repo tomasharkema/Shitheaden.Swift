@@ -1,8 +1,8 @@
-import Vapor
 import ShitheadenRuntime
+import Vapor
 
 @main
-struct ShitheadenServer {
+enum ShitheadenServer {
   static func main() async throws {
     let group = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount / 2)
     let games = AtomicDictionary<String, MultiplayerHandler>()
@@ -13,7 +13,7 @@ struct ShitheadenServer {
     }
 
 //    let websocketServer = async {
-////        logger.notice("START! websocket")
+    ////        logger.notice("START! websocket")
 //        let server = WebsocketServer(games: games)
 //        let channel = try await server.server(group: group)
 //        try channel.closeFuture.wait()

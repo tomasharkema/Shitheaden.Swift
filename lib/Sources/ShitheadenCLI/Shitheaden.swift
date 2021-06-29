@@ -11,8 +11,8 @@ import ArgumentParser
 import CustomAlgo
 import Foundation
 import Logging
-import ShitheadenRuntime
 import ShitheadenCLIRenderer
+import ShitheadenRuntime
 
 private let logger = Logger(label: "cli")
 
@@ -54,7 +54,6 @@ struct Shitheaden: ParsableCommand {
     }
   #endif
 
-
   private func interactive() async {
     LoggingSystem.bootstrap { _ in NoopLogger() }
     let id = UUID()
@@ -86,7 +85,7 @@ struct Shitheaden: ParsableCommand {
             await Keyboard.getKeyboardInput()
           })
         ),
-      ], slowMode: true
+      ], slowMode: true, endGameHandler: { _ in }
     )
     do {
       try await game.startGame()

@@ -33,7 +33,7 @@ class GameTests: XCTestCase {
         position: .zuid,
         ai: CardRankingAlgo()
       ),
-    ], slowMode: false)
+    ], slowMode: false, endGameHandler: { _ in })
 
     let expectation = XCTestExpectation(description: "wait for game play")
 
@@ -64,7 +64,7 @@ class GameTests: XCTestCase {
         position: .noord,
         ai: CardRankingAlgo()
       ),
-    ], slowMode: false)
+    ], slowMode: false, endGameHandler: { _ in })
 
     let expectation = XCTestExpectation(description: "wait for game play")
 
@@ -143,7 +143,7 @@ class GameTests: XCTestCase {
       deck.draw()!,
     ]
 
-    let game = Game(players: [firstPlayer, secondPlayer], slowMode: false)
+    let game = Game(players: [firstPlayer, secondPlayer], slowMode: false, endGameHandler: { _ in })
 
     let expectation = XCTestExpectation(description: "wait for game play")
 
@@ -163,5 +163,30 @@ class GameTests: XCTestCase {
       }
     }
     wait(for: [expectation], timeout: 120.0)
+  }
+
+  func gameCallsEndStateHandlerTests() {
+    let exp = XCTestExpectation()
+
+    var firstPlayer = Player(
+      name: "first",
+      position: .noord,
+      ai: CardRankingAlgoWithUnfairPassingAndNexPlayerAware()
+    )
+    var secondPlayer = Player(
+      name: "second",
+      position: .zuid,
+      ai: CardRankingAlgoWithUnfairPassingAndNexPlayerAware()
+    )
+
+    let game = Game(players: [firstPlayer], slowMode: false, endGameHandler: { _ in
+      exp.fulfill()
+    })
+
+    async {
+      try await game.startGame()
+    }
+
+    wait(for: [exp], timeout: 120.0)
   }
 }

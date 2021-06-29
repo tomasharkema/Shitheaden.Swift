@@ -7,9 +7,9 @@
 
 import Foundation
 import Logging
+import ShitheadenCLIRenderer
 import ShitheadenRuntime
 import ShitheadenShared
-import ShitheadenCLIRenderer
 
 protocol Client: AnyObject {
   var quit: EventHandler<Void>.ReadOnly { get }
@@ -18,7 +18,7 @@ protocol Client: AnyObject {
   func send(_ event: ServerEvent) async throws
 }
 
- actor MultiplayerHandler {
+actor MultiplayerHandler {
   private let logger = Logger(label: "cli.MultiplayerHandler")
   var challenger: (UUID, Client)
   let code: String
@@ -33,8 +33,7 @@ protocol Client: AnyObject {
     competitors = []
   }
 
-func start() {
-
+  func start() {
     challenger.1.quit.on { [weak self] in
       guard let self = self else {
         return
@@ -111,15 +110,15 @@ func start() {
   private func startMultiplayerGame() async throws -> GameSnapshot {
     _ = challenger.1.quit.on {
       do {
-      try await self.send(.quit)
-      } catch { }
+        try await self.send(.quit)
+      } catch {}
     }
 
     for player in competitors {
       _ = player.1.quit.on {
         do {
-        try await self.send(.quit)
-        } catch { }
+          try await self.send(.quit)
+        } catch {}
       }
     }
 
@@ -164,7 +163,11 @@ func start() {
     }
 
     let game = Game(
-      players: [initiator] + joiners, slowMode: true
+      players: [initiator] + joiners, slowMode: true, endGameHandler: { snapshot in
+        async {
+          try await WriteSnapshotToDisk.write(snapshot: snapshot)
+        }
+      }
     )
     let gameTask: Task<GameSnapshot, Error> = async {
       do {

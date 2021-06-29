@@ -20,7 +20,7 @@ struct GameState: Equatable {
   var isOnTurn = false
 
   var canPass = false
-  var endState: EndState?
+  var endState: EndPlace?
   var explain: String?
   var isBeginMove = false
 }

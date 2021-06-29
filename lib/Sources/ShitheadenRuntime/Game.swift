@@ -14,6 +14,7 @@ import ShitheadenShared
 public actor Game {
   private let logger = Logger(label: "runtime.Game")
 
+  let gameId = UUID()
   let beginDate = Date()
   var endDate: Date?
 
@@ -33,10 +34,11 @@ public actor Game {
   var slowMode = false
   var playersOnTurn = Set<UUID>()
   var playerAndError = [UUID: PlayerError]()
+  let endGameHandler: (EndGameSnapshot) -> Void
 
   public init(
     players: [Player],
-    slowMode: Bool
+    slowMode: Bool, endGameHandler: @escaping (EndGameSnapshot) -> Void
   ) {
     #if DEBUG
       var ids = [UUID]()
@@ -50,12 +52,14 @@ public actor Game {
 
     self.players = players
     self.slowMode = slowMode
+    self.endGameHandler = endGameHandler
   }
 
   public convenience init(
     contestants: Int, ai: GameAi.Type,
     localPlayer: Player,
-    slowMode: Bool
+    slowMode: Bool,
+    endGameHandler: @escaping (EndGameSnapshot) -> Void
   ) {
     let contestantPlayers = (0 ..< contestants).map { index in
       Player(
@@ -65,7 +69,11 @@ public actor Game {
       )
     }
 
-    self.init(players: contestantPlayers + [localPlayer], slowMode: slowMode)
+    self.init(
+      players: contestantPlayers + [localPlayer],
+      slowMode: slowMode,
+      endGameHandler: endGameHandler
+    )
   }
 
   var lastCard: Card? {
@@ -80,7 +88,7 @@ public actor Game {
     notDonePlayers.count == 1
   }
 
-  private func getEndState(player: Player) -> EndState? {
+  private func getEndState(player: Player) -> EndPlace? {
     let sorted = players.sorted {
       let left = $0.done ? $0.turns.count : Int.max
       let right = $1.done ? $1.turns.count : Int.max
@@ -667,27 +675,16 @@ public actor Game {
 
     asyncDetached {
       do {
-        try await saveSnapshot(endSnapshot)
+        endGameHandler(EndGameSnapshot(
+          gameId: gameId,
+          snapshot: endSnapshot,
+          signature: try await Signature.getSignature()
+        ))
       } catch {
         logger.error("Error saving snapshot")
       }
     }
     return endSnapshot
-  }
-
-  private func saveSnapshot(_ snapshot: GameSnapshot) async throws {
-    let data = try JSONEncoder().encode(snapshot)
-    try data
-      .write(to: FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        .appendingPathComponent("game-\(beginDate.timeIntervalSince1970).json"))
-
-    #if !os(Linux)
-    var request = URLRequest(url: URL(string: "https://shitheaden-api.harke.ma/playedGame")!)
-    request.httpMethod = "POST"
-    request.addValue("application/json", forHTTPHeaderField: "content-type")
-    let task = URLSession.shared.uploadTask(with: request, from: data)
-    task.resume()
-    #endif
   }
 
   func checkIntegrity() throws {

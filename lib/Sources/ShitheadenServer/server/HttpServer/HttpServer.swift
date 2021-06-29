@@ -1,14 +1,14 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Tomas Harkema on 28/06/2021.
 //
 
 import Foundation
 import ShitheadenRuntime
-import Vapor
 import ShitheadenShared
+import Vapor
 
 private let websocketResponse = """
 <!DOCTYPE html>
@@ -63,24 +63,29 @@ class HttpServer {
     app.http.server.configuration.port = 3338
     app.http.server.configuration.hostname = "0.0.0.0"
 
-            defer { app.shutdown() }
+    defer { app.shutdown() }
 
     app.on(.POST, "playedGame", body: .collect(maxSize: "10mb")) { req -> String in
       self.logger.info("\(req)")
-      let snapshot = try req.content.decode(GameSnapshot.self)
-      let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        .appendingPathComponent("game-\(snapshot.beginDate.timeIntervalSince1970)-server.json")
+      let snapshot = try req.content.decode(EndGameSnapshot.self)
 
-                                self.logger.info("\(url.absoluteString)")
+      async {
+        do {
+          try await WriteSnapshotToDisk.write(snapshot: snapshot)
+        } catch {
+          self.logger.error("Error: \(error)")
+        }
+      }
 
-      let data = try JSONEncoder().encode(snapshot)
-      try data
-        .write(to: url)
       return "ojoo!"
     }
 
     app.get("debug") { _ in
-      return Response(status: .ok, headers: ["Content-Type": "text/html"], body: .init(string: websocketResponse))
+      Response(
+        status: .ok,
+        headers: ["Content-Type": "text/html"],
+        body: .init(string: websocketResponse)
+      )
     }
 
     app.webSocket("debug/websocket") { _, ws in

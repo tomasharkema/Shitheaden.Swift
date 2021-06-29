@@ -53,7 +53,7 @@
             }
             let game = Game(
               players: players,
-              slowMode: false
+              slowMode: false, endGameHandler: { _ in }
             )
 
             do {

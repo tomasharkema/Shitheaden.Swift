@@ -8,10 +8,10 @@
 import CustomAlgo
 import Foundation
 import Logging
-import Vapor
+import ShitheadenCLIRenderer
 import ShitheadenRuntime
 import ShitheadenShared
-import ShitheadenCLIRenderer
+import Vapor
 
 class WebsocketClient: Client {
   private let logger = Logger(label: "cli.WebsocketClient")
@@ -35,7 +35,7 @@ class WebsocketClient: Client {
       do {
         var buffer = $1
         guard let data = buffer
-                .readBytes(length: buffer.readableBytes)
+          .readBytes(length: buffer.readableBytes)
         else {
           throw NSError(domain: "", code: 0, userInfo: nil)
         }
@@ -66,15 +66,7 @@ class WebsocketClient: Client {
 
       logger.info("Received signature: \(signature)")
       logger.info("Fetch local signature")
-      guard let url = Bundle.main.url(forResource: "lib", withExtension: "sig") else {
-        logger.error("No local signature found in lib.sig")
-        throw NSError(domain: "SIG", code: 0, userInfo: nil)
-      }
-
-      logger.info("Fetch signature from \(url.absoluteString)")
-
-      let localSignature = try String(contentsOf: url)
-        .replacingOccurrences(of: "  -\n", with: "")
+      let localSignature = await try Signature.getSignature()
 
       logger.info("Local signature: \(localSignature)")
 
@@ -153,7 +145,11 @@ class WebsocketClient: Client {
             .send(.multiplayerEvent(multiplayerEvent: .gameSnapshot(snapshot: $0)))
         })
       ),
-      slowMode: true
+      slowMode: true, endGameHandler: { snapshot in
+        async {
+          try await WriteSnapshotToDisk.write(snapshot: snapshot)
+        }
+      }
     )
 
     try await game.startGame()
@@ -169,23 +165,24 @@ class WebsocketClient: Client {
 
   func send(_ event: ServerEvent) async throws {
     let _: Void = try await withUnsafeThrowingContinuation { cont in async {
-        // We can't really check for error here, but it's also not the purpose of the
-        // example so let's not worry about it.
-        do {
-          let data = try JSONEncoder().encode(event)
+      // We can't really check for error here, but it's also not the purpose of the
+      // example so let's not worry about it.
+      do {
+        let data = try JSONEncoder().encode(event)
 
-          let promise: EventLoopPromise<Void> = websocket.eventLoop.makePromise()
-          websocket.send(Array(data), promise: promise)
+        let promise: EventLoopPromise<Void> = websocket.eventLoop.makePromise()
+        websocket.send(Array(data), promise: promise)
 
-          promise.futureResult.whenSuccess {
-            cont.resume()
-          }
-          promise.futureResult.whenFailure {
-            cont.resume(throwing: $0)
-          }
-        } catch {
-          self.logger.error("\(error)")
-        } }
+        promise.futureResult.whenSuccess {
+          cont.resume()
+        }
+        promise.futureResult.whenFailure {
+          cont.resume(throwing: $0)
+        }
+      } catch {
+        self.logger.error("\(error)")
       }
+    }
+    }
   }
 }

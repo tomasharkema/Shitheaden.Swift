@@ -9,7 +9,7 @@ import ShitheadenShared
 import SwiftUI
 
 struct EndStateView: View {
-  let endState: EndState?
+  let endState: EndPlace?
   let restart: () async -> Void
   let quit: () async -> Void
 

@@ -32,7 +32,7 @@ public actor UserInputAIJson: GameAi {
   }
 
   public func beginMove(request: TurnRequest,
-                 snapshot _: GameSnapshot) async throws -> (Card, Card, Card)
+                        snapshot _: GameSnapshot) async throws -> (Card, Card, Card)
   {
     let string = try await reader(.requestBeginTurn, request.playerError)
 

@@ -73,7 +73,7 @@ let package = Package(
           "-disable-availability-checking",
         ]),
         .define("DEBUG", .when(configuration: .debug)),
-          .unsafeFlags(["-cross-module-optimization"], .when(configuration: .release))
+        .unsafeFlags(["-cross-module-optimization"], .when(configuration: .release)),
       ]
     ),
     .executableTarget(
@@ -86,14 +86,13 @@ let package = Package(
 
       ], swiftSettings: [
         .unsafeFlags([
-        "-Xfrontend",
-        "-enable-experimental-concurrency",
-        "-Xfrontend",
-        "-disable-availability-checking",
-      ]),
-      .define("DEBUG", .when(configuration: .debug)),
-          .unsafeFlags(["-cross-module-optimization"], .when(configuration: .release))
-
+          "-Xfrontend",
+          "-enable-experimental-concurrency",
+          "-Xfrontend",
+          "-disable-availability-checking",
+        ]),
+        .define("DEBUG", .when(configuration: .debug)),
+        .unsafeFlags(["-cross-module-optimization"], .when(configuration: .release)),
       ]
     ),
     .target(
@@ -185,8 +184,8 @@ let package = Package(
         "-enable-experimental-concurrency",
         "-Xfrontend", "-disable-availability-checking",
       ]),
-                      .define("DEBUG", .when(configuration: .debug)),
-                      .define("TESTING")]
+      .define("DEBUG", .when(configuration: .debug)),
+      .define("TESTING")]
     ),
     .testTarget(
       name: "ShitheadenSharedTests",
@@ -199,8 +198,8 @@ let package = Package(
         "-enable-experimental-concurrency",
         "-Xfrontend", "-disable-availability-checking",
       ]),
-                      .define("DEBUG", .when(configuration: .debug)),
-                      .define("TESTING")]
+      .define("DEBUG", .when(configuration: .debug)),
+      .define("TESTING")]
     ),
     .testTarget(
       name: "CustomAlgoTests",

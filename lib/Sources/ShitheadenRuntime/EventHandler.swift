@@ -22,7 +22,7 @@ public class EventHandler<T> {
     }
   }
 
-  public func once(initial: Bool = false, _ handler: @escaping (T) async -> Void) {
+  public func once(initial _: Bool = false, _ handler: @escaping (T) async -> Void) {
     let uuid = UUID()
     var hasSend = false
     let function = { (element: T) in

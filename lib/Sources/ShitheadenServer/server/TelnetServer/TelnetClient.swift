@@ -10,9 +10,9 @@ import CustomAlgo
 import Foundation
 import Logging
 import NIO
+import ShitheadenCLIRenderer
 import ShitheadenRuntime
 import ShitheadenShared
-import ShitheadenCLIRenderer
 
 class TelnetClient: Client {
   private let logger = Logger(label: "cli.TelnetClient")
@@ -213,7 +213,11 @@ class TelnetClient: Client {
             .send(.multiplayerEvent(multiplayerEvent: .gameSnapshot(snapshot: $0)))
         })
       ),
-      slowMode: true
+      slowMode: true, endGameHandler: { snapshot in
+        async {
+          try await WriteSnapshotToDisk.write(snapshot: snapshot)
+        }
+      }
     )
 
     return try await game.startGame()
