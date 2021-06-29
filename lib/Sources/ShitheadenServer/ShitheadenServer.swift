@@ -21,6 +21,17 @@ enum ShitheadenServer {
   static func main() async throws {
     Backtrace.install()
 
+    do {
+      let signature = try await Signature.getSignature()
+      let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        .appendingPathComponent(
+          signature
+        )
+      try Data().write(to: url)
+    } catch {
+      logger.error("Signature handling: \(error)")
+    }
+
     let group = MultiThreadedEventLoopGroup(numberOfThreads: max(4, System.coreCount / 2))
     let games = AtomicDictionary<String, MultiplayerHandler>()
 
