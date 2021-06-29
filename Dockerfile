@@ -45,9 +45,9 @@ RUN rm ./Sources/CustomAlgo/main.swift && \
 COPY lib/Sources ./Sources
 COPY lib/Tests ./Tests
 
-RUN find Sources/ShitheadenRuntime Sources/ShitheadenShared Sources/ShitheadenServer -type f -exec shasum -a 256 {} \; | sort -k 2 | shasum -a 256 > lib.sig
+RUN find Sources/ShitheadenRuntime Sources/ShitheadenShared -type f -exec shasum -a 256 {} \; | sort -k 2 | shasum -a 256 > lib.sig
 
-RUN swift build -c release --enable-test-discovery -Xswiftc -g
+RUN swift build -c release
 
 FROM tomasharkema7/swift-5.5:1804-snapshot
 

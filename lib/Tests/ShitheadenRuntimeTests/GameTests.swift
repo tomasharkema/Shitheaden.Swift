@@ -168,18 +168,18 @@ class GameTests: XCTestCase {
   func gameCallsEndStateHandlerTests() {
     let exp = XCTestExpectation()
 
-    var firstPlayer = Player(
+    let firstPlayer = Player(
       name: "first",
       position: .noord,
       ai: CardRankingAlgoWithUnfairPassingAndNexPlayerAware()
     )
-    var secondPlayer = Player(
+    let secondPlayer = Player(
       name: "second",
       position: .zuid,
       ai: CardRankingAlgoWithUnfairPassingAndNexPlayerAware()
     )
 
-    let game = Game(players: [firstPlayer], slowMode: false, endGameHandler: { _ in
+    let game = Game(players: [firstPlayer, secondPlayer], slowMode: false, endGameHandler: { _ in
       exp.fulfill()
     })
 

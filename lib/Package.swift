@@ -54,6 +54,7 @@ let package = Package(
     .package(url: "https://github.com/chrisaljoudi/swift-log-oslog.git", from: "0.2.1"),
     .package(url: "https://github.com/nicklockwood/SwiftFormat", from: "0.48.6"),
     .package(url: "https://github.com/vapor/vapor.git", branch: "async-await"),
+    .package(url: "https://github.com/IBM-Swift/BlueSignals.git", from: "1.0.0"),
   ],
   targets: [
     .executableTarget(
@@ -73,6 +74,7 @@ let package = Package(
           "-disable-availability-checking",
         ]),
         .define("DEBUG", .when(configuration: .debug)),
+        .define("RELEASE", .when(configuration: .release)),
         .unsafeFlags(["-cross-module-optimization"], .when(configuration: .release)),
       ]
     ),
@@ -83,7 +85,7 @@ let package = Package(
         .target(name: "CustomAlgo"),
         .target(name: "ShitheadenCLIRenderer"),
         .product(name: "NIOSSH", package: "swift-nio-ssh"),
-
+        .product(name: "Signals", package: "BlueSignals"),
       ], swiftSettings: [
         .unsafeFlags([
           "-Xfrontend",
@@ -92,16 +94,29 @@ let package = Package(
           "-disable-availability-checking",
         ]),
         .define("DEBUG", .when(configuration: .debug)),
+        .define("RELEASE", .when(configuration: .release)),
         .unsafeFlags(["-cross-module-optimization"], .when(configuration: .release)),
       ]
     ),
     .target(
       name: "DependenciesTarget",
       dependencies: [
-        .product(name: "ANSIEscapeCode", package: "ANSIEscapeCode"),
-        .product(name: "NIOSSH", package: "swift-nio-ssh"),
         .product(name: "Vapor", package: "vapor"),
-        .product(name: "Logging", package: "swift-log"),
+        .target(name: "CustomAlgo"),
+        .target(name: "ShitheadenCLIRenderer"),
+        .product(name: "NIOSSH", package: "swift-nio-ssh"),
+        .product(name: "Signals", package: "BlueSignals"),
+      ],
+      swiftSettings: [
+        .unsafeFlags([
+          "-Xfrontend",
+          "-enable-experimental-concurrency",
+          "-Xfrontend",
+          "-disable-availability-checking",
+        ]),
+        .define("DEBUG", .when(configuration: .debug)),
+        .define("RELEASE", .when(configuration: .release)),
+        .unsafeFlags(["-cross-module-optimization"], .when(configuration: .release)),
       ]
     ),
     .target(
@@ -128,6 +143,7 @@ let package = Package(
           "-Xfrontend", "-disable-availability-checking",
         ]),
         .define("DEBUG", .when(configuration: .debug)),
+        .define("RELEASE", .when(configuration: .release)),
       ]
     ),
     .target(
@@ -143,6 +159,7 @@ let package = Package(
           "-Xfrontend", "-disable-availability-checking",
         ]),
         .define("DEBUG", .when(configuration: .debug)),
+        .define("RELEASE", .when(configuration: .release)),
       ]
     ),
     .target(
@@ -185,6 +202,7 @@ let package = Package(
         "-Xfrontend", "-disable-availability-checking",
       ]),
       .define("DEBUG", .when(configuration: .debug)),
+      .define("RELEASE", .when(configuration: .release)),
       .define("TESTING")]
     ),
     .testTarget(
@@ -199,6 +217,7 @@ let package = Package(
         "-Xfrontend", "-disable-availability-checking",
       ]),
       .define("DEBUG", .when(configuration: .debug)),
+      .define("RELEASE", .when(configuration: .release)),
       .define("TESTING")]
     ),
     .testTarget(
@@ -212,6 +231,7 @@ let package = Package(
         "-Xfrontend", "-disable-availability-checking",
       ]),
       .define("DEBUG", .when(configuration: .debug)),
+      .define("RELEASE", .when(configuration: .release)),
       .define("TESTING")]
     ),
   ]

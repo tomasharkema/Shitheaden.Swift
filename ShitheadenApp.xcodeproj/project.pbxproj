@@ -274,7 +274,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# Type a script or drag a script file from your workspace to insert its path.\ncd lib && find Sources/ShitheadenRuntime Sources/ShitheadenShared Sources/ShitheadenServer -type f -exec shasum -a 256 {} \\; | sort -k 2 | shasum -a 256 > ../lib.sig\n";
+			shellScript = "# Type a script or drag a script file from your workspace to insert its path.\ncd lib && find Sources/ShitheadenRuntime Sources/ShitheadenShared -type f -exec shasum -a 256 {} \\; | sort -k 2 | shasum -a 256 > ../lib.sig\n";
 		};
 		C3DBF4FE2686550D0027D011 /* Run Script */ = {
 			isa = PBXShellScriptBuildPhase;
