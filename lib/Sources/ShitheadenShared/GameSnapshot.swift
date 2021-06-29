@@ -7,6 +7,15 @@
 
 import Foundation
 
+public struct UserAndTurn: Equatable, Codable {
+  public let uuid: String
+  public let turn: Turn
+  public init(uuid: String, turn: Turn) {
+    self.uuid = uuid
+    self.turn = turn
+  }
+}
+
 public struct GameSnapshot: Equatable, Codable {
   public let deckCards: [RenderCard]
   public let players: [TurnRequest]
@@ -17,14 +26,15 @@ public struct GameSnapshot: Equatable, Codable {
   public let currentRequest: TurnRequest?
   public let beginDate: TimeInterval
   public let endDate: TimeInterval?
-
+  public let turns: [UserAndTurn]?
   public init(
     deckCards: [RenderCard],
     players: [TurnRequest],
     tableCards: [RenderCard],
     burntCards: [RenderCard],
     playersOnTurn: Set<UUID>,
-    requestFor: UUID?, beginDate: TimeInterval, endDate: TimeInterval?
+    requestFor: UUID?, beginDate: TimeInterval, endDate: TimeInterval?,
+    turns: [UserAndTurn]?
   ) {
     self.deckCards = deckCards
     self.players = players
@@ -34,6 +44,7 @@ public struct GameSnapshot: Equatable, Codable {
     self.requestFor = requestFor
     self.beginDate = beginDate
     self.endDate = endDate
+    self.turns = turns
     currentRequest = requestFor != nil ? players.first { $0.id == requestFor } : nil
   }
 

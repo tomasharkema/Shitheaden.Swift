@@ -190,12 +190,13 @@ final class GameContainer: ObservableObject {
       slowMode: true, endGameHandler: { snapshot in
         async {
           do {
+            let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+              .appendingPathComponent(
+                "game-\(snapshot.gameId)-\(Int(snapshot.snapshot.beginDate))-\(snapshot.signature).json"
+              )
             let data = try JSONEncoder().encode(snapshot)
             try data
-              .write(to: FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-                .appendingPathComponent(
-                  "game-\(snapshot.gameId)-\(Int(snapshot.snapshot.beginDate))-\(snapshot.signature).json"
-                ))
+              .write(to: url)
 
             var request = URLRequest(url: Host.host.appendingPathComponent("playedGame"))
             request.httpMethod = "POST"

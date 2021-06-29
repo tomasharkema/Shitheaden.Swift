@@ -107,7 +107,6 @@ class Connecting: ObservableObject {
 
     case .waitForRestart:
       connection = .restart(canStart: false)
-
     }
   }
 }
@@ -158,14 +157,13 @@ struct ConnectingView: View {
               }
             }
           if canStart {
-          Button("Opnieuw proberen") {
-            async {
-              try await self.connection.start()
-            }
-          }.buttonStyle(.bordered)
+            Button("Opnieuw proberen") {
+              async {
+                try await self.connection.start()
+              }
+            }.buttonStyle(.bordered)
           }
         }
-
 
       case .makeChoice:
         VStack {
@@ -191,12 +189,12 @@ struct ConnectingView: View {
       case let .waiting(canStart, int):
         Text("\(int) waiting to start")
         if canStart {
-        Button("Start!") {
-          async {
-            try await self.connection.client?
-              .write(.multiplayerRequest(.string("start")))
-          }
-        }.buttonStyle(.bordered)
+          Button("Start!") {
+            async {
+              try await self.connection.client?
+                .write(.multiplayerRequest(.string("start")))
+            }
+          }.buttonStyle(.bordered)
         }
 
       case let .codeCreated(code):

@@ -59,23 +59,22 @@ class TelnetClient: Client {
       return try await start()
     }
     do {
-    if choice.hasPrefix("j") {
-      // join
-      try await joinGame()
-    } else if choice.hasPrefix("s") {
-      // single
-      let single = try await singlePlayer(contestants: 3)
-      logger.info("single game \(single)")
-    } else if choice.hasPrefix("m") {
-      // muliplayer
-      try await startMultiplayer()
+      if choice.hasPrefix("j") {
+        // join
+        try await joinGame()
+      } else if choice.hasPrefix("s") {
+        // single
+        let single = try await singlePlayer(contestants: 3)
+        logger.info("single game \(single)")
+      } else if choice.hasPrefix("m") {
+        // muliplayer
+        try await startMultiplayer()
+      }
+
+    } catch {
+      logger.info("Error: \(error)")
+      return try await start()
     }
-
-  } catch {
-
-    logger.info("Error: \(error)")
-    return try await start()
-  }
 
     return try await start()
   }
@@ -108,7 +107,7 @@ class TelnetClient: Client {
       let id = UUID()
       try await game.join(id: id, client: self)
       try await game.finished()
-      
+
       return try await start()
     } else {
       await send(string: """
@@ -189,9 +188,13 @@ class TelnetClient: Client {
       ))
 
     case .requestRestart:
-      await send(string: ANSIEscapeCode.Erase.eraseInDisplay(.entireScreen) + "Wil je nog een keer spelen? Typ start voor nog een potje, quit om te stoppen...")
+      await send(string: ANSIEscapeCode.Erase
+        .eraseInDisplay(.entireScreen) +
+        "Wil je nog een keer spelen? Typ start voor nog een potje, quit om te stoppen...")
     case .waitForRestart:
-      await send(string: ANSIEscapeCode.Erase.eraseInDisplay(.entireScreen) + "Wacht tot de host nog een potje start...of typ quit om te stoppen!")
+      await send(string: ANSIEscapeCode.Erase
+        .eraseInDisplay(.entireScreen) +
+        "Wacht tot de host nog een potje start...of typ quit om te stoppen!")
 
     case .quit:
       logger.info("quit")

@@ -102,10 +102,10 @@ actor MultiplayerHandler {
       return try await waitForStart()
     }
 
-      try await startGame()
+    try await startGame()
   }
 
-    nonisolated func startGame() async throws {
+  nonisolated func startGame() async throws {
     try await send(.start)
 
     let game = try await startMultiplayerGame()
@@ -114,27 +114,27 @@ actor MultiplayerHandler {
 
     try await challenger.1.send(.requestRestart)
 
-      await competitors.forEach { competitor in
-        async {
-         try await competitor.1.send(.waitForRestart)
-        }
+    await competitors.forEach { competitor in
+      async {
+        try await competitor.1.send(.waitForRestart)
       }
+    }
 
-      let readEvent = try await challenger.1.data.once()
-      guard case let .multiplayerRequest(read) = readEvent, let string = read.string,
-            string.contains("start")
-      else {
-        return try await waitForStart()
-      }
+    let readEvent = try await challenger.1.data.once()
+    guard case let .multiplayerRequest(read) = readEvent, let string = read.string,
+          string.contains("start")
+    else {
+      return try await waitForStart()
+    }
 
-      try await startGame()
+    try await startGame()
   }
 
   nonisolated func finished() async throws -> Result<Void, Error> {
     try await finishEvent.once()
   }
 
-  nonisolated private func startMultiplayerGame() async throws -> GameSnapshot {
+  private nonisolated func startMultiplayerGame() async throws -> GameSnapshot {
     _ = await challenger.1.quit.on {
       do {
         try await self.send(.quit)
@@ -196,24 +196,26 @@ actor MultiplayerHandler {
         }
       }
     )
-    let gameTask: Task<GameSnapshot, Error> = async {try await withTaskCancellationHandler(operation: {
-      do {
-        let result = try await game.startGame()
-        return result
-      } catch {
-        self.logger.error("ERROR: \(error)")
-        if error is CancellationError {
-          finishEvent.emit(.success(()))
+    let gameTask: Task<GameSnapshot, Error> = async {
+      try await withTaskCancellationHandler(operation: {
+        do {
+          let result = try await game.startGame()
+          return result
+        } catch {
+          self.logger.error("ERROR: \(error)")
+          if error is CancellationError {
+            finishEvent.emit(.success(()))
+            throw error
+          }
+          finishEvent.emit(.failure(error))
           throw error
         }
-        finishEvent.emit(.failure(error))
-        throw error
-      }
-    }, onCancel: {
-      finishEvent.emit(.success(()))
-    })}
+      }, onCancel: {
+        finishEvent.emit(.success(()))
+      })
+    }
 
-   await setGameTask(gameTask)
+    await setGameTask(gameTask)
     return try await gameTask.get()
   }
 

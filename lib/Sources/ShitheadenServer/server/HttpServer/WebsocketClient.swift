@@ -169,21 +169,21 @@ class WebsocketClient: Client {
 //      async {
       // We can't really check for error here, but it's also not the purpose of the
       // example so let's not worry about it.
-        do {
-          let data = try JSONEncoder().encode(event)
+      do {
+        let data = try JSONEncoder().encode(event)
 
-          let promise: EventLoopPromise<Void> = websocket.eventLoop.makePromise()
-          websocket.send(Array(data), promise: promise)
+        let promise: EventLoopPromise<Void> = websocket.eventLoop.makePromise()
+        websocket.send(Array(data), promise: promise)
 
-          promise.futureResult.whenSuccess {
-            cont.resume()
-          }
-          promise.futureResult.whenFailure {
-            cont.resume(throwing: $0)
-          }
-        } catch {
-          self.logger.error("\(error)")
+        promise.futureResult.whenSuccess {
+          cont.resume()
         }
+        promise.futureResult.whenFailure {
+          cont.resume(throwing: $0)
+        }
+      } catch {
+        self.logger.error("\(error)")
+      }
 //      }
     }
   }

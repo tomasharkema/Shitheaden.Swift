@@ -9,10 +9,10 @@ import CustomAlgo
 import Foundation
 import Logging
 import NIO
+import NIOExtras
 import NIOSSH
 import ShitheadenRuntime
 import ShitheadenShared
-import NIOExtras
 
 final class HardcodedPasswordDelegate: NIOSSHServerUserAuthenticationDelegate {
   var supportedAuthenticationMethods: NIOSSHAvailableUserAuthenticationMethods {
@@ -111,7 +111,9 @@ final class SSHServer {
     }
   }
 
-  func start(quiesce: ServerQuiescingHelper, group: MultiThreadedEventLoopGroup) async throws -> Channel {
+  func start(quiesce: ServerQuiescingHelper,
+             group: MultiThreadedEventLoopGroup) async throws -> Channel
+  {
     let hostKey = NIOSSHPrivateKey(ed25519Key: .init())
     let bootstrap = ServerBootstrap(group: group)
       .serverChannelInitializer { channel in

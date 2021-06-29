@@ -10,9 +10,9 @@ import CustomAlgo
 import Foundation
 import Logging
 import NIO
+import NIOExtras
 import ShitheadenRuntime
 import ShitheadenShared
-import NIOExtras
 
 class TelnetServer {
   private let logger = Logger(label: "cli.TelnetServer")
@@ -23,11 +23,10 @@ class TelnetServer {
     self.games = games
   }
 
-  func start(quiesce: ServerQuiescingHelper, group: MultiThreadedEventLoopGroup) async throws -> Channel {
-
-    
+  func start(quiesce: ServerQuiescingHelper,
+             group: MultiThreadedEventLoopGroup) async throws -> Channel
+  {
 //    let promise = channel.eventLoop.makePromise(of: Void.self)
-
 
     let bootstrap = ServerBootstrap(group: group)
       .serverChannelOption(ChannelOptions.backlog, value: 256)
@@ -36,7 +35,7 @@ class TelnetServer {
         channel.pipeline.addHandler(quiesce.makeServerChannelHandler(channel: channel))
       }
       .childChannelInitializer { channel in
-        channel.pipeline.addHandler( BackPressureHandler()).flatMap {
+        channel.pipeline.addHandler(BackPressureHandler()).flatMap {
           channel.pipeline.addHandler(TelnetServerHandler(games: self.games))
         }
       }

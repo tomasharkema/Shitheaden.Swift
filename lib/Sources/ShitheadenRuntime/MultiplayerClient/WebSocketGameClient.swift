@@ -9,7 +9,10 @@
   import ShitheadenShared
 
   public class WebSocketGameClient {
-    private let address = URL(string: "\(Host.host.absoluteString.replacingOccurrences(of: "http", with: "ws"))/websocket")!
+    private let address =
+      URL(
+        string: "\(Host.host.absoluteString.replacingOccurrences(of: "http", with: "ws"))/websocket"
+      )!
 
     public init() {}
 

@@ -1,15 +1,14 @@
+import Backtrace
+import NIOExtras
 import ShitheadenRuntime
 import Signals
 import Vapor
-import Backtrace
-import NIOExtras
 
 var httpServer: Task.Handle<Void, Error>!
 var telnetServer: Task.Handle<Void, Error>!
 var sshServer: Task.Handle<Void, Error>!
 
 func cancel() {
-  print("CANCEL!")
   httpServer.cancel()
   telnetServer.cancel()
   sshServer.cancel()
@@ -26,7 +25,6 @@ enum ShitheadenServer {
     let games = AtomicDictionary<String, MultiplayerHandler>()
 
     httpServer = async {
-
       let httpServer = HttpServer(games: games)
       try await httpServer.start(group: group)
       cancel()
@@ -34,12 +32,12 @@ enum ShitheadenServer {
 
     telnetServer = async {
       let helper = ServerQuiescingHelper(group: group)
-      let server = TelnetServer( games: games)
-      let channel = try await server.start(quiesce: helper,group: group)
+      let server = TelnetServer(games: games)
+      let channel = try await server.start(quiesce: helper, group: group)
       let promise = channel.eventLoop.makePromise(of: Void.self)
 
-      try await withTaskCancellationHandler(operation: {
-        try! promise.futureResult.wait()
+      await withTaskCancellationHandler(operation: {
+        try! promise.futureResult.wait() // swiftlint:disable:this force_try
       }, onCancel: {
         helper.initiateShutdown(promise: promise)
       })
@@ -48,28 +46,28 @@ enum ShitheadenServer {
     }
     sshServer = async {
       let helper = ServerQuiescingHelper(group: group)
-      let server = SSHServer( games: games)
-      let channel = try await server.start(quiesce: helper,group: group)
+      let server = SSHServer(games: games)
+      let channel = try await server.start(quiesce: helper, group: group)
       let promise = channel.eventLoop.makePromise(of: Void.self)
 
-      try await withTaskCancellationHandler(operation: {
-        try! promise.futureResult.wait()
+      await withTaskCancellationHandler(operation: {
+        try! promise.futureResult.wait() // swiftlint:disable:this force_try
       }, onCancel: {
-          helper.initiateShutdown(promise: promise)
+        helper.initiateShutdown(promise: promise)
       })
 
       cancel()
     }
 
-      Signals.trap(signal: .int) { signal in
-        print("SIGNAL! \(signal)") // swiftlint:disable:this disable_print
-        cancel()
-      }
+    Signals.trap(signal: .int) { signal in
+      print("SIGNAL! \(signal)") // swiftlint:disable:this disable_print
+      cancel()
+    }
 
-      Signals.trap(signal: .term) { signal in
-        print("SIGNAL! \(signal)") // swiftlint:disable:this disable_print
-        cancel()
-      }
+    Signals.trap(signal: .term) { signal in
+      print("SIGNAL! \(signal)") // swiftlint:disable:this disable_print
+      cancel()
+    }
 
     try await httpServer.get()
     try await telnetServer.get()

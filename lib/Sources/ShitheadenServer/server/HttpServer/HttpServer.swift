@@ -66,13 +66,13 @@ final class HttpServer {
       self.logger.info("\(req)")
       let snapshot = try req.content.decode(EndGameSnapshot.self)
       #if DEBUG
-      try await WriteSnapshotToDisk.write(snapshot: snapshot)
-      #else
-      if try await Signature.getSignature() == snapshot.signature {
         try await WriteSnapshotToDisk.write(snapshot: snapshot)
-      } else {
-        throw NSError(domain: "Signature is not recognized", code: 0, userInfo: nil)
-      }
+      #else
+        if try await Signature.getSignature() == snapshot.signature {
+          try await WriteSnapshotToDisk.write(snapshot: snapshot)
+        } else {
+          throw NSError(domain: "Signature is not recognized", code: 0, userInfo: nil)
+        }
       #endif
       return "ojoo!"
     }

@@ -29,7 +29,7 @@ public actor Game {
     }
   #endif
 
-  var turns = [(String, Turn)]()
+  var turns = [UserAndTurn]()
   let rules = Rules.all
   var slowMode = false
   var playersOnTurn = Set<UUID>()
@@ -110,7 +110,7 @@ public actor Game {
     _ obscure: Bool, player: Player,
     includeEndState: Bool
   ) -> TurnRequest {
-    if obscure {
+    if obscure, !includeEndState {
       return TurnRequest(
         id: player.id,
         name: player.name,
@@ -160,7 +160,8 @@ public actor Game {
       playersOnTurn: playersOnTurn,
       requestFor: uuid,
       beginDate: beginDate,
-      endDate: endDate
+      endDate: endDate,
+      turns: includeEndState ? turns : []
     )
   }
 
@@ -429,7 +430,7 @@ public actor Game {
         table = []
       }
 
-      turns += [(player.name, turn)]
+      turns += [UserAndTurn(uuid: player.name, turn: turn)]
 
       try await sendRender(error: previousError)
 
@@ -526,29 +527,29 @@ public actor Game {
   nonisolated func beginRound() async throws {
     try Task.checkCancellation()
     return await withTaskGroup(of: Void.self) { group in
-    for (index, player) in await players.enumerated() {
-      group.async { [weak self] in
-        guard let self = self else { return }
-        do {
-          await self.startPlayerOnSet(player: player)
-
-          let newPlayer = try await self.commitBeginTurn(
-            playerIndex: index,
-            player: player,
-            numberCalled: 0,
-            previousError: nil
-          )
-          await self.removePlayerOnSet(player: player)
-          await self.updatePlayer(player: newPlayer)
+      for (index, player) in await players.enumerated() {
+        group.async { [weak self] in
+          guard let self = self else { return }
           do {
-            try await self.checkIntegrity()
-            try await self.sendRender(error: nil)
+            await self.startPlayerOnSet(player: player)
+
+            let newPlayer = try await self.commitBeginTurn(
+              playerIndex: index,
+              player: player,
+              numberCalled: 0,
+              previousError: nil
+            )
+            await self.removePlayerOnSet(player: player)
+            await self.updatePlayer(player: newPlayer)
+            do {
+              try await self.checkIntegrity()
+              try await self.sendRender(error: nil)
+            } catch {
+              assertionFailure("\(error)")
+            }
           } catch {
-            assertionFailure("\(error)")
+            self.logger.error("Error: \(error)")
           }
-        } catch {
-          self.logger.error("Error: \(error)")
-        }
         }
       }
     }
