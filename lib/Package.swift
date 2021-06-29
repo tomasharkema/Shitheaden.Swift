@@ -55,6 +55,7 @@ let package = Package(
     .package(url: "https://github.com/nicklockwood/SwiftFormat", from: "0.48.6"),
     .package(url: "https://github.com/vapor/vapor.git", branch: "async-await"),
     .package(url: "https://github.com/IBM-Swift/BlueSignals.git", from: "1.0.0"),
+    .package(url: "https://github.com/apple/swift-nio-extras", from: "1.10.0")
   ],
   targets: [
     .executableTarget(
@@ -86,6 +87,7 @@ let package = Package(
         .target(name: "ShitheadenCLIRenderer"),
         .product(name: "NIOSSH", package: "swift-nio-ssh"),
         .product(name: "Signals", package: "BlueSignals"),
+        .product(name: "NIOExtras", package: "swift-nio-extras")
       ], swiftSettings: [
         .unsafeFlags([
           "-Xfrontend",

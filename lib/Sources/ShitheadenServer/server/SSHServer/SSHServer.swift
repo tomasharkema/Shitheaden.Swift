@@ -12,6 +12,7 @@ import NIO
 import NIOSSH
 import ShitheadenRuntime
 import ShitheadenShared
+import NIOExtras
 
 final class HardcodedPasswordDelegate: NIOSSHServerUserAuthenticationDelegate {
   var supportedAuthenticationMethods: NIOSSHAvailableUserAuthenticationMethods {
@@ -110,9 +111,12 @@ final class SSHServer {
     }
   }
 
-  func start(group: MultiThreadedEventLoopGroup) async throws -> Channel {
+  func start(quiesce: ServerQuiescingHelper, group: MultiThreadedEventLoopGroup) async throws -> Channel {
     let hostKey = NIOSSHPrivateKey(ed25519Key: .init())
     let bootstrap = ServerBootstrap(group: group)
+      .serverChannelInitializer { channel in
+        channel.pipeline.addHandler(quiesce.makeServerChannelHandler(channel: channel))
+      }
       .childChannelInitializer { channel in
         channel.pipeline.addHandler(NIOSSHHandler(
           role: .server(.init(

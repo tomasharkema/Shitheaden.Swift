@@ -48,7 +48,7 @@ document.getElementById("former").addEventListener('submit', validateForm);
 </html>
 """
 
-class HttpServer {
+final class HttpServer {
   private let logger = Logger(label: "cli.HttpServer")
   let games: AtomicDictionary<String, MultiplayerHandler>
   private var channel: Channel?
@@ -61,8 +61,6 @@ class HttpServer {
     let app = Application(.development, .shared(group))
     app.http.server.configuration.port = 3338
     app.http.server.configuration.hostname = "0.0.0.0"
-
-    defer { app.shutdown() }
 
     app.on(.POST, "playedGame", body: .collect(maxSize: "10mb")) { req -> String in
       self.logger.info("\(req)")
