@@ -8,7 +8,7 @@
 
 import ShitheadenRuntime
 
-enum CLI {
+public enum CLI {
   static let Background = "44"
   static let TextColor = "39"
 
@@ -17,7 +17,7 @@ enum CLI {
   static let ShowCursor = "\\e[?25h"
   static let HideCursor = "\\e[?25h"
 
-  static func clear() -> String {
+  public static func clear() -> String {
     ClearChar
   }
 

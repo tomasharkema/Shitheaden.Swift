@@ -683,7 +683,7 @@ public actor Game {
           signature: try await Signature.getSignature()
         ))
       } catch {
-        logger.error("Error saving snapshot")
+        logger.error("Error getting snapshot")
       }
     }
     return endSnapshot

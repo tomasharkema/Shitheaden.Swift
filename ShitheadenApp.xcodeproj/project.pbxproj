@@ -30,7 +30,7 @@
 		C398542A26837F8200D64483 /* card.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C398542926837F8200D64483 /* card.ttf */; };
 		C398542D268472C300D64483 /* EndStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C398542C268472C300D64483 /* EndStateView.swift */; };
 		C39A09572682159C00F011BB /* AlertView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C39A09562682159C00F011BB /* AlertView.swift */; };
-		C3DBF4F92685CD470027D011 /* lib.sig in Resources */ = {isa = PBXBuildFile; fileRef = C3DBF4F82685CD470027D011 /* lib.sig */; };
+		C3D1B551268BC7FC0021FCF8 /* lib.sig in Resources */ = {isa = PBXBuildFile; fileRef = C3D1B550268BC7FB0021FCF8 /* lib.sig */; };
 		C3DBF4FD2685E8B20027D011 /* AppDependencies in Frameworks */ = {isa = PBXBuildFile; productRef = C3DBF4FC2685E8B20027D011 /* AppDependencies */; };
 /* End PBXBuildFile section */
 
@@ -59,7 +59,7 @@
 		C398542C268472C300D64483 /* EndStateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EndStateView.swift; sourceTree = "<group>"; };
 		C398B203267CA35D00AAD375 /* lib */ = {isa = PBXFileReference; lastKnownFileType = folder; path = lib; sourceTree = "<group>"; };
 		C39A09562682159C00F011BB /* AlertView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertView.swift; sourceTree = "<group>"; };
-		C3DBF4F82685CD470027D011 /* lib.sig */ = {isa = PBXFileReference; lastKnownFileType = text; path = lib.sig; sourceTree = SOURCE_ROOT; };
+		C3D1B550268BC7FB0021FCF8 /* lib.sig */ = {isa = PBXFileReference; lastKnownFileType = file; name = lib.sig; path = lib/lib.sig; sourceTree = SOURCE_ROOT; };
 		C3EB6C1C2688C61100D897F1 /* ShitheadenApp.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; name = ShitheadenApp.xctestplan; path = ShitheadenApp.xcodeproj/ShitheadenApp.xctestplan; sourceTree = "<group>"; };
 		C3FFA11C267CA6C3007972BA /* ShitheadenApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ShitheadenApp.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -147,8 +147,8 @@
 			isa = PBXGroup;
 			children = (
 				C398542B268380C600D64483 /* Info.plist */,
-				C3DBF4F82685CD470027D011 /* lib.sig */,
 				C398542926837F8200D64483 /* card.ttf */,
+				C3D1B550268BC7FB0021FCF8 /* lib.sig */,
 				C303CC4A2680B27700201FEF /* Menu */,
 				C303CC472680B22D00201FEF /* Game */,
 				C3FFA11C267CA6C3007972BA /* ShitheadenApp.entitlements */,
@@ -252,7 +252,7 @@
 				C3812A5D267C816500397E65 /* Preview Assets.xcassets in Resources */,
 				C3812A5A267C816500397E65 /* Assets.xcassets in Resources */,
 				C398542A26837F8200D64483 /* card.ttf in Resources */,
-				C3DBF4F92685CD470027D011 /* lib.sig in Resources */,
+				C3D1B551268BC7FC0021FCF8 /* lib.sig in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -274,7 +274,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# Type a script or drag a script file from your workspace to insert its path.\ncd lib && find Sources/ShitheadenRuntime Sources/ShitheadenShared -type f -exec shasum -a 256 {} \\; | sort -k 2 | shasum -a 256 > ../lib.sig\n";
+			shellScript = "# Type a script or drag a script file from your workspace to insert its path.\ncd lib && find Sources/ShitheadenRuntime Sources/ShitheadenShared -type f -exec shasum -a 256 {} \\; | sort -k 2 | shasum -a 256 > lib.sig\n";
 		};
 		C3DBF4FE2686550D0027D011 /* Run Script */ = {
 			isa = PBXShellScriptBuildPhase;

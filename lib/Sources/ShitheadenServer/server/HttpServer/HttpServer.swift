@@ -68,11 +68,8 @@ final class HttpServer {
       #if DEBUG
         try await WriteSnapshotToDisk.write(snapshot: snapshot)
       #else
-        if try await Signature.getSignature() == snapshot.signature {
           try await WriteSnapshotToDisk.write(snapshot: snapshot)
-        } else {
-          throw NSError(domain: "Signature is not recognized", code: 0, userInfo: nil)
-        }
+
       #endif
       return "ojoo!"
     }

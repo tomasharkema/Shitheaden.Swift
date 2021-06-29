@@ -11,9 +11,11 @@ import ShitheadenShared
 
 class WriteSnapshotToDisk {
   static func write(snapshot: EndGameSnapshot) async throws {
+let isCorrectlySigned = try await Signature.getSignature() == snapshot.signature
+
     let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
       .appendingPathComponent(
-        "game-\(snapshot.gameId)-\(Int(snapshot.snapshot.beginDate))-\(snapshot.signature)-server.json"
+        "\(isCorrectlySigned ? "UNSIGNED-" : "")game-\(snapshot.gameId)-\(Int(snapshot.snapshot.beginDate))-\(snapshot.signature)-server.json"
       )
 
     let data = try JSONEncoder().encode(snapshot)

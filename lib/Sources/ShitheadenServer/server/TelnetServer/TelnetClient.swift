@@ -46,7 +46,7 @@ class TelnetClient: Client {
   }
 
   func start() async throws {
-    await send(string: """
+    await send(string: CLI.clear() + """
     Welkom bij shitheaden!!
 
     Typ het volgende om te beginnen:
@@ -188,12 +188,10 @@ class TelnetClient: Client {
       ))
 
     case .requestRestart:
-      await send(string: ANSIEscapeCode.Erase
-        .eraseInDisplay(.entireScreen) +
+      await send(string: CLI.clear() +
         "Wil je nog een keer spelen? Typ start voor nog een potje, quit om te stoppen...")
     case .waitForRestart:
-      await send(string: ANSIEscapeCode.Erase
-        .eraseInDisplay(.entireScreen) +
+      await send(string: CLI.clear() +
         "Wacht tot de host nog een potje start...of typ quit om te stoppen!")
 
     case .quit:
