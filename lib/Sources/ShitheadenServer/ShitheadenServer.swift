@@ -17,6 +17,8 @@ enum ShitheadenServer {
     httpServer = async {
       let httpServer = HttpServer(games: games)
       try await httpServer.start(group: group)
+      telnetServer.cancel()
+      sshServer.cancel()
     }
     telnetServer = async {
       let server = TelnetServer(games: games)
@@ -39,5 +41,6 @@ enum ShitheadenServer {
     try await httpServer.get()
     try await telnetServer.get()
     try await sshServer.get()
+    exit(0)
   }
 }

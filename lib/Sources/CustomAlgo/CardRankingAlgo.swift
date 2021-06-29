@@ -13,9 +13,10 @@ public actor CardRankingAlgo: GameAi {
 
   public func render(snapshot _: GameSnapshot) async throws {}
 
-  public func beginMove(request: TurnRequest,
-                        snapshot _: GameSnapshot) async -> (Card, Card, Card)
-  {
+  public func beginMove(
+    request: TurnRequest,
+    snapshot _: GameSnapshot
+  ) async -> (Card, Card, Card) {
     let putOnTable = request.handCards.unobscure().map {
       ($0, $0.number.importanceScore)
     }.sorted {
@@ -29,7 +30,9 @@ public actor CardRankingAlgo: GameAi {
     )
   }
 
-  public func move(request: TurnRequest, snapshot _: GameSnapshot) async -> Turn {
+  public func move(
+    request: TurnRequest, snapshot _: GameSnapshot
+  ) async -> Turn {
     passes += 1
 
     switch request.phase {

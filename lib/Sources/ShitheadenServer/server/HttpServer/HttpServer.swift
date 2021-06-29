@@ -26,8 +26,7 @@ private let websocketResponse = """
 
     <div id="websocket-stream"></div>
     <script>
-console.log(location);
-        var wsconnection = new WebSocket(location.href.replace("http", "ws") + "/websocket");
+        var wsconnection = new WebSocket(location.origin.replace("http", "ws") + "/websocket");
 const reader = new FileReader();
         wsconnection.onmessage = async function (msg) {
             var element = document.createElement("p");

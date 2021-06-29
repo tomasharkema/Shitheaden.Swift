@@ -31,7 +31,7 @@ public actor CardRankingAlgoWithUnfairPassingAndNexPlayerAware: GameAi {
       let nextPlayer = notDonePlayers[nextIndex]
       logger.info("ownIndex: \(ownIndex) \(nextIndex) \(nextPlayer.openTableCards)")
 
-      if request.phase == .hand {
+      if request.phase == .hand, nextPlayer.handCards.isEmpty {
         switch nextPlayer.phase {
         case .tableOpen:
           let nextPlayerOpenCards = nextPlayer.openTableCards.unobscure()

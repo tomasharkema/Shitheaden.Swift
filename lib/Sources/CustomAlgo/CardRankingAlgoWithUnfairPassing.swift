@@ -22,9 +22,9 @@ public actor CardRankingAlgoWithUnfairPassing: GameAi {
   public func move(request: TurnRequest, snapshot: GameSnapshot) async -> Turn {
     let turn = await old.move(request: request, snapshot: snapshot)
 
-    if request.phase == .hand, request.deckCards.count > 3, request.tableCards.count < 6 {
+    if request.phase == .hand, request.deckCards.count > 3 {
       let playThreeOrThen = turn.playedCards.map(\.number).contains {
-        [.ten, .three].contains($0)
+        [.ten, .three, .two].contains($0)
       }
       if playThreeOrThen {
         return .pass

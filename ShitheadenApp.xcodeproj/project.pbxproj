@@ -192,10 +192,10 @@
 			buildPhases = (
 				C3DBF4FE2686550D0027D011 /* Run Script */,
 				C3DBF4FF2686601E0027D011 /* ShellScript */,
+				C3DBF4F72685CB810027D011 /* ShellScript */,
 				C3812A4E267C816400397E65 /* Sources */,
 				C3812A4F267C816400397E65 /* Frameworks */,
 				C3812A50267C816400397E65 /* Resources */,
-				C3DBF4F72685CB810027D011 /* ShellScript */,
 			);
 			buildRules = (
 			);
