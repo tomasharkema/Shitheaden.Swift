@@ -24,8 +24,8 @@ actor MultiplayerHandler {
   let code: String
   var competitors: [(UUID, Client)]
   private var gameTask: Task<GameSnapshot, Error>?
-  private let finishEvent = EventHandler<Result<GameSnapshot, Error>>()
-  public var finish: EventHandler<Result<GameSnapshot, Error>>.ReadOnly { finishEvent.readOnly }
+  private let finishEvent = EventHandler<Result<Void, Error>>()
+  public var finish: EventHandler<Result<Void, Error>>.ReadOnly { finishEvent.readOnly }
 
   init(challenger: (UUID, Client)) {
     self.challenger = challenger
@@ -33,36 +33,41 @@ actor MultiplayerHandler {
     competitors = []
   }
 
-  func start() {
-    challenger.1.quit.on { [weak self] in
+  nonisolated func start() async {
+    await challenger.1.quit.on { [weak self] in
       guard let self = self else {
         return
       }
-      let task = await self.gameTask
-      let finishEvent = self.finishEvent
-      let challenger = await self.challenger
-      await self.logger.info("onQuitRead, challenger \(challenger) \(task) \(finishEvent)")
-      await self.gameTask?.cancel()
+      self.logger.info("onQuitRead")
 
-      await self.competitors.forEach { competitor in
-        async {
-          try await competitor.1.send(.quit)
-        }
-      }
-    }
-    competitors.forEach { competitor in
-      competitor.1.quit.on {
-        self.logger.info("onQuitRead, \(competitor) \(self.gameTask) \(self.finishEvent)")
-        self.gameTask?.cancel()
-        let challenger = await self.challenger
-        async {
-          try await challenger.1.send(.quit)
-        }
-        self.competitors.filter { $0.0 != competitor.0 }.forEach { competitor in
-          async {
+      asyncDetached {
+        await self.competitors.forEach { competitor in
+          asyncDetached {
             try await competitor.1.send(.quit)
           }
         }
+      }
+
+      self.finishEvent.emit(.success(()))
+      await self.gameTask?.cancel()
+    }
+    await competitors.forEach { competitor in
+      competitor.1.quit.on { [weak self] in
+        guard let self = self else {
+          return
+        }
+        asyncDetached {
+          let challenger = await self.challenger
+          try await challenger.1.send(.quit)
+          await self.competitors.filter { $0.0 != competitor.0 }.forEach { competitor in
+            asyncDetached {
+              try await competitor.1.send(.quit)
+            }
+          }
+        }
+
+        self.finishEvent.emit(.success(()))
+        await self.gameTask?.cancel()
       }
     }
   }
@@ -97,24 +102,46 @@ actor MultiplayerHandler {
       return try await waitForStart()
     }
 
+      try await startGame()
+  }
+
+    nonisolated func startGame() async throws {
     try await send(.start)
 
     let game = try await startMultiplayerGame()
-    logger.info("start multiplayer game \(game)")
+
+    logger.info("RESTART?")
+
+    try await challenger.1.send(.requestRestart)
+
+      await competitors.forEach { competitor in
+        async {
+         try await competitor.1.send(.waitForRestart)
+        }
+      }
+
+      let readEvent = try await challenger.1.data.once()
+      guard case let .multiplayerRequest(read) = readEvent, let string = read.string,
+            string.contains("start")
+      else {
+        return try await waitForStart()
+      }
+
+      try await startGame()
   }
 
-  nonisolated func finished() async throws -> Result<GameSnapshot, Error> {
+  nonisolated func finished() async throws -> Result<Void, Error> {
     try await finishEvent.once()
   }
 
-  private func startMultiplayerGame() async throws -> GameSnapshot {
-    _ = challenger.1.quit.on {
+  nonisolated private func startMultiplayerGame() async throws -> GameSnapshot {
+    _ = await challenger.1.quit.on {
       do {
         try await self.send(.quit)
       } catch {}
     }
 
-    for player in competitors {
+    for player in await competitors {
       _ = player.1.quit.on {
         do {
           try await self.send(.quit)
@@ -122,7 +149,7 @@ actor MultiplayerHandler {
       }
     }
 
-    let initiatorAi = UserInputAIJson(id: challenger.0) { request, error in
+    let initiatorAi = await UserInputAIJson(id: challenger.0) { request, error in
       if let error = error {
         try await self.challenger.1
           .send(.multiplayerEvent(multiplayerEvent: .error(error: error)))
@@ -135,14 +162,14 @@ actor MultiplayerHandler {
         .send(.multiplayerEvent(multiplayerEvent: .gameSnapshot(snapshot: game)))
     }
 
-    let initiator = Player(
+    let initiator = await Player(
       id: challenger.0,
       name: String(challenger.0.uuidString.prefix(5).prefix(5)),
       position: .noord,
       ai: initiatorAi
     )
 
-    let joiners = competitors.prefix(3).enumerated().map { index, player in
+    let joiners = await competitors.prefix(3).enumerated().map { index, player in
       Player(
         id: player.0,
         name: String(player.0.uuidString.prefix(5)),
@@ -169,25 +196,28 @@ actor MultiplayerHandler {
         }
       }
     )
-    let gameTask: Task<GameSnapshot, Error> = async {
+    let gameTask: Task<GameSnapshot, Error> = async {try await withTaskCancellationHandler(operation: {
       do {
         let result = try await game.startGame()
-        finishEvent.emit(.success(result))
         return result
       } catch {
+        self.logger.error("ERROR: \(error)")
+        if error is CancellationError {
+          finishEvent.emit(.success(()))
+          throw error
+        }
         finishEvent.emit(.failure(error))
         throw error
       }
-    }
-
-    self.gameTask = gameTask
-
-    return try await withTaskCancellationHandler(operation: {
-      try await gameTask.get()
     }, onCancel: {
-      self.logger.info("CANCEL!")
-      assertionFailure("SHOULD BEHANDLED")
-//      promise.resolve()
-    })
+      finishEvent.emit(.success(()))
+    })}
+
+   await setGameTask(gameTask)
+    return try await gameTask.get()
+  }
+
+  private func setGameTask(_ gameTask: Task<GameSnapshot, Error>) {
+    self.gameTask = gameTask
   }
 }

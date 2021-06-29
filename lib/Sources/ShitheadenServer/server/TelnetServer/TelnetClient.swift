@@ -34,9 +34,6 @@ class TelnetClient: Client {
     self.quit = quit
     self.games = games
     self.data = data.map { input in
-      if input.contains("quit") {
-        return .quit
-      }
       let inputs = input.split(separator: ",").map {
         Int($0.trimmingCharacters(in: .whitespacesAndNewlines))
       }
@@ -53,15 +50,15 @@ class TelnetClient: Client {
     Welkom bij shitheaden!!
 
     Typ het volgende om te beginnen:
-    join          Join een online game
     single        Start een single game
+    join          Join een online game
     multiplayer   Start een multiplayer game
     """)
     guard let choice: String = try await data.once().getMultiplayerRequest().string
     else {
       return try await start()
     }
-
+    do {
     if choice.hasPrefix("j") {
       // join
       try await joinGame()
@@ -73,6 +70,12 @@ class TelnetClient: Client {
       // muliplayer
       try await startMultiplayer()
     }
+
+  } catch {
+
+    logger.info("Error: \(error)")
+    return try await start()
+  }
 
     return try await start()
   }
@@ -105,6 +108,7 @@ class TelnetClient: Client {
       let id = UUID()
       try await game.join(id: id, client: self)
       try await game.finished()
+      
       return try await start()
     } else {
       await send(string: """
@@ -140,7 +144,7 @@ class TelnetClient: Client {
       }
 
     case let .multiplayerEvent(.error(error)):
-      await send(string: await Renderer.error(error: error))
+      await send(string: Renderer.error(error: error))
 
     case let .multiplayerEvent(.gameSnapshot(snapshot)):
       await send(string: await Renderer.render(game: snapshot))
@@ -183,6 +187,11 @@ class TelnetClient: Client {
         row: RenderPosition.input.yAxis + 2,
         column: 0
       ))
+
+    case .requestRestart:
+      await send(string: ANSIEscapeCode.Erase.eraseInDisplay(.entireScreen) + "Wil je nog een keer spelen? Typ start voor nog een potje, quit om te stoppen...")
+    case .waitForRestart:
+      await send(string: ANSIEscapeCode.Erase.eraseInDisplay(.entireScreen) + "Wacht tot de host nog een potje start...of typ quit om te stoppen!")
 
     case .quit:
       logger.info("quit")

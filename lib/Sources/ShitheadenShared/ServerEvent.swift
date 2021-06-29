@@ -32,6 +32,8 @@ public enum ServerEvent: Equatable, Codable {
   case joined(numberOfPlayers: Int)
   case codeCreate(code: String)
   case signatureCheck(Bool)
+  case requestRestart
+  case waitForRestart
 
   case start
   case waiting

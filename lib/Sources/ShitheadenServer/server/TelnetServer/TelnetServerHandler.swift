@@ -61,12 +61,15 @@ final class TelnetServerHandler: ChannelInboundHandler {
       return
     }
 
+    if buffer.contains("quit") {
+      quit.emit(())
+    }
+
     self.data.emit(buffer)
     buffer = ""
   }
 
   public func channelReadComplete(context: ChannelHandlerContext) {
-    logger.info("FLUSH")
     context.flush()
   }
 

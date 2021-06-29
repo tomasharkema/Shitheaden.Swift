@@ -30,7 +30,7 @@ COPY lib/Package.swift ./Package.swift
 COPY lib/Sources/DependenciesTarget ./Sources/DependenciesTarget
 COPY lib/Sources/AppDependencies ./Sources/AppDependencies
 
-RUN swift build --target DependenciesTarget -c release
+RUN swift build --target DependenciesTarget -c release -Xswiftc -g
 
 RUN rm ./Sources/CustomAlgo/main.swift && \
  rm ./Sources/ShitheadenRuntime/main.swift && \
@@ -40,10 +40,10 @@ RUN rm ./Sources/CustomAlgo/main.swift && \
 
 COPY lib/Sources ./Sources
 
-RUN swift build --product ShitheadenRuntime
+RUN swift build --product ShitheadenRuntime -Xswiftc -g
 
 RUN rm ./Tests/ShitheadenRuntimeTests/main.swift && rm ./Tests/ShitheadenSharedTests/main.swift && rm ./Tests/CustomAlgoTests/main.swift && rm ./Sources/ShitheadenServer/main.swift 
 
 COPY lib/Tests ./Tests
 
-RUN swift test --parallel
+RUN swift test --parallel -Xswiftc -g

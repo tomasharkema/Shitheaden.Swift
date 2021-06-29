@@ -32,7 +32,7 @@ COPY lib/Package.swift ./Package.swift
 COPY lib/Sources/DependenciesTarget ./Sources/DependenciesTarget
 COPY lib/Sources/AppDependencies ./Sources/AppDependencies
 
-RUN swift build --target DependenciesTarget -c release
+RUN swift build --target DependenciesTarget -c release -Xswiftc -g
 
 RUN rm ./Sources/CustomAlgo/main.swift && \
     rm ./Sources/ShitheadenRuntime/main.swift && \
@@ -47,7 +47,7 @@ COPY lib/Tests ./Tests
 
 RUN find Sources/ShitheadenRuntime Sources/ShitheadenShared -type f -exec shasum -a 256 {} \; | sort -k 2 | shasum -a 256 > lib.sig
 
-RUN swift build -c release
+RUN swift build -c release  -Xswiftc -g
 
 FROM tomasharkema7/swift-5.5:1804-snapshot
 

@@ -1,6 +1,7 @@
 import ShitheadenRuntime
 import Signals
 import Vapor
+import Backtrace
 
 var httpServer: Task.Handle<Void, Error>!
 var telnetServer: Task.Handle<Void, Error>!
@@ -11,6 +12,7 @@ enum ShitheadenServer {
   static let logger = Logger(label: "ShitheadenServer")
 
   static func main() async throws {
+    Backtrace.install()
     let group = MultiThreadedEventLoopGroup(numberOfThreads: max(4, System.coreCount / 2))
     let games = AtomicDictionary<String, MultiplayerHandler>()
 

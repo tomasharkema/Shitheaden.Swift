@@ -523,33 +523,34 @@ public actor Game {
     playersOnTurn.remove(player.id)
   }
 
-  func beginRound() async throws {
+  nonisolated func beginRound() async throws {
     try Task.checkCancellation()
-//    return await withTaskGroup(of: Void.self) { g in
+    return await withTaskGroup(of: Void.self) { group in
     for (index, player) in await players.enumerated() {
-//        g.async {
-      do {
-        await startPlayerOnSet(player: player)
-
-        let newPlayer = try await commitBeginTurn(
-          playerIndex: index,
-          player: player,
-          numberCalled: 0,
-          previousError: nil
-        )
-        removePlayerOnSet(player: player)
-        await updatePlayer(player: newPlayer)
+      group.async { [weak self] in
+        guard let self = self else { return }
         do {
-          try await checkIntegrity()
-          try await sendRender(error: nil)
+          await self.startPlayerOnSet(player: player)
+
+          let newPlayer = try await self.commitBeginTurn(
+            playerIndex: index,
+            player: player,
+            numberCalled: 0,
+            previousError: nil
+          )
+          await self.removePlayerOnSet(player: player)
+          await self.updatePlayer(player: newPlayer)
+          do {
+            try await self.checkIntegrity()
+            try await self.sendRender(error: nil)
+          } catch {
+            assertionFailure("\(error)")
+          }
         } catch {
-          assertionFailure("\(error)")
+          self.logger.error("Error: \(error)")
         }
-      } catch {
-        assertionFailure("\(error)")
+        }
       }
-//        }
-//      }
     }
   }
 
