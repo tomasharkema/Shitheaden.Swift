@@ -100,7 +100,7 @@ struct GameView: View {
               game.select(
                 $0,
                 selected: $1,
-                deleteNotSameNumber: game.moveHandler != nil
+                deleteNotSameNumber: !game.gameState.isBeginMove
               )
             }, play: {
               game.play()

@@ -22,4 +22,5 @@ struct GameState: Equatable {
   var canPass = false
   var endState: EndState?
   var explain: String?
+  var isBeginMove = false
 }

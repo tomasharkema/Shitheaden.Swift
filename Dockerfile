@@ -3,7 +3,7 @@ FROM tomasharkema7/swift-5.5:1804-snapshot as builder
 WORKDIR /app
 
 RUN apt-get update -y && \
-    apt-get install -y git curl libatomic1 libxml2 netcat-openbsd lsof perl && \
+    apt-get install -y git curl libatomic1 libxml2 netcat-openbsd lsof perl libssl-dev && \
     rm -rf /var/lib/apt/lists/*
 
 # RUN swift build --product NIOSSH
@@ -32,7 +32,7 @@ COPY lib/Package.swift ./Package.swift
 COPY lib/Sources/DependenciesTarget ./Sources/DependenciesTarget
 COPY lib/Sources/AppDependencies ./Sources/AppDependencies
 
-RUN swift build --target DependenciesTarget -v -c release
+RUN swift build --target DependenciesTarget -c release
 
 RUN rm ./Sources/CustomAlgo/main.swift && \
     rm ./Sources/ShitheadenRuntime/main.swift && \
@@ -45,9 +45,9 @@ RUN rm ./Sources/CustomAlgo/main.swift && \
 COPY lib/Sources ./Sources
 COPY lib/Tests ./Tests
 
-RUN find Sources/ShitheadenRuntime Sources/ShitheadenShared -type f -exec shasum -a 256 {} \; | sort -k 2 | shasum -a 256 > lib.sig
+RUN find Sources/ShitheadenRuntime Sources/ShitheadenShared Sources/ShitheadenServer -type f -exec shasum -a 256 {} \; | sort -k 2 | shasum -a 256 > lib.sig
 
-RUN swift build -v -c release
+RUN swift build -c release --enable-test-discovery -Xswiftc -g
 
 FROM tomasharkema7/swift-5.5:1804-snapshot
 

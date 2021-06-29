@@ -48,7 +48,6 @@ let package = Package(
       url: "https://github.com/tomasharkema/swift-argument-parser.git",
       branch: "swift-5.5-async"
     ),
-//    .package(url: "https://github.com/apple/swift-nio", from: "2.29.0"),
     .package(url: "https://github.com/apple/swift-nio-ssh", from: "0.3.0"),
     .package(url: "https://github.com/flintprocessor/ANSIEscapeCode", branch: "master"),
     .package(url: "https://github.com/apple/swift-log", from: "1.4.2"),
@@ -62,20 +61,8 @@ let package = Package(
       dependencies: [
         .target(name: "ShitheadenRuntime"),
         .target(name: "ShitheadenCLIRenderer"),
-//        .target(name: "ShitheadenServer"),
-//        .target(name: "CustomAlgo"),
+        .target(name: "CustomAlgo"),
         .product(name: "ArgumentParser", package: "swift-argument-parser"),
-//        .product(name: "ANSIEscapeCode", package: "ANSIEscapeCode"),
-//        .product(name: "NIOSSH", package: "swift-nio-ssh"),
-//        .product(name: "NIO", package: "swift-nio"),
-//        .product(name: "NIOHTTP1", package: "swift-nio"),
-//        .product(name: "NIOWebSocket", package: "swift-nio"),
-//        .product(name: "Logging", package: "swift-log"),
-//        .product(
-//          name: "LoggingOSLog",
-//          package: "swift-log-oslog",
-//          condition: .when(platforms: [.iOS, .macOS, .macCatalyst, .tvOS, .watchOS])
-//        ),
       ],
       path: "./Sources/ShitheadenCLI",
       swiftSettings: [
@@ -86,6 +73,7 @@ let package = Package(
           "-disable-availability-checking",
         ]),
         .define("DEBUG", .when(configuration: .debug)),
+          .unsafeFlags(["-cross-module-optimization"], .when(configuration: .release))
       ]
     ),
     .executableTarget(
@@ -103,7 +91,10 @@ let package = Package(
         "-Xfrontend",
         "-disable-availability-checking",
       ]),
-      .define("DEBUG", .when(configuration: .debug))]
+      .define("DEBUG", .when(configuration: .debug)),
+          .unsafeFlags(["-cross-module-optimization"], .when(configuration: .release))
+
+      ]
     ),
     .target(
       name: "DependenciesTarget",
@@ -155,34 +146,6 @@ let package = Package(
         .define("DEBUG", .when(configuration: .debug)),
       ]
     ),
-    .testTarget(
-      name: "ShitheadenRuntimeTests",
-      dependencies: [
-        "ShitheadenRuntime",
-        "CustomAlgo",
-      ],
-      swiftSettings: [.unsafeFlags([
-        "-Xfrontend",
-        "-enable-experimental-concurrency",
-        "-Xfrontend", "-disable-availability-checking",
-      ]),
-      .define("DEBUG", .when(configuration: .debug)),
-      .define("TESTING")]
-    ),
-    .testTarget(
-      name: "ShitheadenSharedTests",
-      dependencies: [
-        "ShitheadenRuntime",
-        "CustomAlgo",
-      ],
-      swiftSettings: [.unsafeFlags([
-        "-Xfrontend",
-        "-enable-experimental-concurrency",
-        "-Xfrontend", "-disable-availability-checking",
-      ]),
-      .define("DEBUG", .when(configuration: .debug)),
-      .define("TESTING")]
-    ),
     .target(
       name: "ShitheadenShared",
       dependencies: [
@@ -210,6 +173,34 @@ let package = Package(
           "-Xfrontend", "-disable-availability-checking",
         ]),
       ]
+    ),
+    .testTarget(
+      name: "ShitheadenRuntimeTests",
+      dependencies: [
+        "ShitheadenRuntime",
+        "CustomAlgo",
+      ],
+      swiftSettings: [.unsafeFlags([
+        "-Xfrontend",
+        "-enable-experimental-concurrency",
+        "-Xfrontend", "-disable-availability-checking",
+      ]),
+                      .define("DEBUG", .when(configuration: .debug)),
+                      .define("TESTING")]
+    ),
+    .testTarget(
+      name: "ShitheadenSharedTests",
+      dependencies: [
+        "ShitheadenRuntime",
+        "CustomAlgo",
+      ],
+      swiftSettings: [.unsafeFlags([
+        "-Xfrontend",
+        "-enable-experimental-concurrency",
+        "-Xfrontend", "-disable-availability-checking",
+      ]),
+                      .define("DEBUG", .when(configuration: .debug)),
+                      .define("TESTING")]
     ),
     .testTarget(
       name: "CustomAlgoTests",

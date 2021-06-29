@@ -11,7 +11,7 @@ import Logging
 import ShitheadenShared
 
 // swiftlint:disable:next type_body_length
-public final actor Game {
+public actor Game {
   private let logger = Logger(label: "runtime.Game")
 
   let beginDate = Date()

@@ -24,8 +24,12 @@ final class GameContainer: ObservableObject {
 
   private var contestants: Int?
 
-  private(set) var beginMoveHandler: (((Card, Card, Card)) async throws -> Void)?
-  private(set) var moveHandler: ((Turn) async throws -> Void)?
+//  private(set) var beginMoveHandler: (((Card, Card, Card)) async throws -> Void)?
+//  private(set) var moveHandler: ((Turn) async throws -> Void)?
+
+  private let requestTurn = EventHandler<Void>()
+  private let beginMoveHandler = EventHandler<(Card, Card, Card)>()
+  private let moveHandler = EventHandler<Turn>()
 
   func reset() async {
     appInput = nil
@@ -60,21 +64,32 @@ final class GameContainer: ObservableObject {
 
       case .action(.requestBeginTurn):
         gameState.canPass = false
+        gameState.isBeginMove = true
 
-        moveHandler = nil
-        beginMoveHandler = {
-          self.logger.debug("\(String(describing: $0))")
-          try await client.write(.multiplayerRequest(.concreteCards([$0.0, $0.1, $0.2])))
+
+        beginMoveHandler.once { cards in
+          async {
+                    self.logger.debug("\(String(describing: cards))")
+                    try await client.write(.multiplayerRequest(.concreteCards([cards.0, cards.1, cards.2])))
+          }
         }
 
       case .action(action: .requestNormalTurn):
         gameState.canPass = true
+        gameState.isBeginMove = false
 
-        beginMoveHandler = nil
-        moveHandler = {
-          self.logger.debug("\(String(describing: $0))")
-          try await client.write(.multiplayerRequest(.concreteTurn($0)))
+        moveHandler.once { turn in
+          async {
+                    self.logger.debug("\(String(describing: turn))")
+                    try await client.write(.multiplayerRequest(.concreteTurn(turn)))
+          }
         }
+
+//        beginMoveHandler = nil
+//        moveHandler = {
+//          self.logger.debug("\(String(describing: $0))")
+//          try await client.write(.multiplayerRequest(.concreteTurn($0)))
+//        }
 
       case let .string(string):
         logger.debug("\(string)")
@@ -131,8 +146,6 @@ final class GameContainer: ObservableObject {
       game = nil
       gameTask?.cancel()
       gameTask = nil
-      beginMoveHandler = nil
-      moveHandler = nil
     }
 
     guard appInput == nil, game == nil else {
@@ -145,15 +158,26 @@ final class GameContainer: ObservableObject {
         await MainActor.run {
           var newState = self.gameState
           newState.canPass = false
+          newState.isBeginMove = true
           self.gameState = newState
-          self.beginMoveHandler = handler
+//          self.beginMoveHandler = handler
+          self.beginMoveHandler.once { cards in
+            async {
+            await handler(cards)
+            }
+          }
         }
       }, moveHandler: { handler in
         await MainActor.run {
           var newState = self.gameState
           newState.canPass = true
+          newState.isBeginMove = false
           self.gameState = newState
-          self.moveHandler = handler
+          self.moveHandler.once { turn in
+            async {
+              await handler(turn)
+            }
+          }
         }
       }, errorHandler: { error in
         await MainActor.run {
@@ -220,28 +244,27 @@ final class GameContainer: ObservableObject {
 
   func play() {
     async {
-      if let beginMoveHandler = beginMoveHandler {
+      if gameState.isBeginMove {
         guard selectedCards.count == 3 else {
           self.gameState.error = "Select drie kaarten!"
           return
         }
         self.gameState.error = nil
-        try await beginMoveHandler((
+        beginMoveHandler.emit((
           selectedCards.first!.card!,
           selectedCards.dropFirst().first!.card!,
           selectedCards.dropFirst().dropFirst().first!.card!
         ))
-        self.beginMoveHandler = nil
-      } else if let moveHandler = moveHandler {
+
+      } else {
         self.gameState.error = nil
         if selectedCards.count > 0 {
-          try await moveHandler(.play(Set(selectedCards.map { $0.card! })))
+
+
+          moveHandler.emit(.play(Set(selectedCards.map { $0.card! })))
         } else {
-          try await moveHandler(.pass)
+          moveHandler.emit(.pass)
         }
-        self.moveHandler = nil
-      } else {
-        return
       }
       selectedCards = []
     }
@@ -252,7 +275,7 @@ final class GameContainer: ObservableObject {
       return
     }
     async {
-      try await moveHandler?(.closedCardIndex(index + 1))
+      try await moveHandler.emit(.closedCardIndex(index + 1))
     }
   }
 

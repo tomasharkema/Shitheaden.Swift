@@ -22,13 +22,14 @@ public class EventHandler<T> {
     }
   }
 
-  public func once(_ handler: @escaping (T) async -> Void) {
+  public func once(initial: Bool = false, _ handler: @escaping (T) async -> Void) {
     let uuid = UUID()
     var hasSend = false
     let function = { (element: T) in
       if !hasSend {
         hasSend = true
         await handler(element)
+        async { await self.dataHandlers.insert(uuid, value: nil) }
       }
     }
     DispatchQueue.global().async {
@@ -72,8 +73,8 @@ public class EventHandler<T> {
     }
   }
 
-  public func once() async throws -> T {
-    if let last = events.last {
+  public func once(initial: Bool = true) async throws -> T {
+    if let last = events.last, initial {
       events = []
       return last
     }

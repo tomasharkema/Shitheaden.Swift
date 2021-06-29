@@ -11,8 +11,8 @@ import ArgumentParser
 import CustomAlgo
 import Foundation
 import Logging
-import NIO
 import ShitheadenRuntime
+import ShitheadenCLIRenderer
 
 private let logger = Logger(label: "cli")
 
@@ -35,10 +35,6 @@ struct Shitheaden: ParsableCommand {
         await playTournament()
         return
       }
-    #endif
-    #if os(Linux)
-      await startServer()
-      return
     #endif
 
     await interactive()

@@ -2,7 +2,9 @@ FROM tomasharkema7/swift-5.5:1804-snapshot
 
 WORKDIR /app
 
-RUN apt-get update -y && apt-get install -y git curl libatomic1 libxml2 netcat-openbsd lsof perl && rm -rf /var/lib/apt/lists/*
+RUN apt-get update -y && apt-get install -y git curl libatomic1 libxml2 netcat-openbsd lsof perl libssl-dev && rm -rf /var/lib/apt/lists/*
+
+# RUN git clone https://github.com/vapor/toolbox.git && cd toolbox && git checkout 18.3.3 && make install
 
 RUN mkdir -p ./Sources/CustomAlgo && \
     touch ./Sources/CustomAlgo/main.swift && \
@@ -28,7 +30,7 @@ COPY lib/Package.swift ./Package.swift
 COPY lib/Sources/DependenciesTarget ./Sources/DependenciesTarget
 COPY lib/Sources/AppDependencies ./Sources/AppDependencies
 
-RUN swift build --target DependenciesTarget -v
+RUN swift build --target DependenciesTarget -c release
 
 RUN rm ./Sources/CustomAlgo/main.swift && \
  rm ./Sources/ShitheadenRuntime/main.swift && \
@@ -38,10 +40,10 @@ RUN rm ./Sources/CustomAlgo/main.swift && \
 
 COPY lib/Sources ./Sources
 
-RUN swift build --product ShitheadenRuntime -v
+RUN swift build --product ShitheadenRuntime
 
-RUN rm ./Tests/ShitheadenRuntimeTests/main.swift && rm ./Tests/ShitheadenSharedTests/main.swift && rm ./Tests/CustomAlgoTests/main.swift 
+RUN rm ./Tests/ShitheadenRuntimeTests/main.swift && rm ./Tests/ShitheadenSharedTests/main.swift && rm ./Tests/CustomAlgoTests/main.swift && rm ./Sources/ShitheadenServer/main.swift 
 
 COPY lib/Tests ./Tests
 
-RUN swift test -v
+RUN swift test --parallel --filter CustomAlgoTests

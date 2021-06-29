@@ -8,7 +8,7 @@
 import Foundation
 import ShitheadenShared
 
-public final actor UserInputAIJson: GameAi {
+public actor UserInputAIJson: GameAi {
   let id: UUID
   let reader: (Action, PlayerError?) async throws -> MultiplayerRequest
   let renderHandler: (GameSnapshot) async throws -> Void

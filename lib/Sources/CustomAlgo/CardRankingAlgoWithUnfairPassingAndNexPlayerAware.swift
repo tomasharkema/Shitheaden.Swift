@@ -8,7 +8,7 @@
 import Logging
 import ShitheadenShared
 
-public final actor CardRankingAlgoWithUnfairPassingAndNexPlayerAware: GameAi {
+public actor CardRankingAlgoWithUnfairPassingAndNexPlayerAware: GameAi {
   private let logger = Logger(label: "CardRankingAlgoWithUnfairPassingAndNexPlayerAware")
   private let old = CardRankingAlgoWithUnfairPassing()
   public required init() {}

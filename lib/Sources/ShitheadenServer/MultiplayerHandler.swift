@@ -18,7 +18,7 @@ protocol Client: AnyObject {
   func send(_ event: ServerEvent) async throws
 }
 
-actor MultiplayerHandler {
+ actor MultiplayerHandler {
   private let logger = Logger(label: "cli.MultiplayerHandler")
   var challenger: (UUID, Client)
   let code: String
@@ -31,13 +31,21 @@ actor MultiplayerHandler {
     self.challenger = challenger
     code = UUID().uuidString.prefix(5).lowercased()
     competitors = []
+  }
 
-    challenger.1.quit.on {
-      self.logger
-        .info("onQuitRead, challenger \(challenger) \(self.gameTask) \(self.finishEvent)")
-      self.gameTask?.cancel()
+func start() {
 
-      self.competitors.forEach { competitor in
+    challenger.1.quit.on { [weak self] in
+      guard let self = self else {
+        return
+      }
+      let task = await self.gameTask
+      let finishEvent = self.finishEvent
+      let challenger = await self.challenger
+      await self.logger.info("onQuitRead, challenger \(challenger) \(task) \(finishEvent)")
+      await self.gameTask?.cancel()
+
+      await self.competitors.forEach { competitor in
         async {
           try await competitor.1.send(.quit)
         }
@@ -47,6 +55,7 @@ actor MultiplayerHandler {
       competitor.1.quit.on {
         self.logger.info("onQuitRead, \(competitor) \(self.gameTask) \(self.finishEvent)")
         self.gameTask?.cancel()
+        let challenger = await self.challenger
         async {
           try await challenger.1.send(.quit)
         }
@@ -78,6 +87,8 @@ actor MultiplayerHandler {
   }
 
   nonisolated func waitForStart() async throws {
+    await start()
+
     try await challenger.1.send(.codeCreate(code: code))
 
     let readEvent = try await challenger.1.data.once()
