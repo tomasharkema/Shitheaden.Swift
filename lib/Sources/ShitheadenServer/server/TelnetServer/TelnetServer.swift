@@ -23,11 +23,10 @@ class TelnetServer {
     self.games = games
   }
 
-  func start(quiesce: ServerQuiescingHelper,
+  func start(
+    quiesce: ServerQuiescingHelper,
              group: MultiThreadedEventLoopGroup) async throws -> Channel
   {
-//    let promise = channel.eventLoop.makePromise(of: Void.self)
-
     let bootstrap = ServerBootstrap(group: group)
       .serverChannelOption(ChannelOptions.backlog, value: 256)
       .serverChannelOption(ChannelOptions.socketOption(.so_reuseaddr), value: 1)

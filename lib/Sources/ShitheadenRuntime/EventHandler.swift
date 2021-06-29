@@ -119,12 +119,12 @@ public extension EventHandler {
       event.removeOnDataHandler(id: id)
     }
 
-    public func once(_ fn: @escaping (T) -> Void) {
-      event.once(fn)
+    public func once(initial: Bool = false, _ fn: @escaping (T) -> Void) {
+      event.once(initial: initial, fn)
     }
 
-    public func once() async throws -> T {
-      try await event.once()
+    public func once(initial: Bool = true) async throws -> T {
+      try await event.once(initial: initial)
     }
 
     public func on(_ fn: @escaping (T) async -> Void) -> UUID {

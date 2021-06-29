@@ -43,7 +43,7 @@ class CardRankingAlgoWithUnfairPassingAndNexPlayerAwareTests: XCTestCase {
       playersOnTurn: Set(arrayLiteral: currentPlayerId),
       requestFor: currentPlayerId,
       beginDate: Date().timeIntervalSince1970,
-      endDate: nil
+      endDate: nil, turns: nil
     )
 
     let algo = CardRankingAlgoWithUnfairPassingAndNexPlayerAware()
@@ -98,7 +98,7 @@ class CardRankingAlgoWithUnfairPassingAndNexPlayerAwareTests: XCTestCase {
       playersOnTurn: Set(arrayLiteral: currentPlayerId),
       requestFor: currentPlayerId,
       beginDate: Date().timeIntervalSince1970,
-      endDate: nil
+      endDate: nil, turns: nil
     )
 
     let algo = CardRankingAlgoWithUnfairPassingAndNexPlayerAware()

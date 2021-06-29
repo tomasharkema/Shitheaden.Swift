@@ -217,7 +217,7 @@ class TelnetClient: Client {
             await self
               .send(.multiplayerEvent(multiplayerEvent: .error(error: error)))
           }
-          return try await self.data.once().getMultiplayerRequest()
+      return try await self.data.once(initial: false).getMultiplayerRequest()
         }, renderHandler: {
           _ = await self
             .send(.multiplayerEvent(multiplayerEvent: .gameSnapshot(snapshot: $0)))
