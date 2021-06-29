@@ -13,7 +13,7 @@ class WriteSnapshotToDisk {
   static func write(snapshot: EndGameSnapshot) async throws {
     let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
       .appendingPathComponent(
-        "game-\(snapshot.gameId)-\(Int(snapshot.snapshot.beginDate.timeIntervalSince1970))-\(snapshot.signature)-server.json"
+        "game-\(snapshot.gameId)-\(Int(snapshot.snapshot.beginDate))-\(snapshot.signature)-server.json"
       )
 
     let data = try JSONEncoder().encode(snapshot)
