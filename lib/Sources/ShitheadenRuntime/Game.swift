@@ -15,8 +15,8 @@ public actor Game {
   private let logger = Logger(label: "runtime.Game")
 
   let gameId = UUID()
-  let beginDate = Date()
-  var endDate: Date?
+  let beginDate = Date().timeIntervalSince1970
+  var endDate: TimeInterval?
 
   private(set) var deck = Deck(cards: [])
   var players = [Player]()
@@ -669,7 +669,7 @@ public actor Game {
 
     try Task.checkCancellation()
     try await sendRender(error: nil, includeEndState: true)
-    endDate = Date()
+    endDate = Date().timeIntervalSince1970
 
     let endSnapshot = getSnapshot(for: nil, includeEndState: true)
 

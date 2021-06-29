@@ -188,23 +188,29 @@ final class GameContainer: ObservableObject {
         ai: appInput
       ),
       slowMode: true, endGameHandler: { snapshot in
+      async {
         do {
           let data = try JSONEncoder().encode(snapshot)
           try data
             .write(to: FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
               .appendingPathComponent(
-                "game-\(snapshot.gameId)-\(Int(snapshot.snapshot.beginDate.timeIntervalSince1970))-\(snapshot.signature).json"
+                "game-\(snapshot.gameId)-\(Int(snapshot.snapshot.beginDate))-\(snapshot.signature).json"
               ))
 
           var request = URLRequest(url: URL(string: "https://shitheaden-api.harke.ma/playedGame")!)
           request.httpMethod = "POST"
           request.addValue("application/json", forHTTPHeaderField: "content-type")
-          let task = URLSession.shared.uploadTask(with: request, from: data)
-          task.resume()
+
+          let result = try await URLSession.shared.upload(for: request, from: data, delegate: nil)
+
+          let resultString = String(data: result.0, encoding: .utf8)
+
+          self.logger.info("UPLOAD: \(result) \(resultString)")
         } catch {
           self.logger.error("Error: error")
         }
       }
+    }
     )
 
     self.game = game

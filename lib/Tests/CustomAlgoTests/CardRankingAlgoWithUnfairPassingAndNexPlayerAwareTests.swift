@@ -42,7 +42,7 @@ class CardRankingAlgoWithUnfairPassingAndNexPlayerAwareTests: XCTestCase {
       burntCards: [],
       playersOnTurn: Set(arrayLiteral: currentPlayerId),
       requestFor: currentPlayerId,
-      beginDate: Date(),
+      beginDate: Date().timeIntervalSince1970,
       endDate: nil
     )
 
@@ -97,7 +97,7 @@ class CardRankingAlgoWithUnfairPassingAndNexPlayerAwareTests: XCTestCase {
       burntCards: [],
       playersOnTurn: Set(arrayLiteral: currentPlayerId),
       requestFor: currentPlayerId,
-      beginDate: Date(),
+      beginDate: Date().timeIntervalSince1970,
       endDate: nil
     )
 

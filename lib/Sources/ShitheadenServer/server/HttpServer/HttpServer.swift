@@ -68,15 +68,11 @@ class HttpServer {
     app.on(.POST, "playedGame", body: .collect(maxSize: "10mb")) { req -> String in
       self.logger.info("\(req)")
       let snapshot = try req.content.decode(EndGameSnapshot.self)
-
-      async {
-        do {
-          try await WriteSnapshotToDisk.write(snapshot: snapshot)
-        } catch {
-          self.logger.error("Error: \(error)")
-        }
+      if try await Signature.getSignature() == snapshot.signature {
+        try await WriteSnapshotToDisk.write(snapshot: snapshot)
+      } else {
+        return "snapshot is not recognized"
       }
-
       return "ojoo!"
     }
 
