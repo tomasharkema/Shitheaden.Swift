@@ -15,6 +15,9 @@ class WriteSnapshotToDisk {
 
     let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
       .appendingPathComponent(
+        "shitheaden"
+      )
+      .appendingPathComponent(
         "\(isCorrectlySigned ? "UNSIGNED-" : "")game-\(snapshot.gameId)-\(Int(snapshot.snapshot.beginDate))-\(snapshot.signature)-server.json"
       )
 

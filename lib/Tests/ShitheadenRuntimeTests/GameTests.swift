@@ -136,7 +136,6 @@ class GameTests: XCTestCase {
   }
 
   func gameCallsEndStateHandlerTests() {
-
     let firstPlayer = Player(
       name: "first",
       position: .noord,

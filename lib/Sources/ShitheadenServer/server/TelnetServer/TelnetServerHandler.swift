@@ -22,7 +22,7 @@ final class TelnetServerHandler: ChannelInboundHandler {
   }
 
   private var game: Game?
-  private var task: Task.Handle<Void, Never>?
+  private var task: Task<Void, Never>?
 
   private let quit = EventHandler<Void>()
   private let data = EventHandler<String>()

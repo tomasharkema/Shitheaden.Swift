@@ -28,8 +28,6 @@ struct Shitheaden: ParsableCommand {
   var rounds: Int = 10
 
   mutating func run() async throws {
-    logger.error("\(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0])")
-
     #if os(macOS)
       if testAi {
         await playTournament()

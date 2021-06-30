@@ -8,6 +8,7 @@
 import Foundation
 import NIO
 import NIOSSH
+import NIOSSL
 import ShitheadenRuntime
 import ShitheadenShared
 import Vapor
@@ -21,11 +22,57 @@ final class HttpServer {
     self.games = games
   }
 
-  func start(group: MultiThreadedEventLoopGroup) async throws {
+  func start(group: MultiThreadedEventLoopGroup) async throws { // swiftlint:disable:this function_body_length
     let app = Application(.development, .shared(group))
     app.http.server.configuration.port = 3338
     app.http.server.configuration.hostname = "0.0.0.0"
     app.middleware.use(FileMiddleware(publicDirectory: "Public"))
+
+    let homePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+      .appendingPathComponent(
+        "shitheaden"
+      )
+    let certPath = homePath.appendingPathComponent("cert.pem").absoluteString
+    let keyPath = homePath.appendingPathComponent("key.pem").absoluteString
+
+    if !FileManager.default
+      .fileExists(atPath: homePath.absoluteString.replacingOccurrences(of: "file://", with: ""))
+    {
+      try FileManager.default.createDirectory(
+        at: homePath,
+        withIntermediateDirectories: true,
+        attributes: nil
+      )
+    }
+
+    if !FileManager.default
+      .fileExists(atPath: keyPath.replacingOccurrences(of: "file://", with: "")) || !FileManager
+      .default.fileExists(atPath: certPath.replacingOccurrences(of: "file://", with: ""))
+    {
+      logger.info("Create ssl cert...")
+      let task = Process()
+      task.launchPath = "/usr/bin/openssl"
+      task.arguments = [
+        "req", "-newkey", "rsa:2048", "-new", "-nodes", "-x509", "-days", "3650", "-keyout",
+        keyPath.replacingOccurrences(of: "file://", with: ""), "-out",
+        certPath.replacingOccurrences(of: "file://", with: ""),
+        "-subj", "//O=shitheaden/C=NL/CN=shitheaden.harkema.io",
+      ]
+      task.launch()
+      task.waitUntilExit()
+      logger.info("Done!")
+    }
+
+    let certs = try NIOSSLCertificate
+      .fromPEMFile(certPath.replacingOccurrences(of: "file://", with: ""))
+      .map { NIOSSLCertificateSource.certificate($0) }
+    let tls = TLSConfiguration.forServer(
+      certificateChain: certs,
+      privateKey: .file(keyPath.replacingOccurrences(of: "file://", with: ""))
+    )
+
+    app.http.server.configuration.supportVersions = [.two]
+    app.http.server.configuration.tlsConfiguration = tls
 
     app.on(.POST, "playedGame", body: .collect(maxSize: "10mb")) { req -> String in
       self.logger.info("\(req)")

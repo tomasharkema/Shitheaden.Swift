@@ -4,9 +4,9 @@ import ShitheadenRuntime
 import Signals
 import Vapor
 
-var httpServer: Task.Handle<Void, Error>!
-var telnetServer: Task.Handle<Void, Error>!
-var sshServer: Task.Handle<Void, Error>!
+var httpServer: Task<Void, Error>!
+var telnetServer: Task<Void, Error>!
+var sshServer: Task<Void, Error>!
 
 func cancel() {
   httpServer.cancel()
@@ -24,6 +24,9 @@ enum ShitheadenServer {
     do {
       let signature = try await Signature.getSignature()
       let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        .appendingPathComponent(
+          "shitheaden"
+        )
         .appendingPathComponent(
           signature
         )

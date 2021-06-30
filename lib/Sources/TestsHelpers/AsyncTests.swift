@@ -21,7 +21,7 @@ public extension XCTestCase {
       var task: Task.Handle<Void, Error>
       task = async {
         do {
-           try await handler()
+          try await handler()
         } catch {
           XCTFail("ERROR: \(error)", file: file, line: line)
         }

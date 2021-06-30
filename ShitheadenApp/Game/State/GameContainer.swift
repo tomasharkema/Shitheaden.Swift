@@ -200,6 +200,9 @@ final class GameContainer: ObservableObject {
           do {
             let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
               .appendingPathComponent(
+                "shitheaden"
+              )
+              .appendingPathComponent(
                 "game-\(snapshot.gameId)-\(Int(snapshot.snapshot.beginDate))-\(snapshot.signature).json"
               )
             let data = try JSONEncoder().encode(snapshot)

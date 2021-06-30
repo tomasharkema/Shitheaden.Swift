@@ -5,6 +5,7 @@
 //  Created by Tomas Harkema on 24/06/2021.
 //
 
+import Crypto
 import CustomAlgo
 import Foundation
 import Logging
@@ -111,10 +112,25 @@ final class SSHServer {
     }
   }
 
-  func start(quiesce: ServerQuiescingHelper,
-             group: MultiThreadedEventLoopGroup) async throws -> Channel
-  {
-    let hostKey = NIOSSHPrivateKey(ed25519Key: .init())
+  func start(
+    quiesce: ServerQuiescingHelper,
+    group: MultiThreadedEventLoopGroup
+  ) async throws -> Channel {
+    let file = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+      .appendingPathComponent(
+        "shitheaden"
+      ).appendingPathComponent("ssh.pem")
+
+    let key: Curve25519.Signing.PrivateKey
+    if let data = try? Data(contentsOf: file) {
+      key = try Curve25519.Signing.PrivateKey(rawRepresentation: data)
+    } else {
+      key = Curve25519.Signing.PrivateKey()
+      try Data(key.rawRepresentation).write(to: file)
+    }
+
+    let hostKey = NIOSSHPrivateKey(ed25519Key: key)
+
     let bootstrap = ServerBootstrap(group: group)
       .serverChannelInitializer { channel in
         channel.pipeline.addHandler(quiesce.makeServerChannelHandler(channel: channel))
