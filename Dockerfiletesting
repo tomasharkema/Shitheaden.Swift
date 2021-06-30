@@ -32,7 +32,7 @@ COPY lib/Package.swift ./Package.swift
 COPY lib/Sources/DependenciesTarget ./Sources/DependenciesTarget
 COPY lib/Sources/AppDependencies ./Sources/AppDependencies
 
-RUN swift build --target DependenciesTarget -c release -Xswiftc -g
+RUN swift build --target DependenciesTarget -Xswiftc -g
 
 RUN rm ./Sources/CustomAlgo/main.swift && \
  rm ./Sources/ShitheadenRuntime/main.swift && \

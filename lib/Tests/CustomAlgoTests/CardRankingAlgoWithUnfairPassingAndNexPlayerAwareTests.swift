@@ -51,7 +51,7 @@ class CardRankingAlgoWithUnfairPassingAndNexPlayerAwareTests: XCTestCase {
 
     let expectation = XCTestExpectation(description: "wait for game play")
 
-    asyncTest(timeout: 20) {
+    asyncTest(timeout: 120) {
       let turn = await algo.move(request: currentPlayer, snapshot: gameSnapShot)
 
       XCTAssertEqual(turn.playedCards.first?.number, .nine)
@@ -95,7 +95,7 @@ class CardRankingAlgoWithUnfairPassingAndNexPlayerAwareTests: XCTestCase {
     )
 
     let algo = CardRankingAlgoWithUnfairPassingAndNexPlayerAware()
-    asyncTest(timeout: 30) {
+    asyncTest(timeout: 120) {
       let turn = await algo.move(request: currentPlayer, snapshot: gameSnapShot)
 
       XCTAssertEqual(turn.playedCards.first?.number, .nine)

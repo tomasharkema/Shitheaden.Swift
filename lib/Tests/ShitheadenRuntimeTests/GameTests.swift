@@ -36,7 +36,7 @@ class GameTests: XCTestCase {
       ),
     ], slowMode: false)
 
-    asyncTest(timeout: 20) {
+    asyncTest(timeout: 120) {
       let snapshot = try await game.startGame()
       XCTAssertNotNil(snapshot.snapshot.winner)
     }
@@ -56,7 +56,7 @@ class GameTests: XCTestCase {
       ),
     ], slowMode: false)
 
-    asyncTest(timeout: 20) {
+    asyncTest(timeout: 120) {
       let snapshot = try await game.startGame()
       XCTAssertNotNil(snapshot.snapshot.winner)
     }
@@ -127,7 +127,7 @@ class GameTests: XCTestCase {
 
     let game = Game(players: [firstPlayer, secondPlayer], slowMode: false)
 
-    asyncTest(timeout: 20) {
+    asyncTest(timeout: 120) {
       await game.privateSetBurnt(deck.cards)
       _ = try await game.turn()
       let snapshot = await game.getSnapshot(for: nil, includeEndState: true)
