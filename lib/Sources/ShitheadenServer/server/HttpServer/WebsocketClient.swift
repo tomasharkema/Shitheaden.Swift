@@ -159,7 +159,7 @@ class WebsocketClient: Client {
     let pair = MultiplayerHandler(challenger: (id, self))
     await games.insert(pair.code, value: pair)
 
-    try await pair.waitForStart()
+    try await pair.createGame()
   }
 
   func send(_ event: ServerEvent) async throws {

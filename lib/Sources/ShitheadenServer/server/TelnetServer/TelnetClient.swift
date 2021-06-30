@@ -86,7 +86,7 @@ class TelnetClient: Client {
     )
     await games.insert(pair.code, value: pair)
 
-    try await pair.waitForStart()
+    try await pair.createGame()
   }
 
   private func joinGame() async throws {

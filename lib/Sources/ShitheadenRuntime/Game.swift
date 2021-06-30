@@ -176,7 +176,7 @@ public actor Game {
         deck.draw()!,
       ]
 
-      players[index].sortCards()
+//      players[index].sortCards()
       players[index].closedTableCards = [deck.draw()!, deck.draw()!, deck.draw()!]
     }
   }
@@ -191,7 +191,8 @@ public actor Game {
 
     try Task.checkCancellation()
 
-    player.sortCards()
+    player.sortCardsHandImportance()
+    updatePlayer(player: player)
 
     let req = TurnRequest(
       id: player.id, name: player.name,
@@ -277,7 +278,8 @@ public actor Game {
       return (player, nil)
     }
 
-    player.sortCards()
+    player.sortCardsHandImportance()
+    updatePlayer(player: player)
 
     let req = TurnRequest(
       id: player.id, name: player.name,
@@ -475,7 +477,7 @@ public actor Game {
         try await sendRender(error: previousError)
         await playDelayIfNeeded(multiplier: 2)
 
-        burnt.append(contentsOf: table)
+        burnt += table
         table = []
         try await sendRender(error: previousError)
         if rules.contains(.againAfterGoodBehavior), !player.done, !done {
@@ -555,7 +557,7 @@ public actor Game {
 
   private func checkStalledCard(_ player: UUID) async throws {
     if let lastFirstCardAndPlayerUUID = lastFirstCardAndPlayerUUID,
-       lastFirstCardAndPlayerUUID.0 == table,
+       lastFirstCardAndPlayerUUID.0.containsSameElements(as: table),
        lastFirstCardAndPlayerUUID.1 == player
     {
       try await sendRender(error: nil)

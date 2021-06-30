@@ -25,31 +25,32 @@ public struct Card: Equatable, Hashable, Codable {
     }
   }
 
-  //  public var afters: [Self] {
-//    Symbol.allCases.flatMap { symbol in
-//      self.number.afters.map {
-//        Card(id: UUID(), symbol: symbol, number: $0)
-//      }
-//    }
-  //  }
-
-  public func apply(_ other: Self) -> Bool {
+  @inlinable public func apply(_ other: Self) -> Bool {
     number.afters.contains(other.number)
   }
-
-  //  public static func ==(lhs: Card, rhs :Card) -> Bool {
-//    return lhs.symbol == rhs.symbol && lhs.number == rhs.number
-  //  }
 }
 
 public extension Array where Element == Card {
-  func sortNumbers() -> [Card] {
-    sorted {
-      $0 < $1
+//  @inlinable mutating func sortNumbers() {
+//    sort {
+//      $0 < $1
+//    }
+//  }
+
+  @inlinable mutating func sortCardsHandImportance() {
+    sort {
+      $0.number.handImportanceScore < $1.number.handImportanceScore
+    }
+  }
+  
+  @inlinable func sortedCardsHandImportance() -> Self {
+    return sorted {
+      $0.number.handImportanceScore < $1.number.handImportanceScore
     }
   }
 
-  func sameNumber() -> Bool {
+
+  @inlinable func sameNumber() -> Bool {
     !contains {
       $0.number != first?.number
     }
@@ -57,13 +58,26 @@ public extension Array where Element == Card {
 }
 
 public extension Card {
-  var order: Int {
+  @inlinable var order: Int {
     number.order
   }
 }
 
 extension Card: Comparable {
-  public static func < (lhs: Card, rhs: Card) -> Bool {
+  @inlinable public static func < (lhs: Card, rhs: Card) -> Bool {
     lhs.number < rhs.number
+  }
+}
+
+extension Number {
+  @inlinable var handImportanceScore: Int {
+    switch self {
+    case .ten:
+      return 1000
+    case .three, .two:
+      return 100
+    default:
+      return order
+    }
   }
 }

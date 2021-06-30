@@ -46,7 +46,7 @@ public enum Renderer {
     }
 
     let userPlayer = game.players.first { !$0.isObscured }
-    let handString = userPlayer?.handCards.unobscure().sortNumbers().enumerated()
+    let handString = userPlayer?.handCards.unobscure().sortedCardsHandImportance().enumerated()
       .map { "\($0.offset + 1)\($0.element.description)" }.joined(separator: " ")
 
     let hand = handString != nil ? RenderPosition.hand >>> "Hand: \(handString!)" : ""

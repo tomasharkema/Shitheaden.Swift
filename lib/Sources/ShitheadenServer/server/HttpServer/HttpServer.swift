@@ -85,10 +85,6 @@ final class HttpServer {
       return "ojoo!"
     }
 
-//    app.get("debug") { req in
-//      req.fileio.streamFile(at: "frontend/debug.html", mediaType: .html)
-//    }
-
     app.get("") { req in
       req.fileio.streamFile(at: "Public/index.html", mediaType: .html)
     }
@@ -135,9 +131,6 @@ final class HttpServer {
           .flatMap { sshHandler in
             let promise = channel.eventLoop.makePromise(of: Channel.self)
             sshHandler.createChannel(promise) { childChannel, _ in
-//            guard channelType == .session else {
-//              return channel.eventLoop.makeFailedFuture(SSHClientError.invalidChannelType)
-//            }
               childChannel.pipeline.addHandlers([DataToBufferCodec(), Handler(webSocket: ws)])
             }
             return promise.futureResult

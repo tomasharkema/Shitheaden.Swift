@@ -31,7 +31,7 @@ public struct Player: CustomStringConvertible, Equatable, Hashable {
     self.ai = ai
   }
 
-  var phase: Phase {
+  @inlinable var phase: Phase {
     if !handCards.isEmpty {
       return .hand
     } else if !openTableCards.isEmpty {
@@ -49,16 +49,20 @@ public struct Player: CustomStringConvertible, Equatable, Hashable {
     hasher.combine(id)
   }
 
-  public var done: Bool {
+  @inlinable public var done: Bool {
     handCards.isEmpty && openTableCards.isEmpty && closedTableCards
       .isEmpty
   }
 
-  mutating func sortCards() {
-    handCards = handCards.sortNumbers()
+//  mutating func sortCards() {
+//    handCards.sortNumbers()
+//  }
+
+  @inlinable mutating func sortCardsHandImportance() {
+    handCards.sortCardsHandImportance()
   }
 
-  public static func == (lhs: Player, rhs: Player) -> Bool {
+  @inlinable public static func == (lhs: Player, rhs: Player) -> Bool {
     lhs.handCards == rhs.handCards &&
       lhs.closedTableCards == rhs.closedTableCards &&
       lhs.openTableCards == rhs.openTableCards &&

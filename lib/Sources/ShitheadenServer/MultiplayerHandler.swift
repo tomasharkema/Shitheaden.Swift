@@ -10,6 +10,7 @@ import Logging
 import ShitheadenCLIRenderer
 import ShitheadenRuntime
 import ShitheadenShared
+import CustomAlgo
 
 protocol Client: AnyObject {
   var quit: EventHandler<Void>.ReadOnly { get }
@@ -26,6 +27,7 @@ actor MultiplayerHandler {
   private var gameTask: Task<EndGameSnapshot, Error>?
   private let finishEvent = EventHandler<Result<Void, Error>>()
   public var finish: EventHandler<Result<Void, Error>>.ReadOnly { finishEvent.readOnly }
+  public private(set) var cpus = 0
 
   init(challenger: (UUID, Client)) {
     self.challenger = challenger
@@ -87,22 +89,48 @@ actor MultiplayerHandler {
     await appendCompetitor(id: id, client: client)
 
     try await client.send(.waiting)
-    try await send(.joined(numberOfPlayers: 1 + competitors.count))
+    try await send(.joined(numberOfPlayers: 1 + competitors.count + self.cpus))
   }
 
-  nonisolated func waitForStart() async throws {
+  private func setCpus(_ newValue: Int) {
+    cpus = newValue
+  }
+
+  nonisolated func createGame() async throws {
+
     await start()
 
     try await challenger.1.send(.codeCreate(code: code))
+    try await waitForStart()
+  }
+
+  nonisolated func waitForStart() async throws {
 
     let readEvent = try await challenger.1.data.once()
-    guard case let .multiplayerRequest(read) = readEvent, let string = read.string,
-          string.contains("start")
-    else {
+    if case let .multiplayerRequest(read) = readEvent, let string = read.string,
+          string.contains("start") {
+      let currentCpus = await cpus
+      let currentCompetitors = await competitors
+      if currentCompetitors.count + currentCpus >= 1 && currentCompetitors.count + currentCpus <= 3 {
+        return try await startGame()
+      }
+    }
+
+    if case let .multiplayerRequest(read) = readEvent, let string = read.string,
+          string.contains("cpu")
+     {
+      if let int = Int(string.replacingOccurrences(of: "cpu=", with: "")) {
+        await setCpus(int)
+      } else {
+        await setCpus(cpus + 1)
+      }
+
+      try await send(.joined(numberOfPlayers: 1 + competitors.count + cpus))
+
       return try await waitForStart()
     }
 
-    try await startGame()
+    return try await waitForStart()
   }
 
   nonisolated func startGame() async throws {
@@ -189,8 +217,13 @@ actor MultiplayerHandler {
       )
     }
 
+    let competitors = await competitors
+    let cpus = await (0..<cpus).map {
+      Player(name: "CPU\($0 + 1)", position: Position.allCases[$0 + competitors.count], ai: CardRankingAlgoWithUnfairPassingAndNexPlayerAware())
+    }
+
     let game = Game(
-      players: [initiator] + joiners, slowMode: true
+      players: [initiator] + joiners + cpus, slowMode: true
     )
     let gameTask: Task<EndGameSnapshot, Error> = async {
       try await withTaskCancellationHandler(operation: {

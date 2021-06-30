@@ -17,8 +17,33 @@
     public init() {}
 
     public func start() async throws -> WebSocketClient {
-      try await WebSocketClient(task: URLSession.shared.webSocketTask(with: address))
+      try await WebSocketClient(task: URLSession.shitheaden.webSocketTask(with: address))
         .connected()
     }
   }
+
+#if DEBUG
+
+public class ShitheadenSessionDelegate: NSObject, URLSessionDelegate {
+  static let shared = ShitheadenSessionDelegate()
+
+  public func urlSession(_ session: URLSession, didReceive challenge: URLAuthenticationChallenge) async -> (URLSession.AuthChallengeDisposition, URLCredential?) {
+    if challenge.protectionSpace.host.contains("192.168") {
+      return (.useCredential, URLCredential(trust: challenge.protectionSpace.serverTrust!))
+    } else {
+      return (.performDefaultHandling, nil)
+    }
+  }
+}
+
+public extension URLSession {
+  static let shitheaden = URLSession(configuration: .default, delegate: ShitheadenSessionDelegate.shared, delegateQueue: .main)
+}
+
+#else
+public extension URLSession {
+  static let shitheaden = URLSession.shared
+}
+#endif
+
 #endif

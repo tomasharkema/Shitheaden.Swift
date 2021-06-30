@@ -45,6 +45,19 @@ public enum RenderCard: Equatable, Hashable, Codable, Comparable {
       return left.uuidString < right.uuidString
     }
   }
+
+  public func isOrderedAfter(rhs: RenderCard) -> Bool {
+    switch (self, rhs) {
+    case let (.card(left), .card(right)):
+      return left.number.handImportanceScore < right.number.handImportanceScore
+                      case (.hidden, .card):
+                        return true
+                      case (.card, .hidden):
+                        return false
+                      case let (.hidden(left), .hidden(right)):
+                        return left.uuidString < right.uuidString
+    }
+  }
 }
 
 public extension Array where Element == RenderCard {
@@ -75,6 +88,12 @@ public extension Array where Element == RenderCard {
   func sortNumbers() -> [RenderCard] {
     sorted {
       $0 < $1
+    }
+  }
+
+  func sortCardsHandImportance() -> [RenderCard] {
+    sorted {
+      $0.isOrderedAfter(rhs: $1)
     }
   }
 }

@@ -93,3 +93,4 @@ iOSInjectionProject/
 node_modules
 /lib.sig
 lib.sig
+*.pem

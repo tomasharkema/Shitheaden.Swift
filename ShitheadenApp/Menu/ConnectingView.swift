@@ -66,10 +66,11 @@ class Connecting: ObservableObject {
     }
   }
 
+  var isInitiator: Bool = false
   private func onData(_ event: ServerEvent, _ client: WebSocketClient) {
     switch event {
     case .waiting:
-      connection = .waiting(canStart: true, users: 1)
+      connection = .waiting(canStart: isInitiator, users: 1)
 
     case let .error(error: .gameNotFound(code)):
       connection = .gameNotFound
@@ -87,10 +88,12 @@ class Connecting: ObservableObject {
       logger.info("MultiplayerEvent: \(String(describing: multiplayerEvent))")
 
     case let .joined(numberOfPlayers: numberOfPlayers):
-      connection = .waiting(canStart: false, users: numberOfPlayers)
+      connection = .waiting(canStart: numberOfPlayers >= 2 && isInitiator, users: numberOfPlayers)
 
     case let .codeCreate(code: code):
+      isInitiator = true
       connection = .codeCreated(code)
+
     case .start:
       logger.info("START!")
     case .quit:
@@ -187,8 +190,15 @@ struct ConnectingView: View {
         }
 
       case let .waiting(canStart, int):
+        VStack {
         Text("\(int) waiting to start")
         if canStart {
+          Button("Add cpu!") {
+            async {
+              try await self.connection.client?
+                .write(.multiplayerRequest(.string("cpu")))
+            }
+          }.buttonStyle(.bordered)
           Button("Start!") {
             async {
               try await self.connection.client?
@@ -196,9 +206,15 @@ struct ConnectingView: View {
             }
           }.buttonStyle(.bordered)
         }
-
+        }
       case let .codeCreated(code):
         Text("Je code is \(code)... Wachten tot er mensen joinen!")
+        Button("Add cpu!") {
+          async {
+            try await self.connection.client?
+              .write(.multiplayerRequest(.string("cpu")))
+          }
+        }.buttonStyle(.bordered)
 
       case .gameNotFound:
         Button("Spel niet gevonden. Ga terug") {

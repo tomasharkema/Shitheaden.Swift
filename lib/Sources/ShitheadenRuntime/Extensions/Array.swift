@@ -27,3 +27,10 @@ extension Array {
     return enumerated().sorted(by: { shift($0.offset) < shift($1.offset) }).map(\.element)
   }
 }
+
+extension Array where Element: Comparable {
+  func containsSameElements(as other: [Element]) -> Bool {
+    return self.count == other.count && self.sorted() == other.sorted()
+  }
+}
+
