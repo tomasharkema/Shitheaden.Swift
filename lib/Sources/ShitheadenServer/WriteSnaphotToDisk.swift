@@ -11,7 +11,7 @@ import ShitheadenShared
 
 class WriteSnapshotToDisk {
   static func write(snapshot: EndGameSnapshot) async throws {
-let isCorrectlySigned = try await Signature.getSignature() == snapshot.signature
+    let isCorrectlySigned = try await Signature.getSignature() == snapshot.signature
 
     let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
       .appendingPathComponent(

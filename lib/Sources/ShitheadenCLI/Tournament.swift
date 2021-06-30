@@ -53,14 +53,14 @@
             }
             let game = Game(
               players: players,
-              slowMode: false, endGameHandler: { _ in }
+              slowMode: false
             )
 
             do {
               self.logger.notice(" START: \(gameId) \(idx) / \(self.roundsPerGame)")
               let snapshot = try await game.startGame()
               self.logger.notice(
-                " END: \(gameId) \(idx) / \(self.roundsPerGame) winner: \(snapshot.winner?.algoName ?? "")"
+                " END: \(gameId) \(idx) / \(self.roundsPerGame) winner: \(snapshot.snapshot.winner?.algoName ?? "")"
               )
               await unlock()
               return await [game.getSnapshot(for: nil, includeEndState: true)]

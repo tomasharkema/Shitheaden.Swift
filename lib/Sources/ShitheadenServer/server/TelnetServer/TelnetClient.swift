@@ -201,7 +201,7 @@ class TelnetClient: Client {
     }
   }
 
-  private func singlePlayer(contestants: Int) async throws -> GameSnapshot {
+  private func singlePlayer(contestants: Int) async throws -> EndGameSnapshot {
     let identifier = UUID()
 
     let game = Game(
@@ -217,19 +217,19 @@ class TelnetClient: Client {
             await self
               .send(.multiplayerEvent(multiplayerEvent: .error(error: error)))
           }
-      return try await self.data.once(initial: false).getMultiplayerRequest()
+          return try await self.data.once(initial: false).getMultiplayerRequest()
         }, renderHandler: {
           _ = await self
             .send(.multiplayerEvent(multiplayerEvent: .gameSnapshot(snapshot: $0)))
         })
       ),
-      slowMode: true, endGameHandler: { snapshot in
-        async {
-          try await WriteSnapshotToDisk.write(snapshot: snapshot)
-        }
-      }
+      slowMode: true
     )
 
-    return try await game.startGame()
+    let snapshot = try await game.startGame()
+    asyncDetached(priority: .background) {
+      try await WriteSnapshotToDisk.write(snapshot: snapshot)
+    }
+    return snapshot
   }
 }

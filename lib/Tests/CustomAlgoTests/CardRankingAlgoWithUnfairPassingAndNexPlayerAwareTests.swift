@@ -8,6 +8,7 @@
 @testable import CustomAlgo
 import ShitheadenRuntime
 import ShitheadenShared
+import TestsHelpers
 import XCTest
 
 class CardRankingAlgoWithUnfairPassingAndNexPlayerAwareTests: XCTestCase {
@@ -50,19 +51,11 @@ class CardRankingAlgoWithUnfairPassingAndNexPlayerAwareTests: XCTestCase {
 
     let expectation = XCTestExpectation(description: "wait for game play")
 
-    if #available(macOS 12.0, iOS 15, *) {
-      async {
-        do {
-          let turn = await algo.move(request: currentPlayer, snapshot: gameSnapShot)
+    asyncTest(timeout: 20) {
+      let turn = await algo.move(request: currentPlayer, snapshot: gameSnapShot)
 
-          XCTAssertEqual(turn.playedCards.first?.number, .nine)
-        } catch {
-          XCTFail("ERROR: \(error)")
-        }
-        expectation.fulfill()
-      }
+      XCTAssertEqual(turn.playedCards.first?.number, .nine)
     }
-    wait(for: [expectation], timeout: 120.0)
   }
 
   func testCardRankingAlgoWithUnfairPassingAndNexPlayerAwareTestsClosedCards() {
@@ -102,21 +95,10 @@ class CardRankingAlgoWithUnfairPassingAndNexPlayerAwareTests: XCTestCase {
     )
 
     let algo = CardRankingAlgoWithUnfairPassingAndNexPlayerAware()
+    asyncTest(timeout: 30) {
+      let turn = await algo.move(request: currentPlayer, snapshot: gameSnapShot)
 
-    let expectation = XCTestExpectation(description: "wait for game play")
-
-    if #available(macOS 12.0, iOS 15, *) {
-      async {
-        do {
-          let turn = await algo.move(request: currentPlayer, snapshot: gameSnapShot)
-
-          XCTAssertEqual(turn.playedCards.first?.number, .nine)
-        } catch {
-          XCTFail("ERROR: \(error)")
-        }
-        expectation.fulfill()
-      }
+      XCTAssertEqual(turn.playedCards.first?.number, .nine)
     }
-    wait(for: [expectation], timeout: 120.0)
   }
 }

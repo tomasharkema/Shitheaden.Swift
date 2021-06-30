@@ -12,7 +12,7 @@ class PlayersTests: XCTestCase {
   func testSortPlayerLowestCard() {
     var player1 = Player(id: UUID(), name: "1", position: .noord, ai: RandomBot())
     var player2 = Player(id: UUID(), name: "2", position: .zuid, ai: RandomBot())
-    var player3 = Player(id: UUID(), name: "3", position: .zuid, ai: RandomBot())
+    var player3 = Player(id: UUID(), name: "3", position: .oost, ai: RandomBot())
 
     player1.handCards = [
       .init(id: .init(), symbol: .harten, number: .five),

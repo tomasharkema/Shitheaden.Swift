@@ -6,47 +6,11 @@
 //
 
 import Foundation
+import NIO
+import NIOSSH
 import ShitheadenRuntime
 import ShitheadenShared
 import Vapor
-
-private let websocketResponse = """
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <title>Shitheaden</title>
-  </head>
-  <body>
-
-    <h1>WebSocket Stream</h1>
-    <form name="myForm" id="former">
-        <input name="fname" "type="text" id="command"/>
-    </form>
-
-    <div id="websocket-stream"></div>
-    <script>
-        var wsconnection = new WebSocket(location.origin.replace("http", "ws") + "/websocket");
-const reader = new FileReader();
-        wsconnection.onmessage = async function (msg) {
-            var element = document.createElement("p");
-            const string = await msg.data.text();
-            console.log(string);
-            element.innerHTML = "<code>" + string + "</code>";
-            var textDiv = document.getElementById("websocket-stream");
-            textDiv.insertBefore(element, null);
-        };
-
-        function validateForm(e) {
-          e.preventDefault();
-          wsconnection.send(document.forms["myForm"]["fname"].value + "\\n");
-          return false;
-        };
-document.getElementById("former").addEventListener('submit', validateForm);
-    </script>
-  </body>
-</html>
-"""
 
 final class HttpServer {
   private let logger = Logger(label: "cli.HttpServer")
@@ -61,6 +25,7 @@ final class HttpServer {
     let app = Application(.development, .shared(group))
     app.http.server.configuration.port = 3338
     app.http.server.configuration.hostname = "0.0.0.0"
+    app.middleware.use(FileMiddleware(publicDirectory: "Public"))
 
     app.on(.POST, "playedGame", body: .collect(maxSize: "10mb")) { req -> String in
       self.logger.info("\(req)")
@@ -68,28 +33,83 @@ final class HttpServer {
       #if DEBUG
         try await WriteSnapshotToDisk.write(snapshot: snapshot)
       #else
-          try await WriteSnapshotToDisk.write(snapshot: snapshot)
-
+        try await WriteSnapshotToDisk.write(snapshot: snapshot)
       #endif
       return "ojoo!"
     }
 
-    app.get("debug") { _ in
-      Response(
-        status: .ok,
-        headers: ["Content-Type": "text/html"],
-        body: .init(string: websocketResponse)
-      )
+//    app.get("debug") { req in
+//      req.fileio.streamFile(at: "frontend/debug.html", mediaType: .html)
+//    }
+
+    app.get("") { req in
+      req.fileio.streamFile(at: "Public/index.html", mediaType: .html)
     }
 
-    app.webSocket("debug/websocket") { _, ws in
-      self.logger.info("\(ws)")
-      let client = WebsocketClient(
-        websocket: ws,
-        games: self.games
-      )
-      async {
-        try await client.start()
+    app.webSocket("terminal") { _, ws in
+      do {
+        let bootstrap = ClientBootstrap(group: group)
+          .channelInitializer { channel in
+            channel.pipeline.addHandlers([
+              NIOSSHHandler(
+                role: .client(.init(userAuthDelegate: LoginDelegate(),
+                                    serverAuthDelegate: AcceptAllHostKeysDelegate())),
+                allocator: channel.allocator,
+                inboundChildChannelInitializer: nil
+              ),
+            ])
+          }
+          .channelOption(
+            ChannelOptions.socket(SocketOptionLevel(SOL_SOCKET), SO_REUSEADDR),
+            value: 1
+          )
+          .channelOption(
+            ChannelOptions.socket(SocketOptionLevel(IPPROTO_TCP), TCP_NODELAY),
+            value: 1
+          )
+
+        ws.send("Connecting...", promise: nil)
+
+        let channel: Channel = try await withUnsafeThrowingContinuation { handler in
+          do {
+            let channel = try bootstrap.connect(host: "localhost", port: 3332)
+            channel.whenSuccess {
+              handler.resume(returning: $0)
+            }
+            channel.whenFailure {
+              handler.resume(throwing: $0)
+            }
+          } catch {
+            handler.resume(throwing: error)
+          }
+        }
+
+        let childChannel: Channel = try channel.pipeline.handler(type: NIOSSHHandler.self)
+          .flatMap { sshHandler in
+            let promise = channel.eventLoop.makePromise(of: Channel.self)
+            sshHandler.createChannel(promise) { childChannel, _ in
+//            guard channelType == .session else {
+//              return channel.eventLoop.makeFailedFuture(SSHClientError.invalidChannelType)
+//            }
+              childChannel.pipeline.addHandlers([DataToBufferCodec(), Handler(webSocket: ws)])
+            }
+            return promise.futureResult
+          }.wait()
+
+        ws.send("Connected!", promise: nil)
+
+        ws.onClose.whenSuccess {
+          childChannel.close().flatMap {
+            channel.close()
+          }.whenComplete {
+            self.logger.info("CLOSED! \($0)")
+          }
+        }
+
+      } catch {
+        self.logger.error("Error: \(error)")
+        ws.send("Error: \(error)", promise: nil)
+        ws.close()
       }
     }
 
@@ -108,5 +128,63 @@ final class HttpServer {
     app.shutdown()
     logger.info("QUIT!")
     logger.info("\(app)")
+  }
+}
+
+class Handler: ChannelDuplexHandler {
+  typealias InboundIn = ByteBuffer
+  typealias InboundOut = ByteBuffer
+  typealias OutboundIn = ByteBuffer
+  typealias OutboundOut = ByteBuffer
+
+  private let webSocket: WebSocket
+
+  init(webSocket: WebSocket) {
+    self.webSocket = webSocket
+  }
+
+  func channelActive(context: ChannelHandlerContext) {
+    webSocket.onText { _, text in
+      context.eventLoop.execute {
+        var buffer = context.channel.allocator.buffer(capacity: text.count)
+        buffer.writeString(text)
+        context.writeAndFlush(self.wrapOutboundOut(buffer))
+      }
+    }
+  }
+
+  func channelRead(context _: ChannelHandlerContext, data: NIOAny) {
+    var frame = unwrapInboundIn(data)
+    let string = frame.readString(length: frame.readableBytes) ?? ""
+    webSocket.send(string, promise: nil)
+  }
+
+  func errorCaught(context _: ChannelHandlerContext, error: Error) {
+    webSocket.send("Error: \(error)", promise: nil)
+    webSocket.close()
+  }
+}
+
+final class AcceptAllHostKeysDelegate: NIOSSHClientServerAuthenticationDelegate {
+  func validateHostKey(
+    hostKey _: NIOSSHPublicKey,
+    validationCompletePromise: EventLoopPromise<Void>
+  ) {
+    // Do not replicate this in your own code: validate host keys! This is a
+    // choice made for expedience, not for any other reason.
+    validationCompletePromise.succeed(())
+  }
+}
+
+final class LoginDelegate: NIOSSHClientUserAuthenticationDelegate {
+  func nextAuthenticationType(
+    availableMethods _: NIOSSHAvailableUserAuthenticationMethods,
+    nextChallengePromise: EventLoopPromise<NIOSSHUserAuthenticationOffer?>
+  ) {
+    nextChallengePromise.succeed(NIOSSHUserAuthenticationOffer(
+      username: "",
+      serviceName: "",
+      offer: .password(.init(password: ""))
+    ))
   }
 }

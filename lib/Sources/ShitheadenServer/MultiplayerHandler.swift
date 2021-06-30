@@ -23,7 +23,7 @@ actor MultiplayerHandler {
   var challenger: (UUID, Client)
   let code: String
   var competitors: [(UUID, Client)]
-  private var gameTask: Task<GameSnapshot, Error>?
+  private var gameTask: Task<EndGameSnapshot, Error>?
   private let finishEvent = EventHandler<Result<Void, Error>>()
   public var finish: EventHandler<Result<Void, Error>>.ReadOnly { finishEvent.readOnly }
 
@@ -134,7 +134,7 @@ actor MultiplayerHandler {
     try await finishEvent.once()
   }
 
-  private nonisolated func startMultiplayerGame() async throws -> GameSnapshot {
+  private nonisolated func startMultiplayerGame() async throws -> EndGameSnapshot {
     _ = await challenger.1.quit.on {
       do {
         try await self.send(.quit)
@@ -190,16 +190,17 @@ actor MultiplayerHandler {
     }
 
     let game = Game(
-      players: [initiator] + joiners, slowMode: true, endGameHandler: { snapshot in
-        async {
-          try await WriteSnapshotToDisk.write(snapshot: snapshot)
-        }
-      }
+      players: [initiator] + joiners, slowMode: true
     )
-    let gameTask: Task<GameSnapshot, Error> = async {
+    let gameTask: Task<EndGameSnapshot, Error> = async {
       try await withTaskCancellationHandler(operation: {
         do {
           let result = try await game.startGame()
+
+          asyncDetached(priority: .background) {
+            try await WriteSnapshotToDisk.write(snapshot: result)
+          }
+
           return result
         } catch {
           self.logger.error("ERROR: \(error)")
@@ -219,7 +220,7 @@ actor MultiplayerHandler {
     return try await gameTask.get()
   }
 
-  private func setGameTask(_ gameTask: Task<GameSnapshot, Error>) {
+  private func setGameTask(_ gameTask: Task<EndGameSnapshot, Error>) {
     self.gameTask = gameTask
   }
 }

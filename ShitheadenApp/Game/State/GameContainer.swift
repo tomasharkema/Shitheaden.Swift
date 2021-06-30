@@ -129,7 +129,7 @@ final class GameContainer: ObservableObject {
     }
   }
 
-  var gameTask: Task.Handle<GameSnapshot?, Never>?
+  var gameTask: Task.Handle<EndGameSnapshot?, Never>?
   func start(restart: Bool = false, contestants: Int) async {
     if restart {
       appInput = nil
@@ -187,8 +187,16 @@ final class GameContainer: ObservableObject {
         position: .zuid,
         ai: appInput
       ),
-      slowMode: true, endGameHandler: { snapshot in
-        async {
+      slowMode: true
+    )
+
+    self.game = game
+    let gameTask: Task.Handle<EndGameSnapshot?, Never> = async {
+      var snap: EndGameSnapshot?
+      do {
+        let snapshot = try await game.startGame()
+
+        asyncDetached(priority: .background) {
           do {
             let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
               .appendingPathComponent(
@@ -211,19 +219,13 @@ final class GameContainer: ObservableObject {
             self.logger.error("Error: \(error)")
           }
         }
-      }
-    )
 
-    self.game = game
-    let gameTask: Task.Handle<GameSnapshot?, Never> = async {
-      var snapshot: GameSnapshot?
-      do {
-        snapshot = try await game.startGame()
+        snap = snapshot
       } catch {
         self.logger.error("\(String(describing: error))")
       }
-      self.logger.info("DONE! \(String(describing: snapshot))")
-      return snapshot
+      self.logger.info("DONE! \(String(describing: snap))")
+      return snap
     }
     self.gameTask = gameTask
     await gameTask.get()

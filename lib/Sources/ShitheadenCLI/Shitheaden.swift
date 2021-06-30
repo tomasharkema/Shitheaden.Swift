@@ -85,7 +85,8 @@ struct Shitheaden: ParsableCommand {
             await Keyboard.getKeyboardInput()
           })
         ),
-      ], slowMode: true, endGameHandler: { _ in }
+      ],
+      slowMode: true
     )
     do {
       try await game.startGame()

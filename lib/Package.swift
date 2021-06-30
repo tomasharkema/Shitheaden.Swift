@@ -42,6 +42,7 @@ let package = Package(
     .library(name: "DependenciesTarget", type: .static, targets: ["DependenciesTarget"]),
     .library(name: "AppDependencies", type: .static, targets: ["AppDependencies"]),
     .library(name: "AppDependenciesDynamic", type: .dynamic, targets: ["AppDependencies"]),
+    .library(name: "TestsHelpers", type: .dynamic, targets: ["TestsHelpers"]),
   ],
   dependencies: [
     .package(
@@ -108,6 +109,8 @@ let package = Package(
         .target(name: "ShitheadenCLIRenderer"),
         .product(name: "NIOSSH", package: "swift-nio-ssh"),
         .product(name: "Signals", package: "BlueSignals"),
+        .product(name: "NIOExtras", package: "swift-nio-extras"),
+        .product(name: "ArgumentParser", package: "swift-argument-parser"),
       ],
       swiftSettings: [
         .unsafeFlags([
@@ -192,11 +195,24 @@ let package = Package(
         ]),
       ]
     ),
+    .target(
+      name: "TestsHelpers",
+      dependencies: [],
+      swiftSettings: [
+        .unsafeFlags([
+          "-Xfrontend",
+          "-enable-experimental-concurrency",
+          "-Xfrontend", "-disable-availability-checking",
+        ]),
+      ]
+    ),
+
     .testTarget(
       name: "ShitheadenRuntimeTests",
       dependencies: [
         "ShitheadenRuntime",
         "CustomAlgo",
+        "TestsHelpers",
       ],
       swiftSettings: [.unsafeFlags([
         "-Xfrontend",
@@ -212,6 +228,7 @@ let package = Package(
       dependencies: [
         "ShitheadenRuntime",
         "CustomAlgo",
+        "TestsHelpers",
       ],
       swiftSettings: [.unsafeFlags([
         "-Xfrontend",
@@ -226,6 +243,7 @@ let package = Package(
       name: "CustomAlgoTests",
       dependencies: [
         "CustomAlgo",
+        "TestsHelpers",
       ],
       swiftSettings: [.unsafeFlags([
         "-Xfrontend",

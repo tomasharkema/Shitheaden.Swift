@@ -25,8 +25,8 @@ class TelnetServer {
 
   func start(
     quiesce: ServerQuiescingHelper,
-             group: MultiThreadedEventLoopGroup) async throws -> Channel
-  {
+    group: MultiThreadedEventLoopGroup
+  ) async throws -> Channel {
     let bootstrap = ServerBootstrap(group: group)
       .serverChannelOption(ChannelOptions.backlog, value: 256)
       .serverChannelOption(ChannelOptions.socketOption(.so_reuseaddr), value: 1)

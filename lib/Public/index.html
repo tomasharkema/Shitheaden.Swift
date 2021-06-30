@@ -8,7 +8,6 @@
     <script src="xterm/dist/xterm.js"></script>
     <script src="xterm/dist/addons/fit/fit.js"></script>
     <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
-    <script src="socket.io/socket.io.js"></script>
     <script>
       var socket;
       window.addEventListener(
@@ -19,26 +18,38 @@
           term.open(terminalContainer);
           term.fit();
 
-          socket = io.connect();
-          socket.on("connect", function() {
-            // term.write("\r\n*** Connected to backend***\r\n");
 
-            // Browser -> Backend
+          var wsconnection = new WebSocket(location.origin.replace("http", "ws") + "/terminal");
+          wsconnection.onmessage = async (msg) => {
+            const string = await msg.data;
+              console.log("'" + string + "'");
+            term.write(string);
+          }
             term.on("data", function(data) {
               console.log("'" + data + "'");
-              socket.emit("data", data);
+              wsconnection.send(data);
             });
 
-            // Backend -> Browser
-            socket.on("data", function(data) {
-              console.log("'" + data + "'");
-              term.write(data);
-            });
+          // socket = io.connect();
+          // socket.on("connect", function() {
+          //   // term.write("\r\n*** Connected to backend***\r\n");
 
-            socket.on("disconnect", function() {
-              term.write("\r\n*** Disconnected from backend***\r\n");
-            });
-          });
+          //   // Browser -> Backend
+          //   term.on("data", function(data) {
+          //     console.log("'" + data + "'");
+          //     socket.emit("data", data);
+          //   });
+
+          //   // Backend -> Browser
+          //   socket.on("data", function(data) {
+          //     console.log("'" + data + "'");
+          //     term.write(data);
+          //   });
+
+          //   socket.on("disconnect", function() {
+          //     term.write("\r\n*** Disconnected from backend***\r\n");
+          //   });
+          // });
         },
         false
       );

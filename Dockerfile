@@ -25,7 +25,9 @@ RUN mkdir -p ./Sources/CustomAlgo && \
     mkdir -p ./Tests/ShitheadenSharedTests && \
     touch ./Tests/ShitheadenSharedTests/main.swift && \
     mkdir -p ./Tests/CustomAlgoTests && \
-    touch ./Tests/CustomAlgoTests/main.swift 
+    touch ./Tests/CustomAlgoTests/main.swift  && \
+    mkdir -p ./Sources/TestsHelpers && \
+    touch ./Sources/TestsHelpers/main.swift 
 
 COPY lib/Package.swift ./Package.swift
 
@@ -40,7 +42,8 @@ RUN rm ./Sources/CustomAlgo/main.swift && \
     rm ./Sources/ShitheadenCLI/main.swift && \
     rm ./Sources/ShitheadenCLIRenderer/main.swift && \
     rm ./Sources/ShitheadenServer/main.swift && \
-    rm ./Tests/CustomAlgoTests/main.swift 
+    rm ./Tests/CustomAlgoTests/main.swift  && \
+    rm .//Sources/TestsHelpers/main.swift 
 
 COPY lib/Sources ./Sources
 COPY lib/Tests ./Tests

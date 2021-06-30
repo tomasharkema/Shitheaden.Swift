@@ -34,11 +34,10 @@ public actor Game {
   var slowMode = false
   var playersOnTurn = Set<UUID>()
   var playerAndError = [UUID: PlayerError]()
-  let endGameHandler: (EndGameSnapshot) -> Void
 
   public init(
     players: [Player],
-    slowMode: Bool, endGameHandler: @escaping (EndGameSnapshot) -> Void
+    slowMode: Bool
   ) {
     #if DEBUG
       var ids = [UUID]()
@@ -52,14 +51,12 @@ public actor Game {
 
     self.players = players
     self.slowMode = slowMode
-    self.endGameHandler = endGameHandler
   }
 
   public convenience init(
     contestants: Int, ai: GameAi.Type,
     localPlayer: Player,
-    slowMode: Bool,
-    endGameHandler: @escaping (EndGameSnapshot) -> Void
+    slowMode: Bool
   ) {
     let contestantPlayers = (0 ..< contestants).map { index in
       Player(
@@ -71,8 +68,7 @@ public actor Game {
 
     self.init(
       players: contestantPlayers + [localPlayer],
-      slowMode: slowMode,
-      endGameHandler: endGameHandler
+      slowMode: slowMode
     )
   }
 
@@ -643,12 +639,12 @@ public actor Game {
   }
 
   func resetBeurten() {
-    for (index, _) in players.enumerated() {
+    for index in players.indices {
       players[index].turns = []
     }
   }
 
-  public func startGame() async throws -> GameSnapshot {
+  public func startGame() async throws -> EndGameSnapshot {
     try Task.checkCancellation()
 
     resetBeurten()
@@ -673,20 +669,11 @@ public actor Game {
     try await sendRender(error: nil, includeEndState: true)
     endDate = Date().timeIntervalSince1970
 
-    let endSnapshot = getSnapshot(for: nil, includeEndState: true)
-
-    asyncDetached {
-      do {
-        endGameHandler(EndGameSnapshot(
-          gameId: gameId,
-          snapshot: endSnapshot,
-          signature: try await Signature.getSignature()
-        ))
-      } catch {
-        logger.error("Error getting snapshot")
-      }
-    }
-    return endSnapshot
+    return EndGameSnapshot(
+      gameId: gameId,
+      snapshot: getSnapshot(for: nil, includeEndState: true),
+      signature: (try? await Signature.getSignature()) ?? "NO_SIGNATURE"
+    )
   }
 
   func checkIntegrity() throws {

@@ -8,6 +8,7 @@
 import CustomAlgo
 import Foundation
 @testable import ShitheadenRuntime
+import TestsHelpers
 import XCTest
 
 class GameTests: XCTestCase {
@@ -33,23 +34,12 @@ class GameTests: XCTestCase {
         position: .zuid,
         ai: CardRankingAlgo()
       ),
-    ], slowMode: false, endGameHandler: { _ in })
+    ], slowMode: false)
 
-    let expectation = XCTestExpectation(description: "wait for game play")
-
-    if #available(macOS 12.0, iOS 15, *) {
-      async {
-        do {
-          let snapshot = try await game.startGame()
-          XCTAssertNotNil(snapshot.winner)
-
-        } catch {
-          XCTFail("ERROR: \(error)")
-        }
-        expectation.fulfill()
-      }
+    asyncTest(timeout: 20) {
+      let snapshot = try await game.startGame()
+      XCTAssertNotNil(snapshot.snapshot.winner)
     }
-    wait(for: [expectation], timeout: 120.0)
   }
 
   func testNormalRunTwoPlayers() {
@@ -64,22 +54,12 @@ class GameTests: XCTestCase {
         position: .noord,
         ai: CardRankingAlgo()
       ),
-    ], slowMode: false, endGameHandler: { _ in })
+    ], slowMode: false)
 
-    let expectation = XCTestExpectation(description: "wait for game play")
-
-    if #available(macOS 12.0, iOS 15, *) {
-      async {
-        do {
-          let snapshot = try await game.startGame()
-          XCTAssertNotNil(snapshot.winner)
-        } catch {
-          XCTFail("ERROR: \(error)")
-        }
-        expectation.fulfill()
-      }
+    asyncTest(timeout: 20) {
+      let snapshot = try await game.startGame()
+      XCTAssertNotNil(snapshot.snapshot.winner)
     }
-    wait(for: [expectation], timeout: 120.0)
   }
 
   func testDeadlockPrevention() {
@@ -109,11 +89,13 @@ class GameTests: XCTestCase {
 
     deck = Deck(cards: deck.cards.filter { card in
       if firstPlayer.handCards
-        .contains { $0.number == card.number && $0.symbol == card.symbol } {
+        .contains(where: { $0.number == card.number && $0.symbol == card.symbol })
+      {
         return false
       }
       if secondPlayer.handCards
-        .contains { $0.number == card.number && $0.symbol == card.symbol } {
+        .contains(where: { $0.number == card.number && $0.symbol == card.symbol })
+      {
         return false
       }
       return true
@@ -143,26 +125,14 @@ class GameTests: XCTestCase {
       deck.draw()!,
     ]
 
-    let game = Game(players: [firstPlayer, secondPlayer], slowMode: false, endGameHandler: { _ in })
+    let game = Game(players: [firstPlayer, secondPlayer], slowMode: false)
 
-    let expectation = XCTestExpectation(description: "wait for game play")
-
-    if #available(macOS 12.0, iOS 15, *) {
-      async { [deck] in
-        do {
-          await game.privateSetBurnt(deck.cards)
-
-          _ = try await game.turn()
-          let snapshot = await game.getSnapshot(for: nil, includeEndState: true)
-
-          XCTAssertNotNil(snapshot.winner?.name)
-        } catch {
-          XCTFail("ERROR: \(error)")
-        }
-        expectation.fulfill()
-      }
+    asyncTest(timeout: 20) {
+      await game.privateSetBurnt(deck.cards)
+      _ = try await game.turn()
+      let snapshot = await game.getSnapshot(for: nil, includeEndState: true)
+      XCTAssertNotNil(snapshot.winner?.name)
     }
-    wait(for: [expectation], timeout: 120.0)
   }
 
   func gameCallsEndStateHandlerTests() {
@@ -179,9 +149,7 @@ class GameTests: XCTestCase {
       ai: CardRankingAlgoWithUnfairPassingAndNexPlayerAware()
     )
 
-    let game = Game(players: [firstPlayer, secondPlayer], slowMode: false, endGameHandler: { _ in
-      exp.fulfill()
-    })
+    let game = Game(players: [firstPlayer, secondPlayer], slowMode: false)
 
     async {
       try await game.startGame()

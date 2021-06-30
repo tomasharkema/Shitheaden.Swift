@@ -146,14 +146,12 @@ class WebsocketClient: Client {
             .send(.multiplayerEvent(multiplayerEvent: .gameSnapshot(snapshot: $0)))
         })
       ),
-      slowMode: true, endGameHandler: { snapshot in
-        async {
-          try await WriteSnapshotToDisk.write(snapshot: snapshot)
-        }
-      }
+      slowMode: true
     )
-
-    try await game.startGame()
+    let snapshot = try await game.startGame()
+    asyncDetached(priority: .background) {
+      try await WriteSnapshotToDisk.write(snapshot: snapshot)
+    }
   }
 
   private func startMultiplayer() async throws {
