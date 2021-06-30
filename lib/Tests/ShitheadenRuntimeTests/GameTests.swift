@@ -17,12 +17,12 @@ class GameTests: XCTestCase {
       Player(
         name: "West (Unfair)",
         position: .west,
-        ai: CardRankingAlgo()
+        ai: CardRankingAlgoWithUnfairPassingAndNexPlayerAware()
       ),
       Player(
         name: "Noord",
         position: .noord,
-        ai: CardRankingAlgo()
+        ai: CardRankingAlgoWithUnfairPassing()
       ),
       Player(
         name: "Oost",
@@ -36,7 +36,7 @@ class GameTests: XCTestCase {
       ),
     ], slowMode: false)
 
-    asyncTest(timeout: 120) {
+    asyncTest(timeout: 20) {
       let snapshot = try await game.startGame()
       XCTAssertNotNil(snapshot.snapshot.winner)
     }
@@ -56,7 +56,7 @@ class GameTests: XCTestCase {
       ),
     ], slowMode: false)
 
-    asyncTest(timeout: 120) {
+    asyncTest(timeout: 20) {
       let snapshot = try await game.startGame()
       XCTAssertNotNil(snapshot.snapshot.winner)
     }
@@ -127,7 +127,7 @@ class GameTests: XCTestCase {
 
     let game = Game(players: [firstPlayer, secondPlayer], slowMode: false)
 
-    asyncTest(timeout: 120) {
+    asyncTest(timeout: 20) {
       await game.privateSetBurnt(deck.cards)
       _ = try await game.turn()
       let snapshot = await game.getSnapshot(for: nil, includeEndState: true)
@@ -136,7 +136,6 @@ class GameTests: XCTestCase {
   }
 
   func gameCallsEndStateHandlerTests() {
-    let exp = XCTestExpectation()
 
     let firstPlayer = Player(
       name: "first",
@@ -151,10 +150,8 @@ class GameTests: XCTestCase {
 
     let game = Game(players: [firstPlayer, secondPlayer], slowMode: false)
 
-    async {
+    asyncTest(timeout: 20) {
       try await game.startGame()
     }
-
-    wait(for: [exp], timeout: 120.0)
   }
 }

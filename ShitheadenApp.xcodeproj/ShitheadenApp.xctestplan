@@ -15,12 +15,10 @@
       "identifier" : "C3812A51267C816400397E65",
       "name" : "ShitheadenApp"
     },
-    "testRepetitionMode" : "fixedIterations",
-    "threadSanitizerEnabled" : true
+    "testRepetitionMode" : "fixedIterations"
   },
   "testTargets" : [
     {
-      "parallelizable" : true,
       "target" : {
         "containerPath" : "container:lib",
         "identifier" : "ShitheadenRuntimeTests",
@@ -28,7 +26,6 @@
       }
     },
     {
-      "parallelizable" : true,
       "target" : {
         "containerPath" : "container:lib",
         "identifier" : "ShitheadenSharedTests",
@@ -36,7 +33,6 @@
       }
     },
     {
-      "parallelizable" : true,
       "target" : {
         "containerPath" : "container:lib",
         "identifier" : "CustomAlgoTests",

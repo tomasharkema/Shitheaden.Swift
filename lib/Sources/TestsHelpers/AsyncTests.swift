@@ -18,14 +18,18 @@ public extension XCTestCase {
     let expectation = XCTestExpectation(description: "asyncTest")
 
     if #available(macOS 9999, iOS 9999, *) {
-      async {
+      var task: Task.Handle<Void, Error>
+      task = async {
         do {
-          await try handler()
+           try await handler()
         } catch {
           XCTFail("ERROR: \(error)", file: file, line: line)
         }
         expectation.fulfill()
       }
+    } else {
+      XCTFail()
+      expectation.fulfill()
     }
     wait(for: [expectation], timeout: timeout)
   }

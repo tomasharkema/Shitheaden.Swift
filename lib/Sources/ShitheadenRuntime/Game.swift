@@ -520,7 +520,7 @@ public actor Game {
     playersOnTurn.remove(player.id)
   }
 
-  nonisolated func beginRound() async throws {
+  func beginRound() async throws {
     try Task.checkCancellation()
     return await withTaskGroup(of: Void.self) { group in
       for (index, player) in await players.enumerated() {
