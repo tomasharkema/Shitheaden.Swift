@@ -30,6 +30,9 @@
 		C398542A26837F8200D64483 /* card.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C398542926837F8200D64483 /* card.ttf */; };
 		C398542D268472C300D64483 /* EndStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C398542C268472C300D64483 /* EndStateView.swift */; };
 		C39A09572682159C00F011BB /* AlertView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C39A09562682159C00F011BB /* AlertView.swift */; };
+		C3CBC9CE268E0356002348E8 /* Connecting.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3CBC9CD268E0356002348E8 /* Connecting.swift */; };
+		C3CBC9D0268E0433002348E8 /* ConnectionState.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3CBC9CF268E0433002348E8 /* ConnectionState.swift */; };
+		C3CBC9D2268E04A6002348E8 /* Storage.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3CBC9D1268E04A6002348E8 /* Storage.swift */; };
 		C3D1B551268BC7FC0021FCF8 /* lib.sig in Resources */ = {isa = PBXBuildFile; fileRef = C3D1B550268BC7FB0021FCF8 /* lib.sig */; };
 		C3DBF4FD2685E8B20027D011 /* AppDependencies in Frameworks */ = {isa = PBXBuildFile; productRef = C3DBF4FC2685E8B20027D011 /* AppDependencies */; };
 /* End PBXBuildFile section */
@@ -59,7 +62,10 @@
 		C398542C268472C300D64483 /* EndStateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EndStateView.swift; sourceTree = "<group>"; };
 		C398B203267CA35D00AAD375 /* lib */ = {isa = PBXFileReference; lastKnownFileType = folder; path = lib; sourceTree = "<group>"; };
 		C39A09562682159C00F011BB /* AlertView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertView.swift; sourceTree = "<group>"; };
-		C3D1B550268BC7FB0021FCF8 /* lib.sig */ = {isa = PBXFileReference; lastKnownFileType = file; name = lib.sig; path = lib/lib.sig; sourceTree = SOURCE_ROOT; };
+		C3CBC9CD268E0356002348E8 /* Connecting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Connecting.swift; sourceTree = "<group>"; };
+		C3CBC9CF268E0433002348E8 /* ConnectionState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionState.swift; sourceTree = "<group>"; };
+		C3CBC9D1268E04A6002348E8 /* Storage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Storage.swift; sourceTree = "<group>"; };
+		C3D1B550268BC7FB0021FCF8 /* lib.sig */ = {isa = PBXFileReference; lastKnownFileType = text; name = lib.sig; path = lib/lib.sig; sourceTree = SOURCE_ROOT; };
 		C3EB6C1C2688C61100D897F1 /* ShitheadenApp.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; name = ShitheadenApp.xctestplan; path = ShitheadenApp.xcodeproj/ShitheadenApp.xctestplan; sourceTree = "<group>"; };
 		C3FFA11C267CA6C3007972BA /* ShitheadenApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ShitheadenApp.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -91,9 +97,12 @@
 		C303CC4A2680B27700201FEF /* Menu */ = {
 			isa = PBXGroup;
 			children = (
+				C3CBC9D1268E04A6002348E8 /* Storage.swift */,
 				C303CC612680CE3E00201FEF /* MenuView.swift */,
 				C303CC632680D6C100201FEF /* ConnectingView.swift */,
 				C39A09562682159C00F011BB /* AlertView.swift */,
+				C3CBC9CD268E0356002348E8 /* Connecting.swift */,
+				C3CBC9CF268E0433002348E8 /* ConnectionState.swift */,
 			);
 			path = Menu;
 			sourceTree = "<group>";
@@ -319,11 +328,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				C303CC4E2680B33500201FEF /* AppInputUserInputAI.swift in Sources */,
+				C3CBC9D0268E0433002348E8 /* ConnectionState.swift in Sources */,
 				C303CC542680B64200201FEF /* CardStackView.swift in Sources */,
 				C303CC642680D6C100201FEF /* ConnectingView.swift in Sources */,
+				C3CBC9CE268E0356002348E8 /* Connecting.swift in Sources */,
 				C33A6C0D267CA87400FCF8C5 /* GameContainer.swift in Sources */,
 				C303CC5C2680B9F400201FEF /* LocalPlayerView.swift in Sources */,
 				C303CC522680B4AB00201FEF /* PlayerView.swift in Sources */,
+				C3CBC9D2268E04A6002348E8 /* Storage.swift in Sources */,
 				C303CC582680B73D00201FEF /* CardView.swift in Sources */,
 				C3812A58267C816400397E65 /* ContentView.swift in Sources */,
 				C303CC492680B23E00201FEF /* GameView.swift in Sources */,

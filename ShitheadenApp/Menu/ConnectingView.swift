@@ -10,152 +10,8 @@ import ShitheadenRuntime
 import ShitheadenShared
 import SwiftUI
 
-enum ConnectionState {
-  case connecting
-  case makeChoice
-  case waiting(code: String, canStart: Bool, initiator: String, contestants: [String], cpus: Int)
-  case gameNotFound
-  case codeCreated(code: String)
-  case gameSnapshot(GameSnapshot, WebSocketClient)
-  case restart(canStart: Bool)
-}
-
-@MainActor
-class Connecting: ObservableObject {
-  private let logger = Logger(label: "app.Connecting")
-  private let websocket = WebSocketGameClient()
-  private var client: WebSocketClient?
-  @Published var connection: ConnectionState = .connecting
-
-  private var identifier: UUID?
-  private var code: String?
-
-  private var dataHandler: UUID?
-  private var quitHandler: UUID?
-  private var connectingTask: Task.Handle<Void, Error>?
-
-  func start() async throws {
-    connectingTask?.cancel()
-
-    let connectingTask = async {
-      connection = .connecting
-      do {
-        let client = try await websocket.start()
-        logger.debug("CLIENT! \(String(describing: client))")
-        self.client = client
-        dataHandler = client.data.on {
-          self.onData($0, client)
-        }
-        quitHandler = client.quit.on {
-          self.connection = .gameNotFound
-        }
-      } catch {
-        connection = .gameNotFound
-        throw error
-      }
-    }
-
-    self.connectingTask = connectingTask
-
-    return try await connectingTask.get()
-  }
-
-  func close() {
-    connectingTask?.cancel()
-    async {
-      await client?.close()
-    }
-  }
-
-  var isInitiator: Bool = false
-  private func onData(_ event: ServerEvent, _ client: WebSocketClient) {
-    switch event {
-    case .waiting:
-      if let code = code {
-        connection = .waiting(
-          code: code,
-          canStart: isInitiator,
-          initiator: UIDevice.current.name,
-          contestants: [],
-          cpus: 0
-        )
-      }
-
-    case let .error(error: .gameNotFound(code)):
-      connection = .gameNotFound
-
-    case let .error(error: error):
-      logger.error("Received error: \(String(describing: error))")
-
-    case .requestMultiplayerChoice:
-      connection = .makeChoice
-
-    case let .multiplayerEvent(.gameSnapshot(snapshot)):
-      connection = .gameSnapshot(snapshot, client)
-
-    case let .multiplayerEvent(multiplayerEvent: multiplayerEvent):
-      logger.info("MultiplayerEvent: \(String(describing: multiplayerEvent))")
-
-    case let .joined(initiator, contestants, cpus):
-      if let code = code {
-        connection = .waiting(
-          code: code,
-          canStart: contestants.count + cpus + 1 >= 2 && isInitiator,
-          initiator: initiator,
-          contestants: contestants,
-          cpus: cpus
-        )
-      }
-
-    case let .codeCreate(code: code):
-      isInitiator = true
-      self.code = code
-      connection = .codeCreated(code: code)
-
-    case .start:
-      logger.info("START!")
-    case .quit:
-      connection = .gameNotFound
-
-    case .requestSignature:
-      break
-
-    case let .signatureCheck(succeeded):
-      logger.notice("SIGNATURE SUCCEEDED! \(succeeded)")
-
-    case .requestRestart:
-      connection = .restart(canStart: true)
-
-    case .waitForRestart:
-      connection = .restart(canStart: false)
-    }
-  }
-
-  func connect(code: String) async throws {
-    self.code = code
-    try await client?.write(.joinMultiplayer(name: UIDevice.current.name, code: code))
-  }
-
-  func connect() async throws {
-    try await client?.write(.startMultiplayer(name: UIDevice.current.name))
-  }
-
-  func addCpu() async throws {
-    try await client?
-      .write(.multiplayerRequest(.string("cpu+")))
-  }
-
-  func removeCpu() async throws {
-    try await client?
-      .write(.multiplayerRequest(.string("cpu-")))
-  }
-
-  func startGame() async throws {
-    try await client?.write(.multiplayerRequest(.string("start")))
-  }
-}
-
 struct ConnectingView: View {
+  @State var name: String = ""
   @Binding var state: AppState?
   @StateObject var connection = Connecting()
   let code: String?
@@ -163,6 +19,21 @@ struct ConnectingView: View {
   var body: some View {
     VStack {
       switch connection.connection {
+      case .getName:
+        Text("Wat is je naam?")
+        TextField("Naam", text: $name).padding()
+        Button("Verder") {
+          async {
+            Storage.shared.name = name
+            self.connection.set(name: name)
+            if let code = code {
+              try await self.connection.connect(code: code)
+            } else {
+              try await self.connection.connect()
+            }
+          }
+        }.disabled(name.isEmpty).buttonStyle(.bordered)
+
       case let .gameSnapshot(snapshot, handler):
         GameView(state: $state, gameType: .online(handler))
           .onDisappear {
