@@ -29,7 +29,7 @@ public enum ServerEvent: Equatable, Codable {
   case error(error: ServerError)
   case requestMultiplayerChoice
   case multiplayerEvent(multiplayerEvent: MultiplayerEvent)
-  case joined(numberOfPlayers: Int)
+  case joined(initiator: String, contestants: [String], cpus: Int)
   case codeCreate(code: String)
   case signatureCheck(Bool)
   case requestRestart
@@ -37,7 +37,7 @@ public enum ServerEvent: Equatable, Codable {
 
   case start
   case waiting
-  case quit
+  case quit(from: UUID)
   case requestSignature
 
   public func getMultiplayerEvent() throws -> MultiplayerEvent {
@@ -65,11 +65,11 @@ public enum Action: Equatable, Codable {
 }
 
 public enum ServerRequest: Equatable, Codable {
-  case startMultiplayer
-  case joinMultiplayer(code: String)
+  case startMultiplayer(name: String)
+  case joinMultiplayer(name: String, code: String)
   case multiplayerRequest(MultiplayerRequest)
   case startGame
-  case quit
+  case quit(from: UUID)
   case singlePlayer
   case signature(String)
 

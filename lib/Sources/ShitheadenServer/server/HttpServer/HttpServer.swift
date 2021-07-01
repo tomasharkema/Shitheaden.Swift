@@ -23,7 +23,7 @@ final class HttpServer {
   }
 
   func start(group: MultiThreadedEventLoopGroup) async throws {
-    // swiftlint:disable:this function_body_length
+    // swiftlint:disable:previous function_body_length
     let app = Application(.development, .shared(group))
     app.http.server.configuration.port = 3338
     app.http.server.configuration.hostname = "0.0.0.0"
@@ -98,7 +98,8 @@ final class HttpServer {
           .channelInitializer { channel in
             channel.pipeline.addHandlers([
               NIOSSHHandler(
-                role: .client(.init(userAuthDelegate: LoginDelegate(),
+                role: .client(.init(userAuthDelegate: SimplePasswordDelegate(username: "",
+                                                                             password: ""),
                                     serverAuthDelegate: AcceptAllHostKeysDelegate())),
                 allocator: channel.allocator,
                 inboundChildChannelInitializer: nil
@@ -216,18 +217,5 @@ final class AcceptAllHostKeysDelegate: NIOSSHClientServerAuthenticationDelegate 
     // Do not replicate this in your own code: validate host keys! This is a
     // choice made for expedience, not for any other reason.
     validationCompletePromise.succeed(())
-  }
-}
-
-final class LoginDelegate: NIOSSHClientUserAuthenticationDelegate {
-  func nextAuthenticationType(
-    availableMethods _: NIOSSHAvailableUserAuthenticationMethods,
-    nextChallengePromise: EventLoopPromise<NIOSSHUserAuthenticationOffer?>
-  ) {
-    nextChallengePromise.succeed(NIOSSHUserAuthenticationOffer(
-      username: "",
-      serviceName: "",
-      offer: .password(.init(password: ""))
-    ))
   }
 }

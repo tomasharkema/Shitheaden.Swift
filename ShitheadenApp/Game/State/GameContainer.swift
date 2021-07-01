@@ -15,6 +15,8 @@ import SwiftUI
 
 @MainActor
 final class GameContainer: ObservableObject {
+  private let id = UUID()
+
   private let logger = Logger(label: "app.GameContainer")
 
   private var appInput: AppInputUserInputAI?
@@ -142,7 +144,6 @@ final class GameContainer: ObservableObject {
       return
     }
     gameState = GameState()
-    let id = UUID()
     let appInput = AppInputUserInputAI(
       beginMoveHandler: { handler in
         await MainActor.run {
@@ -301,6 +302,6 @@ final class GameContainer: ObservableObject {
 
   func stop() async {
     logger.info("STOP game controller for client \(String(describing: client))")
-    try? await client?.write(.quit)
+    try? await client?.write(.quit(from: id))
   }
 }

@@ -16,10 +16,11 @@ import ShitheadenShared
 
 class TelnetClient: Client {
   private let logger = Logger(label: "cli.TelnetClient")
+  private let id: UUID
   private let context: ChannelHandlerContext
   private let handler: TelnetServerHandler
   let games: AtomicDictionary<String, MultiplayerHandler>
-  let quit: EventHandler<Void>.ReadOnly
+  let quit: EventHandler<UUID>.ReadOnly
   let data: EventHandler<ServerRequest>.ReadOnly
 
   init(
@@ -29,9 +30,11 @@ class TelnetClient: Client {
     data: EventHandler<String>.ReadOnly,
     games: AtomicDictionary<String, MultiplayerHandler>
   ) {
+    let id = UUID()
+    self.id = id
     self.context = context
     self.handler = handler
-    self.quit = quit
+    self.quit = quit.map { id }
     self.games = games
     self.data = data.map { input in
       let inputs = input.split(separator: ",").map {
@@ -46,50 +49,111 @@ class TelnetClient: Client {
   }
 
   func start() async throws {
-    await send(string: CLI.clear() + """
-    Welkom bij shitheaden!!
-
-    Typ het volgende om te beginnen:
-    single        Start een single game
-    join          Join een online game
-    multiplayer   Start een multiplayer game
-    """)
-    guard let choice: String = try await data.once().getMultiplayerRequest().string
-    else {
-      return try await start()
-    }
     do {
-      if choice.hasPrefix("j") {
-        // join
-        try await joinGame()
-      } else if choice.hasPrefix("s") {
-        // single
-        let single = try await singlePlayer(contestants: 3)
-        logger.info("single game \(single)")
-      } else if choice.hasPrefix("m") {
-        // muliplayer
-        try await startMultiplayer()
+      let task: Task.Handle<Void, Error> = async {
+        await send(string: CLI.clear() + """
+        ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+        ░░░░░░░░░░░░░░░▓████████▓░░░░░░░░░░░░░░░░
+        ░░░░░░░░░░░░░░▒█████████▓▒░░░░░░░░░░░░░░░
+        ░░░░░░░░░░░░░░░▓██▓▓▓▓▓▓███░░░░░░░░░░░░░░
+        ░░░░░░░░░░░░░░░▓██▓▓▓▓▓▓▓██▓░░░░░░░░░░░░░
+        ░░░░░░░░░░░░░░░░▓█▓▓▓▓▓▓▓▓█▓░░░░░░░░░░░░░
+        ░░░░░░░░░░░░░░░░▓█▓▓▓▓▓▓▓▓█▓▒░░░░░░░░░░░░
+        ░░░░░░░░░░░░░░░▓██▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░░░░░
+        ░░░░░░░░░░░▒▓▓█████▓▓▓▓▓▓▓▓██▓░░░░░░░░░░░
+        ░░░░░░░░░▓█████████▓▓▓▓▓▓▓▓███▓▒░░░░░░░░░
+        ░░░░░░░░▓███▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓████▓░░░░░░░░
+        ░░░░░░▒████▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓███▓░░░░░░░
+        ░░░░░░▓██▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓██▓░░░░░░
+        ░░░░░░▓██▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓██▓░░░░░░
+        ░░░░░░███▓▓▓█████▓▓▓▓▓▓▓█████▓▓▓██▓░░░░░░
+        ░░░░░░████▓█▓░░▒▓▓▓▓█▓██▓░░▒▓█▓███▓░░░░░░
+        ░░░░░▒█████▓░░░░▒▓█████▓░░░░▒▓█████▒░░░░░
+        ░░░░▓████▓▒░░▒█░░░▓███▒░░▒▓░░░▓█████▓░░░░
+        ░░▒▓███▓▓▓░░░██▒░░▒▓█▓░░░▓█▓░░░▓▓▓███▓▒░░
+        ░▓████▓▓▓▓▓░░░░░░░▓▓▓▓▒░░░░░░░▓▓▓▓▓████░░
+        ░███▓▓▓▓▓▓▓▓▒░░░▓▓▓▓▓▓▓▓▒░░░▓▓▓▓▓▓▓▓▓██▓░
+        ░███▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓██▓░
+        ░███▓▓▓▓▓░▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░▓▓▓▓██▓░
+        ░███▓▓▓▓▓░░▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░▓▓▓▓██▓░
+        ░███▓▓▓▓▓▓░░░▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░▓▓▓▓▓██▓░
+        ░█████▓▓▓▓▓▓▓░░░░░░░░░░░░░░░░▓▓▓▓▓▓▓███▒░
+        ░▒█████▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓███▓█░░
+        ░░░▓████▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓████▒░░░
+        ░░░░▒▓█████████████████████████████▓▒░░░░
+        ░░░░░▒▓███████████████████████████▓░░░░░░
+
+        Welkom bij shitheaden!!
+
+        Typ het volgende om te beginnen:
+        single        Start een single game
+        join          Join een online game
+        multiplayer   Start een multiplayer game
+        """)
+        guard let choice: String = try await data.once().getMultiplayerRequest().string
+        else {
+          return try await start()
+        }
+        do {
+          if choice.hasPrefix("j") {
+            // join
+            try await joinGame(name: askName())
+          } else if choice.hasPrefix("s") {
+            // single
+            let single = try await singlePlayer(contestants: 3)
+            logger.info("single game \(single)")
+          } else if choice.hasPrefix("m") {
+            // muliplayer
+            try await startMultiplayer(name: askName())
+          }
+
+        } catch {
+          logger.info("Error: \(error)")
+          return try await start()
+        }
+
+        return try await start()
       }
+
+      quit.once { uuid in
+        self.logger.info("CANCELLED BY: \(uuid)")
+        task.cancel()
+      }
+      return try await task.get()
 
     } catch {
       logger.info("Error: \(error)")
       return try await start()
     }
-
-    return try await start()
   }
 
-  private func startMultiplayer() async throws {
-    let id = UUID()
+  private func startMultiplayer(name: String) async throws {
     let pair = MultiplayerHandler(
-      challenger: (id, self)
+      challenger: Contestant(uuid: id, name: name, client: self)
     )
     await games.insert(pair.code, value: pair)
 
     try await pair.createGame()
   }
 
-  private func joinGame() async throws {
+  private func askName() async throws -> String {
+    await send(string: """
+
+
+        Wat is je naam?
+    """)
+    let event = try await data.once()
+
+    guard let name = try await event.getMultiplayerRequest().string?
+      .trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+    else {
+      return try await askName()
+    }
+
+    return name
+  }
+
+  private func joinGame(name: String) async throws {
     await send(string: """
 
 
@@ -100,12 +164,21 @@ class TelnetClient: Client {
     guard let code = try await event.getMultiplayerRequest().string?
       .trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     else {
-      return try await joinGame()
+      return try await joinGame(name: name)
     }
 
     if let game = await games.get(code) {
       let id = UUID()
-      try await game.join(id: id, client: self)
+
+      if await game.cpus + game.competitors.count + 1 >= 4 {
+        await send(string: """
+
+              Lobby is vol!
+        """)
+        return try await start()
+      }
+
+      try await game.join(competitor: Contestant(uuid: id, name: name, client: self))
       try await game.finished()
 
       return try await start()
@@ -226,10 +299,14 @@ class TelnetClient: Client {
       slowMode: true
     )
 
+//    let task: Task.Handle<EndGameSnapshot, Error> = async {
     let snapshot = try await game.startGame()
     asyncDetached(priority: .background) {
       try await WriteSnapshotToDisk.write(snapshot: snapshot)
     }
     return snapshot
+//    }
+
+//    return try await task.get()
   }
 }

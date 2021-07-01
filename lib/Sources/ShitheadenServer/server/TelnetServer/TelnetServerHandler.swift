@@ -5,6 +5,7 @@
 //  Created by Tomas Harkema on 24/06/2021.
 //
 
+import Foundation
 import Logging
 import NIO
 import ShitheadenRuntime
@@ -62,6 +63,7 @@ final class TelnetServerHandler: ChannelInboundHandler {
     }
 
     if buffer.contains("quit") {
+      logger.info("EMIT QUIT!")
       quit.emit(())
     }
 

@@ -13,30 +13,36 @@ import ShitheadenRuntime
 import ShitheadenShared
 
 protocol Client: AnyObject {
-  var quit: EventHandler<Void>.ReadOnly { get }
+  var quit: EventHandler<UUID>.ReadOnly { get }
   var data: EventHandler<ServerRequest>.ReadOnly { get }
 
   func send(_ event: ServerEvent) async throws
 }
 
+struct Contestant {
+  let uuid: UUID
+  let name: String
+  let client: Client
+}
+
 actor MultiplayerHandler {
   private let logger = Logger(label: "cli.MultiplayerHandler")
-  var challenger: (UUID, Client)
+  var challenger: Contestant
   let code: String
-  var competitors: [(UUID, Client)]
+  var competitors: [Contestant]
   private var gameTask: Task<EndGameSnapshot, Error>?
   private let finishEvent = EventHandler<Result<Void, Error>>()
   public var finish: EventHandler<Result<Void, Error>>.ReadOnly { finishEvent.readOnly }
   public private(set) var cpus = 0
 
-  init(challenger: (UUID, Client)) {
+  init(challenger: Contestant) {
     self.challenger = challenger
     code = UUID().uuidString.prefix(5).lowercased()
     competitors = []
   }
 
   nonisolated func start() async {
-    await challenger.1.quit.on { [weak self] in
+    await challenger.client.quit.on { [weak self] uuid in
       guard let self = self else {
         return
       }
@@ -45,7 +51,7 @@ actor MultiplayerHandler {
       asyncDetached {
         await self.competitors.forEach { competitor in
           asyncDetached {
-            try await competitor.1.send(.quit)
+            try await competitor.client.send(.quit(from: uuid))
           }
         }
       }
@@ -54,16 +60,16 @@ actor MultiplayerHandler {
       await self.gameTask?.cancel()
     }
     await competitors.forEach { competitor in
-      competitor.1.quit.on { [weak self] in
+      competitor.client.quit.on { [weak self] uuid in
         guard let self = self else {
           return
         }
         asyncDetached {
           let challenger = await self.challenger
-          try await challenger.1.send(.quit)
-          await self.competitors.filter { $0.0 != competitor.0 }.forEach { competitor in
+          try await challenger.client.send(.quit(from: uuid))
+          await self.competitors.filter { $0.uuid != competitor.uuid }.forEach { competitor in
             asyncDetached {
-              try await competitor.1.send(.quit)
+              try await competitor.client.send(.quit(from: uuid))
             }
           }
         }
@@ -75,21 +81,22 @@ actor MultiplayerHandler {
   }
 
   nonisolated func send(_ event: ServerEvent) async throws {
-    try await challenger.1.send(event)
+    try await challenger.client.send(event)
     for competitor in await competitors {
-      try await competitor.1.send(event)
+      try await competitor.client.send(event)
     }
   }
 
-  func appendCompetitor(id: UUID, client: Client) {
-    competitors.append((id, client))
+  func append(competitor: Contestant) {
+    competitors.append(competitor)
   }
 
-  nonisolated func join(id: UUID, client: Client) async throws {
-    await appendCompetitor(id: id, client: client)
+  nonisolated func join(competitor: Contestant) async throws {
+    await append(competitor: competitor)
 
-    try await client.send(.waiting)
-    try await send(.joined(numberOfPlayers: 1 + competitors.count + cpus))
+    try await competitor.client.send(.waiting)
+    try await send(.joined(initiator: challenger.name, contestants: competitors.map(\.name),
+                           cpus: cpus))
   }
 
   private func setCpus(_ newValue: Int) {
@@ -99,12 +106,12 @@ actor MultiplayerHandler {
   nonisolated func createGame() async throws {
     await start()
 
-    try await challenger.1.send(.codeCreate(code: code))
+    try await challenger.client.send(.codeCreate(code: code))
     try await waitForStart()
   }
 
   nonisolated func waitForStart() async throws {
-    let readEvent = try await challenger.1.data.once()
+    let readEvent = try await challenger.client.data.once()
     if case let .multiplayerRequest(read) = readEvent, let string = read.string,
        string.contains("start")
     {
@@ -128,7 +135,8 @@ actor MultiplayerHandler {
         }
       }
 
-      try await send(.joined(numberOfPlayers: 1 + competitors.count + cpus))
+      try await send(.joined(initiator: challenger.name, contestants: competitors.map(\.name),
+                             cpus: cpus))
 
       return try await waitForStart()
     }
@@ -143,15 +151,15 @@ actor MultiplayerHandler {
 
     logger.info("RESTART?")
 
-    try await challenger.1.send(.requestRestart)
+    try await challenger.client.send(.requestRestart)
 
     await competitors.forEach { competitor in
       async {
-        try await competitor.1.send(.waitForRestart)
+        try await competitor.client.send(.waitForRestart)
       }
     }
 
-    let readEvent = try await challenger.1.data.once()
+    let readEvent = try await challenger.client.data.once()
     guard case let .multiplayerRequest(read) = readEvent, let string = read.string,
           string.contains("start")
     else {
@@ -166,55 +174,55 @@ actor MultiplayerHandler {
   }
 
   private nonisolated func startMultiplayerGame() async throws -> EndGameSnapshot {
-    _ = await challenger.1.quit.on {
+    _ = await challenger.client.quit.on { uuid in
       do {
-        try await self.send(.quit)
+        try await self.send(.quit(from: uuid))
       } catch {}
     }
 
     for player in await competitors {
-      _ = player.1.quit.on {
+      _ = player.client.quit.on { uuid in
         do {
-          try await self.send(.quit)
+          try await self.send(.quit(from: uuid))
         } catch {}
       }
     }
 
-    let initiatorAi = await UserInputAIJson(id: challenger.0) { request, error in
+    let initiatorAi = await UserInputAIJson(id: challenger.uuid) { request, error in
       if let error = error {
-        try await self.challenger.1
+        try await self.challenger.client
           .send(.multiplayerEvent(multiplayerEvent: .error(error: error)))
       }
-      try await self.challenger.1
+      try await self.challenger.client
         .send(.multiplayerEvent(multiplayerEvent: .action(action: request)))
-      return try await self.challenger.1.data.once().getMultiplayerRequest()
+      return try await self.challenger.client.data.once().getMultiplayerRequest()
     } renderHandler: { game in
-      _ = try await self.challenger.1
+      _ = try await self.challenger.client
         .send(.multiplayerEvent(multiplayerEvent: .gameSnapshot(snapshot: game)))
     }
 
     let initiator = await Player(
-      id: challenger.0,
-      name: String(challenger.0.uuidString.prefix(5).prefix(5)),
+      id: challenger.uuid,
+      name: challenger.name,
       position: .noord,
       ai: initiatorAi
     )
 
     let joiners = await competitors.prefix(3).enumerated().map { index, player in
       Player(
-        id: player.0,
-        name: String(player.0.uuidString.prefix(5)),
+        id: player.uuid,
+        name: player.name,
         position: Position.allCases[index + 1],
-        ai: UserInputAIJson(id: player.0) { request, error in
+        ai: UserInputAIJson(id: player.uuid) { request, error in
           if let error = error {
-            try await player.1
+            try await player.client
               .send(.multiplayerEvent(multiplayerEvent: .error(error: error)))
           }
-          try await player.1
+          try await player.client
             .send(.multiplayerEvent(multiplayerEvent: .action(action: request)))
-          return try await player.1.data.once().getMultiplayerRequest()
+          return try await player.client.data.once().getMultiplayerRequest()
         } renderHandler: { game in
-          _ = try await player.1
+          _ = try await player.client
             .send(.multiplayerEvent(multiplayerEvent: .gameSnapshot(snapshot: game)))
         }
       )

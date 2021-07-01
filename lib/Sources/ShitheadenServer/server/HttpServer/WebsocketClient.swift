@@ -18,10 +18,10 @@ class WebsocketClient: Client {
   private let websocket: WebSocket
   let games: AtomicDictionary<String, MultiplayerHandler>
 
-  let onQuit = EventHandler<Void>()
+  let onQuit = EventHandler<UUID>()
   let onData = EventHandler<ServerRequest>()
 
-  var quit: EventHandler<Void>.ReadOnly { onQuit.readOnly }
+  var quit: EventHandler<UUID>.ReadOnly { onQuit.readOnly }
   var data: EventHandler<ServerRequest>.ReadOnly { onData.readOnly }
 
   init(
@@ -87,10 +87,11 @@ class WebsocketClient: Client {
     do {
       let choice: ServerRequest? = try await data.once()
       switch choice {
-      case let .joinMultiplayer(code):
-        try await joinGame(code: code)
-      case .startMultiplayer:
-        try await startMultiplayer()
+      case let .joinMultiplayer(name, code):
+        try await joinGame(name: name, code: code)
+
+      case let .startMultiplayer(name):
+        try await startMultiplayer(name: name)
 
       case .multiplayerRequest:
         return try await start()
@@ -114,10 +115,11 @@ class WebsocketClient: Client {
     }
   }
 
-  private func joinGame(code: String) async throws {
+  private func joinGame(name: String, code: String) async throws {
     if let game = await games.get(code) {
       let id = UUID()
-      try await game.join(id: id, client: self)
+      try await game
+        .join(competitor: Contestant(uuid: id, name: name, client: self)) // (id: id, client: self)
       try await game.finished()
     } else {
       try await send(.error(error: .gameNotFound(code: code)))
@@ -154,9 +156,9 @@ class WebsocketClient: Client {
     }
   }
 
-  private func startMultiplayer() async throws {
+  private func startMultiplayer(name: String) async throws {
     let id = UUID()
-    let pair = MultiplayerHandler(challenger: (id, self))
+    let pair = MultiplayerHandler(challenger: Contestant(uuid: id, name: name, client: self))
     await games.insert(pair.code, value: pair)
 
     try await pair.createGame()
