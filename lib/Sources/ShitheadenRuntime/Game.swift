@@ -175,7 +175,7 @@ public actor Game {
         deck.draw()!,
         deck.draw()!,
       ]
-
+      players[index].sortCardsHandImportance()
 //      players[index].sortCards()
       players[index].closedTableCards = [deck.draw()!, deck.draw()!, deck.draw()!]
     }
@@ -230,6 +230,7 @@ public actor Game {
       player.handCards.remove(at: player.handCards.firstIndex(of: card1)!)
       player.handCards.remove(at: player.handCards.firstIndex(of: card2)!)
       player.handCards.remove(at: player.handCards.firstIndex(of: card3)!)
+      player.sortCardsHandImportance()
 
       player.openTableCards.append(card1)
       player.openTableCards.append(card2)
@@ -412,6 +413,7 @@ public actor Game {
               continue
             }
           }
+          player.sortCardsHandImportance()
 
         case .tableOpen:
           assert(!possibleBeurt.contains { !player.openTableCards.contains($0) }, "WTF")
@@ -425,6 +427,7 @@ public actor Game {
 
       case .pass:
         player.handCards.append(contentsOf: table)
+        player.sortCardsHandImportance()
         table = []
       }
 

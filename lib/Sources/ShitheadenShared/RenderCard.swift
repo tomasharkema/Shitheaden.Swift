@@ -50,12 +50,12 @@ public enum RenderCard: Equatable, Hashable, Codable, Comparable {
     switch (self, rhs) {
     case let (.card(left), .card(right)):
       return left.number.handImportanceScore < right.number.handImportanceScore
-                      case (.hidden, .card):
-                        return true
-                      case (.card, .hidden):
-                        return false
-                      case let (.hidden(left), .hidden(right)):
-                        return left.uuidString < right.uuidString
+    case (.hidden, .card):
+      return true
+    case (.card, .hidden):
+      return false
+    case let (.hidden(left), .hidden(right)):
+      return left.uuidString < right.uuidString
     }
   }
 }

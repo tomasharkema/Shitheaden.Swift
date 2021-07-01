@@ -103,9 +103,9 @@ final class GameContainer: ObservableObject {
     newState.gameSnapshot = snapshot
     newState.localPhase = localPlayer.phase
     if !localPlayer.handCards.isEmpty {
-      newState.localCards = localPlayer.handCards//.sortNumbers()
+      newState.localCards = localPlayer.handCards // .sortNumbers()
     } else if !localPlayer.openTableCards.isEmpty {
-      newState.localCards = localPlayer.openTableCards//.sortNumbers()
+      newState.localCards = localPlayer.openTableCards // .sortNumbers()
     } else {
       // closed cards!
       newState.localClosedCards = localPlayer.closedCards
@@ -213,7 +213,11 @@ final class GameContainer: ObservableObject {
             request.httpMethod = "POST"
             request.addValue("application/json", forHTTPHeaderField: "content-type")
 
-            let result = try await URLSession.shitheaden.upload(for: request, from: data, delegate: nil)
+            let result = try await URLSession.shitheaden.upload(
+              for: request,
+              from: data,
+              delegate: nil
+            )
 
             let resultString = String(data: result.0, encoding: .utf8)
 

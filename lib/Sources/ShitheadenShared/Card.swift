@@ -42,13 +42,12 @@ public extension Array where Element == Card {
       $0.number.handImportanceScore < $1.number.handImportanceScore
     }
   }
-  
+
   @inlinable func sortedCardsHandImportance() -> Self {
-    return sorted {
+    sorted {
       $0.number.handImportanceScore < $1.number.handImportanceScore
     }
   }
-
 
   @inlinable func sameNumber() -> Bool {
     !contains {

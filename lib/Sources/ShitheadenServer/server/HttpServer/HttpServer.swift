@@ -22,10 +22,13 @@ final class HttpServer {
     self.games = games
   }
 
-  func start(group: MultiThreadedEventLoopGroup) async throws { // swiftlint:disable:this function_body_length
+  func start(group: MultiThreadedEventLoopGroup) async throws {
+    // swiftlint:disable:this function_body_length
     let app = Application(.development, .shared(group))
     app.http.server.configuration.port = 3338
     app.http.server.configuration.hostname = "0.0.0.0"
+    app.http.server.configuration.responseCompression = .enabled
+
     app.middleware.use(FileMiddleware(publicDirectory: "Public"))
 
     let homePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]

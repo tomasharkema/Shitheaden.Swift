@@ -30,7 +30,6 @@ extension Array {
 
 extension Array where Element: Comparable {
   func containsSameElements(as other: [Element]) -> Bool {
-    return self.count == other.count && self.sorted() == other.sorted()
+    count == other.count && sorted() == other.sorted()
   }
 }
-

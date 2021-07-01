@@ -13,9 +13,9 @@ import SwiftUI
 enum ConnectionState {
   case connecting
   case makeChoice
-  case waiting(canStart: Bool, users: Int)
+  case waiting(code: String, canStart: Bool, users: Int)
   case gameNotFound
-  case codeCreated(String)
+  case codeCreated(code: String)
   case gameSnapshot(GameSnapshot, WebSocketClient)
   case restart(canStart: Bool)
 }
@@ -28,6 +28,7 @@ class Connecting: ObservableObject {
   @Published var connection: ConnectionState = .connecting
 
   var id: UUID?
+  private var code: String?
 
   private var dataHandler: UUID?
   private var quitHandler: UUID?
@@ -70,7 +71,9 @@ class Connecting: ObservableObject {
   private func onData(_ event: ServerEvent, _ client: WebSocketClient) {
     switch event {
     case .waiting:
-      connection = .waiting(canStart: isInitiator, users: 1)
+      if let code = code {
+        connection = .waiting(code: code, canStart: isInitiator, users: 1)
+      }
 
     case let .error(error: .gameNotFound(code)):
       connection = .gameNotFound
@@ -88,11 +91,18 @@ class Connecting: ObservableObject {
       logger.info("MultiplayerEvent: \(String(describing: multiplayerEvent))")
 
     case let .joined(numberOfPlayers: numberOfPlayers):
-      connection = .waiting(canStart: numberOfPlayers >= 2 && isInitiator, users: numberOfPlayers)
+      if let code = code {
+        connection = .waiting(
+          code: code,
+          canStart: numberOfPlayers >= 2 && isInitiator,
+          users: numberOfPlayers
+        )
+      }
 
     case let .codeCreate(code: code):
       isInitiator = true
-      connection = .codeCreated(code)
+      self.code = code
+      connection = .codeCreated(code: code)
 
     case .start:
       logger.info("START!")
@@ -111,6 +121,11 @@ class Connecting: ObservableObject {
     case .waitForRestart:
       connection = .restart(canStart: false)
     }
+  }
+
+  func connect(code: String) async throws {
+    self.code = code
+    try await client?.write(.joinMultiplayer(code: code))
   }
 }
 
@@ -152,8 +167,7 @@ struct ConnectingView: View {
             .onAppear {
               async {
                 if let code = code {
-                  try await self.connection.client?
-                    .write(.joinMultiplayer(code: code))
+                  try await self.connection.connect(code: code)
                 } else {
                   try await self.connection.client?.write(.startMultiplayer)
                 }
@@ -175,8 +189,7 @@ struct ConnectingView: View {
             .onAppear {
               async {
                 if let code = code {
-                  try await self.connection.client?
-                    .write(.joinMultiplayer(code: code))
+                  try await self.connection.connect(code: code)
                 } else {
                   try await self.connection.client?.write(.startMultiplayer)
                 }
@@ -189,24 +202,35 @@ struct ConnectingView: View {
           }.buttonStyle(.bordered)
         }
 
-      case let .waiting(canStart, int):
+      case let .waiting(code, canStart, int):
         VStack {
-        Text("\(int) waiting to start")
-        if canStart {
-          Button("Add cpu!") {
-            async {
-              try await self.connection.client?
-                .write(.multiplayerRequest(.string("cpu")))
+          Text("Je code is \(code)... \(int) spelers wachten om te beginnen!")
+          if canStart {
+            if int < 4 {
+              Button("Add cpu!") {
+                async {
+                  try await self.connection.client?
+                    .write(.multiplayerRequest(.string("cpu+")))
+                }
+              }.buttonStyle(.bordered)
             }
-          }.buttonStyle(.bordered)
-          Button("Start!") {
-            async {
-              try await self.connection.client?
-                .write(.multiplayerRequest(.string("start")))
+            if int > 1 {
+              Button("Remove cpu!") {
+                async {
+                  try await self.connection.client?
+                    .write(.multiplayerRequest(.string("cpu-")))
+                }
+              }.buttonStyle(.bordered)
             }
-          }.buttonStyle(.bordered)
+            Button("Start!") {
+              async {
+                try await self.connection.client?
+                  .write(.multiplayerRequest(.string("start")))
+              }
+            }.buttonStyle(.bordered)
+          }
         }
-        }
+
       case let .codeCreated(code):
         Text("Je code is \(code)... Wachten tot er mensen joinen!")
         Button("Add cpu!") {
