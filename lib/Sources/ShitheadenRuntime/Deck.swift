@@ -26,14 +26,8 @@ public struct Deck: Equatable, Codable {
     self.cards = cards
   }
 
-  mutating func shuffle(seed: [UInt8]?) {
-    if let seed = seed {
-      var generatorInstance = ARC4RandomNumberGenerator(seed: seed)
-      cards.shuffle(using: &generatorInstance)
-    } else {
-      var generatorInstance = SystemRandomNumberGenerator()
-      cards.shuffle(using: &generatorInstance)
-    }
+  mutating func shuffle() {
+    cards.shuffle()
   }
 
   mutating func draw() -> Card? {
@@ -47,7 +41,7 @@ public struct Deck: Equatable, Codable {
 
   static var new: Deck {
     var deck = Deck()
-    deck.shuffle(seed: nil)
+    deck.shuffle()
     return deck
   }
 }

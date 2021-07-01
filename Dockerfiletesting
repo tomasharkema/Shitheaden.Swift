@@ -51,4 +51,4 @@ RUN rm ./Tests/ShitheadenRuntimeTests/main.swift && rm ./Tests/ShitheadenSharedT
 
 COPY lib/Tests ./Tests
 
-RUN swift test --parallel -Xswiftc -g
+RUN swift test -Xswiftc -g
