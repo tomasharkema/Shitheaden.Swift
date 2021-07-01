@@ -12,6 +12,30 @@ import ShitheadenShared
 public struct Deck: Equatable, Codable {
   public private(set) var cards: [Card]
 
+  init() {
+    var cards = [Card]()
+    for symbol in Symbol.allCases {
+      for number in Number.allCases {
+        cards.append(Card(id: UUID(), symbol: symbol, number: number))
+      }
+    }
+    self.cards = cards
+  }
+
+  init(cards: [Card]) {
+    self.cards = cards
+  }
+
+  mutating func shuffle(seed: [UInt8]?) {
+    if let seed = seed {
+      var generatorInstance = ARC4RandomNumberGenerator(seed: seed)
+      cards.shuffle(using: &generatorInstance)
+    } else {
+      var generatorInstance = SystemRandomNumberGenerator()
+      cards.shuffle(using: &generatorInstance)
+    }
+  }
+
   mutating func draw() -> Card? {
     if cards.isEmpty {
       return nil
@@ -22,20 +46,8 @@ public struct Deck: Equatable, Codable {
   }
 
   static var new: Deck {
-    var cards = [Card]()
-    for symbol in Symbol.allCases {
-      for number in Number.allCases {
-        cards.append(Card(id: UUID(), symbol: symbol, number: number))
-      }
-    }
-    for _ in 0 ..< Int.random(in: 0 ..< 100) {
-      cards.shuffle()
-      cards.shuffle()
-      cards.shuffle()
-      cards.shuffle()
-      cards.shuffle()
-      cards.shuffle()
-    }
-    return Deck(cards: cards)
+    var deck = Deck()
+    deck.shuffle(seed: nil)
+    return deck
   }
 }

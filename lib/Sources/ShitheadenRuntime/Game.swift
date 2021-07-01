@@ -18,7 +18,7 @@ public actor Game {
   let beginDate = Date().timeIntervalSince1970
   var endDate: TimeInterval?
 
-  private(set) var deck = Deck(cards: [])
+  private(set) var deck = Deck()
   var players = [Player]()
   private(set) var table = Table()
   private(set) var burnt = [Card]()
@@ -26,6 +26,10 @@ public actor Game {
   #if DEBUG
     public func privateSetBurnt(_ cards: [Card]) {
       burnt = cards
+    }
+
+    func set(deck: Deck) {
+      self.deck = deck
     }
   #endif
 
