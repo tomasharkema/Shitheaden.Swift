@@ -15,6 +15,15 @@ struct PlayerView: View {
 
   var body: some View {
     if !player.done {
+
+
+      if player.position == .zuid || player.position == .oost {
+        Text(player.name)
+          .font(.system(.body, design: .rounded).bold())
+          .foregroundColor(.white)
+          .rotationEffect(player.position == .oost  ? .degrees(-90) : .zero)
+      }
+
       VStack {
         OrientationStack(orientation: orientation) {
           CardWaverView(
@@ -48,6 +57,12 @@ struct PlayerView: View {
         RoundedRectangle(cornerRadius: 20)
           .stroke(Color.green, lineWidth: 5)
       )
+      if player.position == .noord || player.position == .west {
+        Text(player.name)
+          .font(.system(.body, design: .rounded).bold())
+          .foregroundColor(.white)
+          .rotationEffect(player.position == .west  ? .degrees(90) : .zero)
+      }
     }
   }
 }

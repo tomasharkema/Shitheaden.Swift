@@ -39,7 +39,6 @@ let package = Package(
     .library(name: "ShitheadenSharedDynamic", type: .dynamic, targets: ["ShitheadenRuntime"]),
     .library(name: "CustomAlgo", type: .static, targets: ["CustomAlgo"]),
     .library(name: "CustomAlgoDynamic", type: .dynamic, targets: ["CustomAlgo"]),
-    .library(name: "DependenciesTarget", type: .static, targets: ["DependenciesTarget"]),
     .library(name: "AppDependencies", type: .static, targets: ["AppDependencies"]),
     .library(name: "AppDependenciesDynamic", type: .dynamic, targets: ["AppDependencies"]),
     .library(name: "TestsHelpers", type: .dynamic, targets: ["TestsHelpers"]),
@@ -77,7 +76,6 @@ let package = Package(
         ]),
         .define("DEBUG", .when(configuration: .debug)),
         .define("RELEASE", .when(configuration: .release)),
-        .unsafeFlags(["-cross-module-optimization"], .when(configuration: .release)),
       ]
     ),
     .executableTarget(
@@ -98,30 +96,6 @@ let package = Package(
         ]),
         .define("DEBUG", .when(configuration: .debug)),
         .define("RELEASE", .when(configuration: .release)),
-        .unsafeFlags(["-cross-module-optimization"], .when(configuration: .release)),
-      ]
-    ),
-    .target(
-      name: "DependenciesTarget",
-      dependencies: [
-        .product(name: "Vapor", package: "vapor"),
-        .target(name: "CustomAlgo"),
-        .target(name: "ShitheadenCLIRenderer"),
-        .product(name: "NIOSSH", package: "swift-nio-ssh"),
-        .product(name: "Signals", package: "BlueSignals"),
-        .product(name: "NIOExtras", package: "swift-nio-extras"),
-        .product(name: "ArgumentParser", package: "swift-argument-parser"),
-      ],
-      swiftSettings: [
-        .unsafeFlags([
-          "-Xfrontend",
-          "-enable-experimental-concurrency",
-          "-Xfrontend",
-          "-disable-availability-checking",
-        ]),
-        .define("DEBUG", .when(configuration: .debug)),
-        .define("RELEASE", .when(configuration: .release)),
-        .unsafeFlags(["-cross-module-optimization"], .when(configuration: .release)),
       ]
     ),
     .target(
@@ -161,7 +135,8 @@ let package = Package(
         .unsafeFlags([
           "-Xfrontend",
           "-enable-experimental-concurrency",
-          "-Xfrontend", "-disable-availability-checking",
+          "-Xfrontend",
+          "-disable-availability-checking",
         ]),
         .define("DEBUG", .when(configuration: .debug)),
         .define("RELEASE", .when(configuration: .release)),
@@ -176,7 +151,8 @@ let package = Package(
         .unsafeFlags([
           "-Xfrontend",
           "-enable-experimental-concurrency",
-          "-Xfrontend", "-disable-availability-checking",
+          "-Xfrontend",
+          "-disable-availability-checking",
         ]),
       ]
     ),
@@ -191,7 +167,8 @@ let package = Package(
         .unsafeFlags([
           "-Xfrontend",
           "-enable-experimental-concurrency",
-          "-Xfrontend", "-disable-availability-checking",
+          "-Xfrontend",
+          "-disable-availability-checking",
         ]),
       ]
     ),
@@ -206,7 +183,6 @@ let package = Package(
         ]),
       ]
     ),
-
     .testTarget(
       name: "ShitheadenRuntimeTests",
       dependencies: [

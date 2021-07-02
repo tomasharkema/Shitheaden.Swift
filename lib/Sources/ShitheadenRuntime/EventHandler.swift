@@ -77,14 +77,15 @@ public class EventHandler<T> {
       function(.success(event))
     }
 
-    return try await withTaskCancellationHandler(operation: {
+
+    return try await withTaskCancellationHandler(handler: { [function] in
+      function!(.failure(NSError(domain: "", code: 0, userInfo: nil)))
+    }, operation: {
       try await withUnsafeThrowingContinuation { cont in
         function = {
           cont.resume(with: $0)
         }
       }
-    }, onCancel: { [function] in
-      function!(.failure(NSError(domain: "", code: 0, userInfo: nil)))
     })
   }
 

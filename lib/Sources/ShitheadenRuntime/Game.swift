@@ -435,7 +435,7 @@ public actor Game {
         table = []
       }
 
-      turns += [UserAndTurn(uuid: player.name, turn: turn)]
+      turns += [UserAndTurn(uuid: player.id.uuidString, turn: turn)]
 
       try await sendRender(error: previousError)
 

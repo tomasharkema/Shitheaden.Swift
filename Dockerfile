@@ -31,12 +31,11 @@ RUN mkdir -p ./Sources/CustomAlgo && \
 
 COPY lib/Package.swift ./Package.swift
 
-COPY lib/Sources/DependenciesTarget ./Sources/DependenciesTarget
 COPY lib/Sources/AppDependencies ./Sources/AppDependencies
 
 RUN swift package resolve
 
-RUN swift build --target DependenciesTarget -c release -Xswiftc -g
+RUN swift build --target Vapor -c release -Xswiftc -g
 
 RUN rm ./Sources/CustomAlgo/main.swift && \
     rm ./Sources/ShitheadenRuntime/main.swift && \

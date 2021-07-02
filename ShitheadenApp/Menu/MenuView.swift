@@ -16,8 +16,9 @@ struct MenuView: View {
   @State var joinCode: String = ""
 
   var body: some View {
-    VStack(spacing: 10) {
+    VStack(spacing: 20) {
       Text("💩").font(.system(size: 100))
+      Text("Shitheaden").font(.system(size: 50, design: .rounded))
       Button("Single Player 4p", action: {
         withAnimation {
           state = .singlePlayer(contestants: 3)
