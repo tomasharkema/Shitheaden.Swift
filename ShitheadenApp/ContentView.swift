@@ -20,15 +20,19 @@ enum AppState {
 struct ContentView: View {
   @State var appState: AppState?
 
+  @StateObject var offlineGame = GameContainer()
+
   var body: some View {
     switch appState {
-    case .singlePlayer:
-      GameView(state: $appState, gameType: .offline)
+    case let .singlePlayer(contestants):
+      GameView(state: $appState, game: offlineGame).onAppear {
+        async {
+          await offlineGame.start(contestants: contestants)
+        }
+      }
     case .multiplayerChallenger:
-//        GameView(state: $appState)
       ConnectingView(state: $appState, code: nil)
     case let .multiplayerJoin(code):
-//        GameView(state: $appState, gameType: .offline)
       ConnectingView(state: $appState, code: code)
     case .none:
       MenuView(state: $appState)

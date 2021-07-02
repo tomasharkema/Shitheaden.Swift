@@ -16,7 +16,9 @@ enum ConnectionState {
   case makeChoice
   case waiting(code: String, canStart: Bool, initiator: String, contestants: [String], cpus: Int)
   case gameNotFound
+  case error(Error)
   case codeCreated(code: String)
-  case gameSnapshot(GameSnapshot, WebSocketClient)
+//  case gameSnapshot(GameSnapshot)
+  case gameContainer(GameContainer)
   case restart(canStart: Bool)
 }

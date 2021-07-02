@@ -9,6 +9,7 @@ import Logging
 import ShitheadenRuntime
 import ShitheadenShared
 import SwiftUI
+import Foundation
 
 struct ConnectingView: View {
   @State var name: String = ""
@@ -34,11 +35,13 @@ struct ConnectingView: View {
           }
         }.disabled(name.isEmpty).buttonStyle(.bordered)
 
-      case let .gameSnapshot(snapshot, handler):
-        GameView(state: $state, gameType: .online(handler))
-          .onDisappear {
-            handler.close()
-          }
+//      case let .gameSnapshot(snapshot, handler):
+      case let .gameContainer(container):
+        GameView(state: $state, game: container)
+//        GameView(state: $state, gameType: .online(handler))
+//          .onDisappear {
+//            handler.close()
+//          }
 
       case .connecting:
         VStack {
@@ -138,6 +141,9 @@ struct ConnectingView: View {
           }
         }.buttonStyle(.bordered)
 
+      case .error(let error):
+        Text(error.localizedDescription)
+
       case .gameNotFound:
         Button("Spel niet gevonden. Ga terug") {
           state = nil
@@ -146,7 +152,7 @@ struct ConnectingView: View {
             state = nil
           }
       }
-      if case .gameSnapshot = connection.connection { } else {
+      if case .gameContainer = connection.connection { } else {
         Button("Annuleren", action: {
           connection.close()
           state = nil

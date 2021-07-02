@@ -166,9 +166,6 @@ class WebsocketClient: Client {
 
   func send(_ event: ServerEvent) async throws {
     let _: Void = try await withUnsafeThrowingContinuation { cont in
-//      async {
-      // We can't really check for error here, but it's also not the purpose of the
-      // example so let's not worry about it.
       do {
         let data = try JSONEncoder().encode(event)
 
@@ -184,7 +181,6 @@ class WebsocketClient: Client {
       } catch {
         self.logger.error("\(error)")
       }
-//      }
     }
   }
 }

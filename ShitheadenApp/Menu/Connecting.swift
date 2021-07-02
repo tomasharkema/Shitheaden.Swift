@@ -16,6 +16,7 @@ class Connecting: ObservableObject {
   private let websocket = WebSocketGameClient()
   private var client: WebSocketClient?
   @Published var connection: ConnectionState = .connecting
+  @Published var gameContainer: GameContainer?
 
   private var identifier: UUID?
   private var code: String?
@@ -62,7 +63,6 @@ class Connecting: ObservableObject {
   private func onData(_ event: ServerEvent, _ client: WebSocketClient) {
     guard let name = name else {
       connection = .getName
-
       return
     }
 
@@ -82,16 +82,34 @@ class Connecting: ObservableObject {
       connection = .gameNotFound
 
     case let .error(error: error):
-      logger.error("Received error: \(String(describing: error))")
+      connection = .error(error)
 
     case .requestMultiplayerChoice:
       connection = .makeChoice
 
     case let .multiplayerEvent(.gameSnapshot(snapshot)):
-      connection = .gameSnapshot(snapshot, client)
+      let container: GameContainer
+      if let gameContainer = gameContainer {
+        container = gameContainer
+      } else {
+        container = GameContainer()
+        gameContainer = container
+        async {
+          await container.startOnline(client, restart: false)
+        }
+      }
+      
+      if case .gameContainer = connection {
+        // NO-OP
+      } else {
+        connection = .gameContainer(container)
+      }
+      container.handleOnlineObject(.multiplayerEvent(multiplayerEvent: .gameSnapshot(snapshot: snapshot)), client: client)
 
-    case let .multiplayerEvent(multiplayerEvent: multiplayerEvent):
-      logger.info("MultiplayerEvent: \(String(describing: multiplayerEvent))")
+//      connection = .gameSnapshot(snapshot, client)
+
+    case let .multiplayerEvent(multiplayerEvent):
+      gameContainer?.handleOnlineObject(.multiplayerEvent(multiplayerEvent: multiplayerEvent), client: client)
 
     case let .joined(initiator, contestants, cpus):
       if let code = code {
@@ -128,21 +146,22 @@ class Connecting: ObservableObject {
     }
   }
 
-  func connect(code: String) async throws { guard let name = name else {
-    connection = .getName
-
-    return
+  func connect(code: String) async throws {
+    guard let name = name else {
+      connection = .getName
+      return
+    }
+    self.code = code
+    try await client?.write(.joinMultiplayer(name: name, code: code))
   }
-  self.code = code
-  try await client?.write(.joinMultiplayer(name: name, code: code))
-  }
 
-  func connect() async throws { guard let name = name else {
-    connection = .getName
+  func connect() async throws {
+    guard let name = name else {
+      connection = .getName
 
-    return
-  }
-  try await client?.write(.startMultiplayer(name: name))
+      return
+    }
+    try await client?.write(.startMultiplayer(name: name))
   }
 
   func addCpu() async throws {

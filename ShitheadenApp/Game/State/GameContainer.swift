@@ -41,17 +41,9 @@ final class GameContainer: ObservableObject {
   func startOnline(_ client: WebSocketClient, restart _: Bool) async {
     gameState = GameState()
     self.client = client
-    client.data.removeOnDataHandler(id: onDataId)
-    onDataId = client.data.on { ob in
-      async {
-        await MainActor.run {
-          self.handleOnlineObject(ob, client: client)
-        }
-      }
-    }
   }
 
-  private func handleOnlineObject(_ ob: ServerEvent, client: WebSocketClient) {
+  func handleOnlineObject(_ ob: ServerEvent, client: WebSocketClient) {
     switch ob {
     case .requestMultiplayerChoice:
       logger.info("START ONLINE")
@@ -96,7 +88,7 @@ final class GameContainer: ObservableObject {
     }
   }
 
-  func handle(snapshot: GameSnapshot) {
+  private func handle(snapshot: GameSnapshot) {
     guard let localPlayer = snapshot.players.first(where: { !$0.isObscured }) else {
       return
     }
@@ -133,6 +125,7 @@ final class GameContainer: ObservableObject {
 
   var gameTask: Task.Handle<EndGameSnapshot?, Never>?
   func start(restart: Bool = false, contestants: Int) async {
+    self.contestants = contestants
     if restart {
       appInput = nil
       game = nil
@@ -303,5 +296,13 @@ final class GameContainer: ObservableObject {
   func stop() async {
     logger.info("STOP game controller for client \(String(describing: client))")
     try? await client?.write(.quit(from: id))
+  }
+
+  func restart() async {
+    if let client = client {
+      await startOnline(client, restart: true)
+    } else if let contestants = contestants {
+      await start(restart: true, contestants: contestants)
+    }
   }
 }

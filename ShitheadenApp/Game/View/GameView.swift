@@ -8,16 +8,16 @@
 import ShitheadenRuntime
 import SwiftUI
 
-enum GameType {
-  case offline
-  case online(WebSocketClient)
-}
+//enum GameType {
+//  case offline
+//  case online(WebSocketClient)
+//}
 
 struct GameView: View {
   @Binding var state: AppState?
-  let gameType: GameType
+//  let gameType: GameType
   @State var showMenu = false
-  @StateObject var game = GameContainer()
+  @StateObject var game: GameContainer
 
   var body: some View {
     VStack {
@@ -109,19 +109,17 @@ struct GameView: View {
         }
         .transition(.move(edge: .top))
         .animation(.linear, value: snapshot)
+      } else {
+        Text("Loading...")
+        ProgressView()
       }
     }
     .overlay(Button("Menu", action: {
       showMenu = true
     }).foregroundColor(Color.green).padding(), alignment: .topTrailing)
     .overlay(EndStateView(endState: game.gameState.endState, restart: {
-      switch gameType {
-      case .offline:
-        if case let .singlePlayer(contestants) = self.state {
-          await game.start(restart: true, contestants: contestants)
-        }
-      case let .online(handler):
-        await game.startOnline(handler, restart: true)
+      async {
+      await game.restart()
       }
     }, quit: {
       self.state = nil
@@ -139,30 +137,30 @@ struct GameView: View {
         .cancel(),
       ])
     })
-    #if os(iOS)
-      .task {
-        switch gameType {
-        case .offline:
-          if case let .singlePlayer(contestants) = self.state {
-            await game.start(contestants: contestants)
-          }
-        case let .online(handler):
-          await game.startOnline(handler, restart: false)
-        }
-      }
-    #else
-      .onAppear {
-        async {
-          switch gameType {
-          case .offline:
-            if case let .singlePlayer(contestants) = self.state {
-              await game.start(contestants: contestants)
-            }
-          case let .online(handler, code):
-            await game.startOnline(handler, code: code, restart: false)
-          }
-        }
-      }
-    #endif
+//    #if os(iOS)
+//      .task {
+//        switch gameType {
+//        case .offline:
+//          if case let .singlePlayer(contestants) = self.state {
+//            await game.start(contestants: contestants)
+//          }
+//        case let .online(handler):
+//          await game.startOnline(handler, restart: false)
+//        }
+//      }
+//    #else
+//      .onAppear {
+//        async {
+//          switch gameType {
+//          case .offline:
+//            if case let .singlePlayer(contestants) = self.state {
+//              await game.start(contestants: contestants)
+//            }
+//          case let .online(handler):
+//            await game.startOnline(handler, restart: false)
+//          }
+//        }
+//      }
+//    #endif
   }
 }
