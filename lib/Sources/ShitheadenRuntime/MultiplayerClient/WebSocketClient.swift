@@ -61,8 +61,9 @@
           } catch {
             self.logger.error("\(error)")
           }
+
+          self.receive()
         }
-        self.receive()
       }
     }
 

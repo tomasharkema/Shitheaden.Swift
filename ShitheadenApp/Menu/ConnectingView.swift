@@ -5,11 +5,11 @@
 //  Created by Tomas Harkema on 21/06/2021.
 //
 
+import Foundation
 import Logging
 import ShitheadenRuntime
 import ShitheadenShared
 import SwiftUI
-import Foundation
 
 struct ConnectingView: View {
   @State var name: String = ""
@@ -35,13 +35,8 @@ struct ConnectingView: View {
           }
         }.disabled(name.isEmpty).buttonStyle(.bordered)
 
-//      case let .gameSnapshot(snapshot, handler):
-      case let .gameContainer(container):
-        GameView(state: $state, game: container)
-//        GameView(state: $state, gameType: .online(handler))
-//          .onDisappear {
-//            handler.close()
-//          }
+      case .gameContainer:
+        GameView(state: $state, game: connection.gameContainer)
 
       case .connecting:
         VStack {
@@ -141,7 +136,7 @@ struct ConnectingView: View {
           }
         }.buttonStyle(.bordered)
 
-      case .error(let error):
+      case let .error(error):
         Text(error.localizedDescription)
 
       case .gameNotFound:

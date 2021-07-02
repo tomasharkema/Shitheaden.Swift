@@ -8,16 +8,15 @@
 import ShitheadenRuntime
 import SwiftUI
 
-//enum GameType {
+// enum GameType {
 //  case offline
 //  case online(WebSocketClient)
-//}
+// }
 
 struct GameView: View {
   @Binding var state: AppState?
-//  let gameType: GameType
   @State var showMenu = false
-  @StateObject var game: GameContainer
+  @ObservedObject var game: GameContainer
 
   var body: some View {
     VStack {
@@ -99,8 +98,7 @@ struct GameView: View {
             }, select: {
               game.select(
                 $0,
-                selected: $1,
-                deleteNotSameNumber: !game.gameState.isBeginMove
+                selected: $1
               )
             }, play: {
               game.play()
@@ -119,7 +117,7 @@ struct GameView: View {
     }).foregroundColor(Color.green).padding(), alignment: .topTrailing)
     .overlay(EndStateView(endState: game.gameState.endState, restart: {
       async {
-      await game.restart()
+        await game.restart()
       }
     }, quit: {
       self.state = nil

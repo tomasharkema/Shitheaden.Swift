@@ -38,12 +38,16 @@ final class GameContainer: ObservableObject {
 
   var onDataId: UUID?
   var client: WebSocketClient?
-  func startOnline(_ client: WebSocketClient, restart _: Bool) async {
-    gameState = GameState()
+  func startOnline(_ client: WebSocketClient, restart: Bool) async {
+    if restart {
+      gameState = GameState()
+    }
     self.client = client
   }
 
   func handleOnlineObject(_ ob: ServerEvent, client: WebSocketClient) {
+    var newGameState = gameState
+
     switch ob {
     case .requestMultiplayerChoice:
       logger.info("START ONLINE")
@@ -51,11 +55,12 @@ final class GameContainer: ObservableObject {
     case let .multiplayerEvent(multiplayerEvent):
       switch multiplayerEvent {
       case let .error(error):
-        gameState.error = error.localizedDescription
+        newGameState.error = error.localizedDescription
 
       case .action(.requestBeginTurn):
-        gameState.canPass = false
-        gameState.isBeginMove = true
+        logger.info("requestBeginTurn isBeginMove true")
+        newGameState.canPass = false
+        newGameState.isBeginMove = true
 
         beginMoveHandler.once { cards in
           async {
@@ -66,8 +71,9 @@ final class GameContainer: ObservableObject {
         }
 
       case .action(action: .requestNormalTurn):
-        gameState.canPass = true
-        gameState.isBeginMove = false
+        logger.info("requestNormalTurn isBeginMove false")
+        newGameState.canPass = true
+        newGameState.isBeginMove = false
 
         moveHandler.once { turn in
           async {
@@ -79,48 +85,50 @@ final class GameContainer: ObservableObject {
         logger.debug("\(string)")
 
       case let .gameSnapshot(snapshot):
-        handle(snapshot: snapshot)
+        newGameState = handle(snapshot: snapshot, gameState: newGameState)
       }
     case let .error(error):
-      gameState.error = error.localizedDescription
+      newGameState.error = error.localizedDescription
     default:
       logger.error("DERP \(String(describing: ob))")
     }
+
+    if gameState != newGameState {
+      gameState = newGameState
+    }
   }
 
-  private func handle(snapshot: GameSnapshot) {
+  private func handle(snapshot: GameSnapshot, gameState: GameState? = nil) -> GameState {
     guard let localPlayer = snapshot.players.first(where: { !$0.isObscured }) else {
-      return
+      return gameState ?? self.gameState
     }
+    var newGameState = gameState ?? self.gameState
 
-    var newState = gameState
-    newState.gameSnapshot = snapshot
-    newState.localPhase = localPlayer.phase
+    newGameState.gameSnapshot = snapshot
+    newGameState.localPhase = localPlayer.phase
     if !localPlayer.handCards.isEmpty {
-      newState.localCards = localPlayer.handCards // .sortNumbers()
+      newGameState.localCards = localPlayer.handCards // .sortNumbers()
     } else if !localPlayer.openTableCards.isEmpty {
-      newState.localCards = localPlayer.openTableCards // .sortNumbers()
+      newGameState.localCards = localPlayer.openTableCards // .sortNumbers()
     } else {
       // closed cards!
-      newState.localClosedCards = localPlayer.closedCards
-      newState.localCards = []
+      newGameState.localClosedCards = localPlayer.closedCards
+      newGameState.localCards = []
     }
 
-    newState.isOnTurn = snapshot.playersOnTurn.contains(localPlayer.id)
+    newGameState.isOnTurn = snapshot.playersOnTurn.contains(localPlayer.id)
 
-    newState.endState = snapshot.currentRequest?.endState
+    newGameState.endState = snapshot.currentRequest?.endState
 
     switch localPlayer.phase {
     case .hand:
-      newState.explain = "Speel een kaart uit je hand"
+      newGameState.explain = "Speel een kaart uit je hand"
     case .tableOpen:
-      newState.explain = "Speel een kaart van tafel"
+      newGameState.explain = "Speel een kaart van tafel"
     case .tableClosed:
-      newState.explain = "Speel een kaart van je dichte stapel"
+      newGameState.explain = "Speel een kaart van je dichte stapel"
     }
-    if gameState != newState {
-      gameState = newState
-    }
+    return newGameState
   }
 
   var gameTask: Task.Handle<EndGameSnapshot?, Never>?
@@ -167,7 +175,7 @@ final class GameContainer: ObservableObject {
           self.gameState.error = error
         }
       }, renderHandler: { game in
-        self.handle(snapshot: game)
+        self.gameState = self.handle(snapshot: game)
       }
     )
     self.appInput = appInput
@@ -232,29 +240,38 @@ final class GameContainer: ObservableObject {
     await gameTask.get()
   }
 
-  func select(_ cards: [RenderCard], selected: Bool, deleteNotSameNumber: Bool) {
+  func select(_ cards: [RenderCard], selected: Bool) {
+    let deleteNotSameNumber = !gameState.isBeginMove
+    logger.info("deleteNotSameNumber: \(deleteNotSameNumber) \(gameState)")
+
     if selected {
       if deleteNotSameNumber,
          selectedCards.contains(where: { $0.card?.number != cards.first?.card?.number })
       {
         selectedCards = cards
       } else {
-        let cardIndex = max((selectedCards.count + cards.count) - 3, 0)
-        logger.debug("items: \(selectedCards.count), \(cards.count), \(cardIndex)")
+        var newSelectedCards = selectedCards
+        let cardIndex = max((newSelectedCards.count + cards.count) - 3, 0)
+        logger.debug("items: \(newSelectedCards.count), \(cards.count), \(cardIndex)")
 
-        selectedCards = Array(selectedCards.dropFirst(cardIndex))
+        newSelectedCards = Array(newSelectedCards.dropFirst(cardIndex))
 
         for card in cards {
-          selectedCards.append(card)
+          newSelectedCards.append(card)
         }
+
+        selectedCards = newSelectedCards
       }
 
     } else {
+      var newSelectedCards = selectedCards
       for card in cards {
         if let cardIndex = selectedCards.firstIndex(of: card) {
-          selectedCards.remove(at: cardIndex)
+          newSelectedCards.remove(at: cardIndex)
         }
       }
+
+      selectedCards = newSelectedCards
     }
   }
 

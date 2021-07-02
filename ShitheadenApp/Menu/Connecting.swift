@@ -16,7 +16,7 @@ class Connecting: ObservableObject {
   private let websocket = WebSocketGameClient()
   private var client: WebSocketClient?
   @Published var connection: ConnectionState = .connecting
-  @Published var gameContainer: GameContainer?
+  let gameContainer = GameContainer()
 
   private var identifier: UUID?
   private var code: String?
@@ -61,6 +61,11 @@ class Connecting: ObservableObject {
 
   var isInitiator: Bool = false
   private func onData(_ event: ServerEvent, _ client: WebSocketClient) {
+    gameContainer.handleOnlineObject(
+      event,
+      client: client
+    )
+    
     guard let name = name else {
       connection = .getName
       return
@@ -88,28 +93,17 @@ class Connecting: ObservableObject {
       connection = .makeChoice
 
     case let .multiplayerEvent(.gameSnapshot(snapshot)):
-      let container: GameContainer
-      if let gameContainer = gameContainer {
-        container = gameContainer
-      } else {
-        container = GameContainer()
-        gameContainer = container
-        async {
-          await container.startOnline(client, restart: false)
-        }
-      }
-      
       if case .gameContainer = connection {
         // NO-OP
       } else {
-        connection = .gameContainer(container)
+        async {
+          await gameContainer.startOnline(client, restart: false)
+        }
       }
-      container.handleOnlineObject(.multiplayerEvent(multiplayerEvent: .gameSnapshot(snapshot: snapshot)), client: client)
-
-//      connection = .gameSnapshot(snapshot, client)
+      connection = .gameContainer(gameContainer)
 
     case let .multiplayerEvent(multiplayerEvent):
-      gameContainer?.handleOnlineObject(.multiplayerEvent(multiplayerEvent: multiplayerEvent), client: client)
+      break
 
     case let .joined(initiator, contestants, cpus):
       if let code = code {
