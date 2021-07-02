@@ -6,7 +6,7 @@
 //  Copyright © 2015 Tomas Harkema. All rights reserved.
 //
 
-public enum Phase: Codable {
+public enum Phase: Codable, Hashable {
   case hand
   case tableOpen
   case tableClosed

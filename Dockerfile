@@ -35,7 +35,11 @@ COPY lib/Sources/AppDependencies ./Sources/AppDependencies
 
 RUN swift package resolve
 
-RUN swift build --target Vapor -c release -Xswiftc -g
+RUN swift build --target Vapor -c release
+RUN swift build --target NIOSSH -c release
+RUN swift build --target ArgumentParser -c release
+RUN swift build --target ANSIEscapeCode -c release
+RUN swift build --target Logging -c release
 
 RUN rm ./Sources/CustomAlgo/main.swift && \
     rm ./Sources/ShitheadenRuntime/main.swift && \
@@ -51,7 +55,7 @@ COPY lib/Tests ./Tests
 
 RUN find Sources/ShitheadenRuntime Sources/ShitheadenShared -type f -exec shasum -a 256 {} \; | sort -k 2 | shasum -a 256 > lib.sig
 
-RUN swift build -c release  -Xswiftc -g
+RUN swift build -c release
 
 FROM tomasharkema7/swift-5.5:1804
 

@@ -10,6 +10,15 @@ import SwiftUI
 enum Orientation {
   case horizontal
   case vertical
+
+  func toggle() -> Orientation {
+    switch self {
+    case .horizontal:
+      return .vertical
+    case .vertical:
+      return .horizontal
+    }
+  }
 }
 
 struct OrientationStack<Content: View>: View {

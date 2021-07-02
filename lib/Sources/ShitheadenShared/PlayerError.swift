@@ -7,7 +7,7 @@
 
 import Foundation
 
-public enum PlayerError: LocalizedError, Codable, Equatable {
+public enum PlayerError: LocalizedError, Codable, Equatable, Hashable {
   case notEmpty
   case cardsCount(Int)
   case sameNumber

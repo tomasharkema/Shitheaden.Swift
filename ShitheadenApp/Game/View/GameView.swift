@@ -22,52 +22,53 @@ struct GameView: View {
     VStack {
       if let snapshot = game.gameState.gameSnapshot {
         VStack(spacing: 0) {
-          VStack {
+
+          ZStack {
             if let player = snapshot.players.first { $0.position == .noord },
-               !player.done {
-                 PlayerView(
-                   player: player,
-                   orientation: .horizontal,
-                   playerOnTurn: game.gameState.gameSnapshot?.playersOnTurn
-                     .contains(player.id) ?? false
-                 )
-               }
-            Spacer()
-            HStack {
-              if let player = snapshot.players.first { $0.position == .west },
-                 !player.done {
-                   PlayerView(
-                     player: player,
-                     orientation: .vertical,
-                     playerOnTurn: game.gameState.gameSnapshot?.playersOnTurn
-                       .contains(player.id) ?? false
-                   )
-                 }
-
-              Spacer()
-
-              if let player = snapshot.players.first { $0.position == .oost },
-                 !player.done {
-                   PlayerView(
-                     player: player,
-                     orientation: .vertical,
-                     playerOnTurn: game.gameState.gameSnapshot?.playersOnTurn
-                       .contains(player.id) ?? false
-                   )
-                 }
+            !player.done {
+              PlayerView(
+                player: player,
+                orientation: .horizontal,
+                playerOnTurn: game.gameState.gameSnapshot?.playersOnTurn
+                  .contains(player.id) ?? false
+              )
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             }
-            Spacer()
+
+
+            if let player = snapshot.players.first { $0.position == .west },
+            !player.done {
+              PlayerView(
+                player: player,
+                orientation: .vertical,
+                playerOnTurn: game.gameState.gameSnapshot?.playersOnTurn
+                  .contains(player.id) ?? false
+              ).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+            }
+
+
+            if let player = snapshot.players.first { $0.position == .oost },
+            !player.done {
+              PlayerView(
+                player: player,
+                orientation: .vertical,
+                playerOnTurn: game.gameState.gameSnapshot?.playersOnTurn
+                  .contains(player.id) ?? false
+              ).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
+            }
+
 
             if let player = snapshot.players.first { $0.position == .zuid },
-               !player.done {
-                 PlayerView(
-                   player: player,
-                   orientation: .horizontal,
-                   playerOnTurn: game.gameState.gameSnapshot?.playersOnTurn
-                     .contains(player.id) ?? false
-                 )
-               }
+            !player.done {
+              PlayerView(
+                player: player,
+                orientation: .horizontal,
+                playerOnTurn: game.gameState.gameSnapshot?.playersOnTurn
+                  .contains(player.id) ?? false
+              ).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+            }
           }
+          .frame(maxWidth: .infinity, maxHeight: .infinity)
           .padding()
           .background(Color.blue)
           .overlay(

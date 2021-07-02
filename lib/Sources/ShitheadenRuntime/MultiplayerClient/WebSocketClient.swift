@@ -27,8 +27,8 @@
       self.task = task
       super.init()
       task.delegate = self
-      task.resume()
       receive()
+      task.resume()
 
       dataCancable = $data.sink { data in
         async {
@@ -51,6 +51,7 @@
         logger.info("Stop reading")
         return
       }
+
       task.receive { result in
         self.logger.info("receive: \(result)")
 

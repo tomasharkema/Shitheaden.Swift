@@ -315,6 +315,7 @@ public actor Game {
 
       do {
         try turn.verify()
+        await playDelayIfNeeded()
         try await sendRender(error: previousError)
       } catch {
         if !type(of: player.ai).algoName.contains("UserInputAI") {

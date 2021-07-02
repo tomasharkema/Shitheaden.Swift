@@ -29,10 +29,13 @@ struct LocalPlayerView: View {
 
   var body: some View {
     VStack {
-      Text(isOnTurn ? explain ?? " " : " ").foregroundColor(.black)
+      Text(isOnTurn ? explain ?? " " : " ")
+        .font(.system(.body, design: .rounded))
+        .foregroundColor(.black)
 
       if let error = error {
         Text(error)
+          .font(.system(.body, design: .rounded))
           .bold()
           .foregroundColor(Color.red)
           .onAppear {

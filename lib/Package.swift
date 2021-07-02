@@ -129,7 +129,8 @@ let package = Package(
       name: "ShitheadenRuntime",
       dependencies: [
         .target(name: "ShitheadenShared"),
-        .product(name: "Logging", package: "swift-log"),
+        .product(name: "Logging", package: "swift-log"
+                ),
       ],
       swiftSettings: [
         .unsafeFlags([
@@ -145,7 +146,8 @@ let package = Package(
     .target(
       name: "ShitheadenShared",
       dependencies: [
-        .product(name: "Logging", package: "swift-log"),
+        .product(name: "Logging", package: "swift-log"
+                ),
       ],
       swiftSettings: [
         .unsafeFlags([
@@ -161,7 +163,8 @@ let package = Package(
       dependencies: [
         .target(name: "ShitheadenShared"),
         .target(name: "ShitheadenRuntime"),
-        .product(name: "Logging", package: "swift-log"),
+        .product(name: "Logging", package: "swift-log"
+                ),
       ],
       swiftSettings: [
         .unsafeFlags([

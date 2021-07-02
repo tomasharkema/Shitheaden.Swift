@@ -14,14 +14,12 @@ struct PlayerView: View {
   let playerOnTurn: Bool
 
   var body: some View {
-    if !player.done {
 
-
-      if player.position == .zuid || player.position == .oost {
+    VStack {
+      if player.position == .zuid || player.position == .oost || player.position == .west {
         Text(player.name)
           .font(.system(.body, design: .rounded).bold())
-          .foregroundColor(.white)
-          .rotationEffect(player.position == .oost  ? .degrees(-90) : .zero)
+          .foregroundColor(playerOnTurn ? .green : .white)
       }
 
       VStack {
@@ -57,11 +55,10 @@ struct PlayerView: View {
         RoundedRectangle(cornerRadius: 20)
           .stroke(Color.green, lineWidth: 5)
       )
-      if player.position == .noord || player.position == .west {
+      if player.position == .noord {
         Text(player.name)
           .font(.system(.body, design: .rounded).bold())
-          .foregroundColor(.white)
-          .rotationEffect(player.position == .west  ? .degrees(90) : .zero)
+          .foregroundColor(playerOnTurn ? .green : .white)
       }
     }
   }

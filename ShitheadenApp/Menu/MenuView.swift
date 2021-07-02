@@ -50,6 +50,8 @@ struct MenuView: View {
           state = .multiplayerChallenger
         }
       })
+    }.background {
+
 
       if showAlert {
         AlertControlView(
@@ -59,13 +61,15 @@ struct MenuView: View {
           message: ""
         )
       }
-    }.onChange(of: joinCode, perform: { code in
+    }
+    .onChange(of: joinCode, perform: { code in
       logger.info("joincode: \(code)")
 
       if code.count > 1 {
         state = .multiplayerJoin(code)
       }
-    }).buttonStyle(.bordered)
+    })
+      .buttonStyle(.bordered)
       .controlSize(.large).controlProminence(.increased)
   }
 }
