@@ -43,7 +43,7 @@
       static let shitheaden = URLSession(
         configuration: .default,
         delegate: ShitheadenSessionDelegate.shared,
-        delegateQueue: OperationQueue.init()
+        delegateQueue: OperationQueue()
       )
     }
 
@@ -52,7 +52,7 @@
       static let shitheaden = URLSession(
         configuration: .default,
         delegate: nil,
-        delegateQueue: OperationQueue.init()
+        delegateQueue: OperationQueue()
       )
     }
   #endif

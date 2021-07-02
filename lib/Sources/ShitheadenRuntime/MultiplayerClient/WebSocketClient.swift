@@ -7,10 +7,10 @@
 
 #if !os(Linux)
 
+  import Combine
   import Foundation
   import Logging
   import ShitheadenShared
-  import Combine
 
   public class WebSocketClient: NSObject, ObservableObject, URLSessionWebSocketDelegate {
     private let logger = Logger(label: "runtime.WebSocketClient")
@@ -32,16 +32,17 @@
 
       dataCancable = $data.sink { data in
         async {
-                switch data {
-                case .requestSignature:
-                  do {
-                    try await self.write(.signature(Signature.getSignature()))
-                  } catch {
-                    self.logger.error("\(error)")
-                  }
-                default:
-                  self.logger.info("\(data)")
-                }}
+          switch data {
+          case .requestSignature:
+            do {
+              try await self.write(.signature(Signature.getSignature()))
+            } catch {
+              self.logger.error("\(error)")
+            }
+          default:
+            self.logger.info("\(data)")
+          }
+        }
       }
     }
 
@@ -52,17 +53,17 @@
       }
       task.receive { result in
         self.logger.info("receive: \(result)")
-        
-          do {
-            let object = try JSONDecoder().decode(ServerEvent.self, from: try result.getData())
-            self.logger.debug("Received: \(object)")
-            self.data = object
 
-          } catch {
-            self.logger.error("\(error)")
-          }
+        do {
+          let object = try JSONDecoder().decode(ServerEvent.self, from: try result.getData())
+          self.logger.debug("Received: \(object)")
+          self.data = object
 
-          self.receive()
+        } catch {
+          self.logger.error("\(error)")
+        }
+
+        self.receive()
       }
     }
 

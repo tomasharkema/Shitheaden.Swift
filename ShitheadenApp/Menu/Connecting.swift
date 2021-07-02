@@ -5,11 +5,11 @@
 //  Created by Tomas Harkema on 01/07/2021.
 //
 
+import Combine
 import Logging
 import ShitheadenRuntime
 import ShitheadenShared
 import SwiftUI
-import Combine
 
 @MainActor
 class Connecting: ObservableObject {
@@ -27,7 +27,6 @@ class Connecting: ObservableObject {
   private var quitHandler: AnyCancellable?
 
   private var connectingTask: Task.Handle<Void, Error>?
-
 
   func start() async throws {
     connectingTask?.cancel()
@@ -48,10 +47,10 @@ class Connecting: ObservableObject {
           }
 
         quitHandler = client.$quit.filter { $0 != nil }
-        .receive(on: RunLoop.main)
-        .sink { _ in
+          .receive(on: RunLoop.main)
+          .sink { _ in
             self.connection = .gameNotFound
-        }
+          }
       } catch {
         connection = .gameNotFound
         throw error
@@ -76,7 +75,7 @@ class Connecting: ObservableObject {
       event,
       client: client
     )
-    
+
     guard let name = name else {
       connection = .getName
       return

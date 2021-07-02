@@ -33,14 +33,14 @@ public class EventHandler<T> {
       }
     }
 
-    await self.dataHandlers.insert(uuid, value: function)
+    await dataHandlers.insert(uuid, value: function)
   }
 
   public func on(_ handler: @escaping (T) async -> Void) -> UUID {
     events.forEach { element in
-        async {
-          await handler(element)
-        }
+      async {
+        await handler(element)
+      }
     }
 
     events = []
@@ -59,9 +59,9 @@ public class EventHandler<T> {
         events.append(value)
       }
       await dataHandlers.values().forEach { handler in
-          async {
-            await handler(value)
-          }
+        async {
+          await handler(value)
+        }
       }
     }
   }
@@ -72,13 +72,13 @@ public class EventHandler<T> {
       return last
     }
 
-    var function: ((Result<T, Error>) -> ())!
-    await self.once { event in
+    var function: ((Result<T, Error>) -> Void)!
+    await once { event in
       function(.success(event))
     }
 
     return try await withTaskCancellationHandler(operation: {
-      return try await withUnsafeThrowingContinuation { cont in
+      try await withUnsafeThrowingContinuation { cont in
         function = {
           cont.resume(with: $0)
         }
@@ -86,8 +86,6 @@ public class EventHandler<T> {
     }, onCancel: { [function] in
       function!(.failure(NSError(domain: "", code: 0, userInfo: nil)))
     })
-
-
   }
 
   public func map<N>(_ fn: @escaping (T) -> N) -> EventHandler<N>.ReadOnly {
