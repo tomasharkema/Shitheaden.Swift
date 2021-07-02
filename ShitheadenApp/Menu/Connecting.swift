@@ -9,12 +9,13 @@ import Logging
 import ShitheadenRuntime
 import ShitheadenShared
 import SwiftUI
+import Combine
 
 @MainActor
 class Connecting: ObservableObject {
   private let logger = Logger(label: "app.Connecting")
   private let websocket = WebSocketGameClient()
-  private var client: WebSocketClient?
+  @Published private var client: WebSocketClient?
   @Published var connection: ConnectionState = .connecting
   let gameContainer = GameContainer()
 
@@ -22,9 +23,11 @@ class Connecting: ObservableObject {
   private var code: String?
   private var name: String? = Storage.shared.name
 
-  private var dataHandler: UUID?
-  private var quitHandler: UUID?
+  private var dataHandler: AnyCancellable?
+  private var quitHandler: AnyCancellable?
+
   private var connectingTask: Task.Handle<Void, Error>?
+
 
   func start() async throws {
     connectingTask?.cancel()
@@ -35,11 +38,19 @@ class Connecting: ObservableObject {
         let client = try await websocket.start()
         logger.debug("CLIENT! \(String(describing: client))")
         self.client = client
-        dataHandler = client.data.on {
-          self.onData($0, client)
-        }
-        quitHandler = client.quit.on {
-          self.connection = .gameNotFound
+        dataHandler = client.$data
+          .filter { $0 != nil }
+          .receive(on: RunLoop.main)
+          .sink { event in
+            async {
+              await self.onData(event!, client)
+            }
+          }
+
+        quitHandler = client.$quit.filter { $0 != nil }
+        .receive(on: RunLoop.main)
+        .sink { _ in
+            self.connection = .gameNotFound
         }
       } catch {
         connection = .gameNotFound
@@ -60,8 +71,8 @@ class Connecting: ObservableObject {
   }
 
   var isInitiator: Bool = false
-  private func onData(_ event: ServerEvent, _ client: WebSocketClient) {
-    gameContainer.handleOnlineObject(
+  private func onData(_ event: ServerEvent, _ client: WebSocketClient) async {
+    await gameContainer.handleOnlineObject(
       event,
       client: client
     )

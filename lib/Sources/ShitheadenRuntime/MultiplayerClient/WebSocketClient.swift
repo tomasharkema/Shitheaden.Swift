@@ -10,37 +10,38 @@
   import Foundation
   import Logging
   import ShitheadenShared
+  import Combine
 
-  public class WebSocketClient: NSObject, URLSessionWebSocketDelegate {
+  public class WebSocketClient: NSObject, ObservableObject, URLSessionWebSocketDelegate {
     private let logger = Logger(label: "runtime.WebSocketClient")
     let task: URLSessionWebSocketTask
-    private let onQuit: EventHandler<Void>
-    private let onData: EventHandler<ServerEvent>
-    public let quit: EventHandler<Void>.ReadOnly
-    public let data: EventHandler<ServerEvent>.ReadOnly
+
+    @Published public private(set) var data: ServerEvent?
+    @Published public private(set) var quit: UUID?
+
     public private(set) var closed = false
+
+    private var dataCancable: AnyCancellable?
 
     init(task: URLSessionWebSocketTask) {
       self.task = task
-      onQuit = EventHandler()
-      onData = EventHandler()
-      quit = onQuit.readOnly
-      data = onData.readOnly
       super.init()
       task.delegate = self
       task.resume()
       receive()
-      data.on {
-        switch $0 {
-        case .requestSignature:
-          do {
-            try await self.write(.signature(Signature.getSignature()))
-          } catch {
-            self.logger.error("\(error)")
-          }
-        default:
-          self.logger.info("\($0)")
-        }
+
+      dataCancable = $data.sink { data in
+        async {
+                switch data {
+                case .requestSignature:
+                  do {
+                    try await self.write(.signature(Signature.getSignature()))
+                  } catch {
+                    self.logger.error("\(error)")
+                  }
+                default:
+                  self.logger.info("\(data)")
+                }}
       }
     }
 
@@ -51,19 +52,17 @@
       }
       task.receive { result in
         self.logger.info("receive: \(result)")
-        async {
+        
           do {
             let object = try JSONDecoder().decode(ServerEvent.self, from: try result.getData())
             self.logger.debug("Received: \(object)")
-            await MainActor.run {
-              self.onData.emit(object)
-            }
+            self.data = object
+
           } catch {
             self.logger.error("\(error)")
           }
 
           self.receive()
-        }
       }
     }
 
@@ -103,7 +102,7 @@
       didCompleteWithError error: Error?
     ) {
       logger.error("didCompleteWithError: \(error)")
-      onQuit.emit(())
+      quit = UUID()
       closed = true
     }
 

@@ -115,7 +115,7 @@ class TelnetClient: Client {
         return try await start()
       }
 
-      quit.once { uuid in
+      await quit.once { uuid in
         self.logger.info("CANCELLED BY: \(uuid)")
         task.cancel()
       }

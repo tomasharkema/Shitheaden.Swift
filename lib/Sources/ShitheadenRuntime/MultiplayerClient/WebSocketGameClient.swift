@@ -43,13 +43,17 @@
       static let shitheaden = URLSession(
         configuration: .default,
         delegate: ShitheadenSessionDelegate.shared,
-        delegateQueue: .main
+        delegateQueue: OperationQueue.init()
       )
     }
 
   #else
     public extension URLSession {
-      static let shitheaden = URLSession.shared
+      static let shitheaden = URLSession(
+        configuration: .default,
+        delegate: nil,
+        delegateQueue: OperationQueue.init()
+      )
     }
   #endif
 

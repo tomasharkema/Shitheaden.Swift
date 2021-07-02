@@ -142,16 +142,15 @@ struct ConnectingView: View {
       case .gameNotFound:
         Button("Spel niet gevonden. Ga terug") {
           state = nil
-        }.buttonStyle(.bordered)
-          .onAppear {
-            state = nil
-          }
+        }
+        .buttonStyle(.bordered)
       }
       if case .gameContainer = connection.connection { } else {
         Button("Annuleren", action: {
           connection.close()
           state = nil
-        }).buttonStyle(.bordered)
+        })
+          .buttonStyle(.bordered)
       }
     }
   }

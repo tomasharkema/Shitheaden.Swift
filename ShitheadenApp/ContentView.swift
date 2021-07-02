@@ -46,8 +46,6 @@ struct ContentView_Previews: PreviewProvider {
   }
 }
 
-// extension Player: Identifiable {}
-
 extension Card: Identifiable {}
 
 extension Card: CustomStringConvertible {

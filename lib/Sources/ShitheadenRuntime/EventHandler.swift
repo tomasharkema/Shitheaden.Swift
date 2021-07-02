@@ -22,30 +22,25 @@ public class EventHandler<T> {
     }
   }
 
-  public func once(initial _: Bool = false, _ handler: @escaping (T) async -> Void) {
+  public func once(initial _: Bool = false, _ handler: @escaping (T) async -> Void) async {
     let uuid = UUID()
     var hasSend = false
     let function = { (element: T) in
       if !hasSend {
         hasSend = true
         await handler(element)
-        async { await self.dataHandlers.insert(uuid, value: nil) }
+        await self.dataHandlers.insert(uuid, value: nil)
       }
     }
-    DispatchQueue.global().async {
-      async {
-        await self.dataHandlers.insert(uuid, value: function)
-      }
-    }
+
+    await self.dataHandlers.insert(uuid, value: function)
   }
 
   public func on(_ handler: @escaping (T) async -> Void) -> UUID {
     events.forEach { element in
-      DispatchQueue.global().async {
         async {
           await handler(element)
         }
-      }
     }
 
     events = []
@@ -64,11 +59,9 @@ public class EventHandler<T> {
         events.append(value)
       }
       await dataHandlers.values().forEach { handler in
-        DispatchQueue.global().async {
           async {
             await handler(value)
           }
-        }
       }
     }
   }
@@ -79,19 +72,22 @@ public class EventHandler<T> {
       return last
     }
 
-    let handler = EventHandler<Void>()
-    return try await withTaskCancellationHandler(handler: {
-      handler.emit(())
-    }, operation: {
-      try await withUnsafeThrowingContinuation { cont in
-        handler.once { _ in
-          cont.resume(throwing: PlayerError.debug("QUIT"))
-        }
-        self.once { event in
-          cont.resume(returning: event)
+    var function: ((Result<T, Error>) -> ())!
+    await self.once { event in
+      function(.success(event))
+    }
+
+    return try await withTaskCancellationHandler(operation: {
+      return try await withUnsafeThrowingContinuation { cont in
+        function = {
+          cont.resume(with: $0)
         }
       }
+    }, onCancel: { [function] in
+      function!(.failure(NSError(domain: "", code: 0, userInfo: nil)))
     })
+
+
   }
 
   public func map<N>(_ fn: @escaping (T) -> N) -> EventHandler<N>.ReadOnly {
@@ -119,8 +115,8 @@ public extension EventHandler {
       event.removeOnDataHandler(id: id)
     }
 
-    public func once(initial: Bool = false, _ fn: @escaping (T) -> Void) {
-      event.once(initial: initial, fn)
+    public func once(initial: Bool = false, _ fn: @escaping (T) -> Void) async {
+      await event.once(initial: initial, fn)
     }
 
     public func once(initial: Bool = true) async throws -> T {
