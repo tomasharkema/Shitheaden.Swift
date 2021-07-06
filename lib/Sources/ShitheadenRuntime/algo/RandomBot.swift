@@ -5,10 +5,11 @@
 //  Created by Tomas Harkema on 15/06/2021.
 //
 
+import Foundation
 import ShitheadenShared
 
 public actor RandomBot: GameAi {
-  public required init() {}
+  public init() {}
 
   public func render(snapshot _: GameSnapshot) async {}
 

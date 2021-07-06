@@ -9,7 +9,7 @@ import ShitheadenShared
 
 public actor CardRankingAlgoWithUnfairPassing: GameAi {
   private let old = CardRankingAlgo()
-  public required init() {}
+  public init() {}
 
   public func render(snapshot: GameSnapshot) async throws {
     try await old.render(snapshot: snapshot)

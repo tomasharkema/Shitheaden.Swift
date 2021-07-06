@@ -13,7 +13,7 @@ public actor UserInputAIJson: GameAi {
   let reader: (Action, PlayerError?) async throws -> MultiplayerRequest
   let renderHandler: (GameSnapshot) async throws -> Void
 
-  public required init() {
+  public init() {
     fatalError()
   }
 
