@@ -61,9 +61,10 @@ struct LocalPlayerView: View {
           .padding(5)
           Spacer()
         } else {
-          LazyVGrid(
-            columns: Array(repeating: GridItem(.fixed(50), spacing: -15), count: 6),
-            spacing: -15
+          LazyVGrid(columns: [
+            GridItem(.adaptive(minimum: 40, maximum: 60), spacing: -10),
+          ]
+                    ,spacing: -50
           ) {
             ForEach(Array(cards.enumerated()), id: \.element) { index, card in
               HStack {
@@ -91,9 +92,9 @@ struct LocalPlayerView: View {
               }.zIndex(Double(-index))
             }
           }
-          .padding(5)
-          Spacer()
-          Button(action: {
+          .frame(maxWidth: .infinity)
+          .padding(.trailing, 110)
+          .overlay(      Button(action: {
             play()
           }, label: {
             if selectedCards.count > 0 {
@@ -104,16 +105,17 @@ struct LocalPlayerView: View {
               Text("SPEEL!").disabled(true)
             }
           })
-            .buttonStyle(.bordered)
-            .controlSize(.large).controlProminence(.increased)
-            .disabled(!isOnTurn)
-            .onChange(of: isOnTurn, perform: {
-              if $0 {
-                logger.debug("HAPTIC!!")
-                let impactHeavy = UIImpactFeedbackGenerator(style: .light)
-                impactHeavy.impactOccurred()
-              }
-            })
+                          .buttonStyle(.bordered)
+                          .controlSize(.large).controlProminence(.increased)
+                          .disabled(!isOnTurn)
+                          .onChange(of: isOnTurn, perform: {
+            if $0 {
+              logger.debug("HAPTIC!!")
+              let impactHeavy = UIImpactFeedbackGenerator(style: .light)
+              impactHeavy.impactOccurred()
+            }
+          }), alignment: .trailing)
+
         }
       }
     }.padding()

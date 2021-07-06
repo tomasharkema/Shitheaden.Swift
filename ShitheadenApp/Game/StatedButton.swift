@@ -20,13 +20,13 @@ struct StatedButton<Label>: View where Label: View {
   }
 
   var body: some View {
-    Button(action: {
-      //      self.isSelected = !self.isSelected
+    Button {
       self.action?(!self.isSelected)
-    }) {
+    } label: {
       label?()
-        .overlay(Rectangle().foregroundColor(.clear)
-          .border(isSelected ? Color.green : Color.clear, width: 5).cornerRadius(10))
+        .overlay(RoundedRectangle(cornerSize: .init(width: 10, height: 10)).foregroundColor(.clear)
+                  .border(isSelected ? Color.green : Color.clear, width: 5)
+                  .cornerRadius(10))
         .animation(.linear, value: isSelected)
     }.buttonStyle(PlainButtonStyle())
   }

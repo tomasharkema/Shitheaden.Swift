@@ -28,6 +28,7 @@ RUN mkdir -p ./Sources/CustomAlgo && \
     touch ./Sources/TestsHelpers/main.swift 
 
 COPY lib/Package.swift ./Package.swift
+COPY lib/Package.resolved ./Package.resolved
 
 COPY lib/Sources/AppDependencies ./Sources/AppDependencies
 
