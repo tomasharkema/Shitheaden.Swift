@@ -233,7 +233,7 @@ actor MultiplayerHandler {
       Player(
         name: "CPU\($0 + 1)",
         position: Position.allCases[$0 + competitors.count],
-        ai: CardRankingAlgoWithUnfairPassingAndNexPlayerAware()
+        ai: CardRankingAlgoWithUnfairPassingAndNexPlayerAware.make()
       )
     }
 

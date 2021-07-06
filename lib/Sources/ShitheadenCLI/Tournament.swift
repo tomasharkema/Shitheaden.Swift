@@ -48,7 +48,7 @@
               return Player(
                 name: name,
                 position: Position.allCases[index],
-                ai: ai.init()
+                ai: ai.make()
               )
             }
             let game = Game(

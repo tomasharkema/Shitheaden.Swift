@@ -20,6 +20,10 @@ actor AppInputUserInputAI: GameAi {
     renderHandler = { _ in }
   }
 
+  static func make() -> GameAi {
+    return AppInputUserInputAI()
+  }
+
   init(
     beginMoveHandler: @escaping (@escaping ((Card, Card, Card)) async -> Void) async -> Void,
     moveHandler: @escaping (@escaping (Turn) async -> Void) async -> Void,

@@ -17,6 +17,10 @@ public actor UserInputAIJson: GameAi {
     fatalError()
   }
 
+  public static func make() -> GameAi {
+    return UserInputAIJson()
+  }
+
   public init(
     id: UUID,
     reader: @escaping ((Action, PlayerError?) async throws -> MultiplayerRequest),

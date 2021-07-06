@@ -6,8 +6,10 @@
 //  Copyright © 2015 Tomas Harkema. All rights reserved.
 //
 
-public protocol GameAi: Actor {
-  init()
+public protocol GameAi: AnyObject, Actor {
+//  init()
+
+  static func make() -> GameAi
 
   func render(snapshot: GameSnapshot) async throws
   func beginMove(request: TurnRequest, snapshot: GameSnapshot) async throws

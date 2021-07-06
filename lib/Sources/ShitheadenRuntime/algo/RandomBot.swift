@@ -9,7 +9,10 @@ import Foundation
 import ShitheadenShared
 
 public actor RandomBot: GameAi {
-  public init() {}
+
+  public static func make() -> GameAi {
+    RandomBot()
+  }
 
   public func render(snapshot _: GameSnapshot) async {}
 

@@ -60,17 +60,17 @@ struct Shitheaden: ParsableCommand {
         Player(
           name: "West (Unfair)",
           position: .west,
-          ai: CardRankingAlgoWithUnfairPassing()
+          ai: CardRankingAlgoWithUnfairPassing.make()
         ),
         Player(
           name: "Noord",
           position: .noord,
-          ai: CardRankingAlgo()
+          ai: CardRankingAlgo.make()
         ),
         Player(
           name: "Oost",
           position: .oost,
-          ai: CardRankingAlgo()
+          ai: CardRankingAlgo.make()
         ),
         Player(
           id: id,

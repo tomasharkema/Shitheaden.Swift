@@ -66,7 +66,7 @@ public actor Game {
       Player(
         name: "West (Unfair)",
         position: Position.allCases.filter { $0 != localPlayer.position }[index],
-        ai: ai.init()
+        ai: ai.make()
       )
     }
 

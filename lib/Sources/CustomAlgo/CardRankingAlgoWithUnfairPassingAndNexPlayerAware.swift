@@ -11,7 +11,10 @@ import ShitheadenShared
 public actor CardRankingAlgoWithUnfairPassingAndNexPlayerAware: GameAi {
   private let logger = Logger(label: "CardRankingAlgoWithUnfairPassingAndNexPlayerAware")
   private let old = CardRankingAlgoWithUnfairPassing()
-  public init() {}
+
+  public static func make() -> GameAi {
+    return CardRankingAlgoWithUnfairPassingAndNexPlayerAware()
+  }
 
   public func render(snapshot: GameSnapshot) async throws {
     try await old.render(snapshot: snapshot)
