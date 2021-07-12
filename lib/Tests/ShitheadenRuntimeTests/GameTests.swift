@@ -18,22 +18,22 @@ class GameTests: XCTestCase {
       Player(
         name: "West (Unfair)",
         position: .west,
-        ai: CardRankingAlgoWithUnfairPassingAndNexPlayerAware()
+        ai: CardRankingAlgoWithUnfairPassingAndNexPlayerAware.make()
       ),
       Player(
         name: "Noord",
         position: .noord,
-        ai: CardRankingAlgoWithUnfairPassingAndNexPlayerAware()
+        ai: CardRankingAlgoWithUnfairPassingAndNexPlayerAware.make()
       ),
       Player(
         name: "Oost",
         position: .oost,
-        ai: CardRankingAlgoWithUnfairPassing()
+        ai: CardRankingAlgoWithUnfairPassing.make()
       ),
       Player(
         name: "Zuid",
         position: .zuid,
-        ai: CardRankingAlgo()
+        ai: CardRankingAlgo.make()
       ),
     ], slowMode: false)
 
@@ -50,12 +50,12 @@ class GameTests: XCTestCase {
       Player(
         name: "West (Unfair)",
         position: .west,
-        ai: CardRankingAlgoWithUnfairPassingAndNexPlayerAware()
+        ai: CardRankingAlgoWithUnfairPassingAndNexPlayerAware.make()
       ),
       Player(
         name: "Noord",
         position: .noord,
-        ai: CardRankingAlgo()
+        ai: CardRankingAlgo.make()
       ),
     ], slowMode: false)
 
@@ -73,12 +73,12 @@ class GameTests: XCTestCase {
     var firstPlayer = Player(
       name: "first",
       position: .noord,
-      ai: CardRankingAlgo()
+      ai: CardRankingAlgo.make()
     )
     var secondPlayer = Player(
       name: "second",
       position: .zuid,
-      ai: CardRankingAlgo()
+      ai: CardRankingAlgo.make()
     )
 
     firstPlayer.handCards = [
@@ -147,12 +147,12 @@ class GameTests: XCTestCase {
     let firstPlayer = Player(
       name: "first",
       position: .noord,
-      ai: CardRankingAlgoWithUnfairPassingAndNexPlayerAware()
+      ai: CardRankingAlgoWithUnfairPassingAndNexPlayerAware.make()
     )
     let secondPlayer = Player(
       name: "second",
       position: .zuid,
-      ai: CardRankingAlgoWithUnfairPassingAndNexPlayerAware()
+      ai: CardRankingAlgoWithUnfairPassingAndNexPlayerAware.make()
     )
 
     let game = Game(players: [firstPlayer, secondPlayer], slowMode: false)

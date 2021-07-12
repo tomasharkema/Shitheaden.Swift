@@ -18,7 +18,7 @@ public extension XCTestCase {
     let expectation = XCTestExpectation(description: "asyncTest")
 
     if #available(macOS 9999, iOS 9999, *) {
-      var task: Task<Void, Error>
+      var task: Task.Handle<Void, Error>
       task = async {
         do {
           try await handler()
