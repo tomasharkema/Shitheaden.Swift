@@ -183,33 +183,33 @@
               }
               return new
             }
-      }
-
-      let scoresSorted = stats.0.sorted { lhs, rhs in
-        lhs.1 > rhs.1
-      }
-
-      logger.notice("\n\nSCORES: (potjes van \(roundsPerGame) gewonnen)\n")
-
-      let scores = scoresSorted.reduce("") { prev, element in
-        prev + "\(element.0): \(element.1)\n"
-      }
-      logger.notice("\(scores)")
-
-      // winnings from
-      let line = stats.1.reduce("Performance:\n") { prev, element in
-
-        let ranks = element.1.sorted { left, right in
-          left.1 > right.1
-        }.reduce("") { prev, elementRed in
-          prev + "     \(element.0): \(elementRed.1)\n"
         }
 
-        return prev + "\(element.0): wint van\n\(ranks)\n"
-      }
-      logger.notice("\(line)")
+        let scoresSorted = stats.0.sorted { lhs, rhs in
+          lhs.1 > rhs.1
+        }
 
-      logger.notice("Tijd: \(watch.getLap())\n")
+        logger.notice("\n\nSCORES: (potjes van \(roundsPerGame) gewonnen)\n")
+
+        let scores = scoresSorted.reduce("") { prev, element in
+          prev + "\(element.0): \(element.1)\n"
+        }
+        logger.notice("\(scores)")
+
+        // winnings from
+        let line = stats.1.reduce("Performance:\n") { prev, element in
+
+          let ranks = element.1.sorted { left, right in
+            left.1 > right.1
+          }.reduce("") { prev, elementRed in
+            prev + "     \(element.0): \(elementRed.1)\n"
+          }
+
+          return prev + "\(element.0): wint van\n\(ranks)\n"
+        }
+        logger.notice("\(line)")
+
+        logger.notice("Tijd: \(watch.getLap())\n")
     }
   }
 

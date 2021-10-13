@@ -22,51 +22,47 @@ struct GameView: View {
     VStack {
       if let snapshot = game.gameState.gameSnapshot {
         VStack(spacing: 0) {
-
           ZStack {
             if let player = snapshot.players.first { $0.position == .noord },
-            !player.done {
-              PlayerView(
-                player: player,
-                orientation: .horizontal,
-                playerOnTurn: game.gameState.gameSnapshot?.playersOnTurn
-                  .contains(player.id) ?? false
-              )
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-            }
-
+               !player.done {
+                 PlayerView(
+                   player: player,
+                   orientation: .horizontal,
+                   playerOnTurn: game.gameState.gameSnapshot?.playersOnTurn
+                     .contains(player.id) ?? false
+                 )
+                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+               }
 
             if let player = snapshot.players.first { $0.position == .west },
-            !player.done {
-              PlayerView(
-                player: player,
-                orientation: .vertical,
-                playerOnTurn: game.gameState.gameSnapshot?.playersOnTurn
-                  .contains(player.id) ?? false
-              ).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-            }
-
+               !player.done {
+                 PlayerView(
+                   player: player,
+                   orientation: .vertical,
+                   playerOnTurn: game.gameState.gameSnapshot?.playersOnTurn
+                     .contains(player.id) ?? false
+                 ).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+               }
 
             if let player = snapshot.players.first { $0.position == .oost },
-            !player.done {
-              PlayerView(
-                player: player,
-                orientation: .vertical,
-                playerOnTurn: game.gameState.gameSnapshot?.playersOnTurn
-                  .contains(player.id) ?? false
-              ).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
-            }
-
+               !player.done {
+                 PlayerView(
+                   player: player,
+                   orientation: .vertical,
+                   playerOnTurn: game.gameState.gameSnapshot?.playersOnTurn
+                     .contains(player.id) ?? false
+                 ).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
+               }
 
             if let player = snapshot.players.first { $0.position == .zuid },
-            !player.done {
-              PlayerView(
-                player: player,
-                orientation: .horizontal,
-                playerOnTurn: game.gameState.gameSnapshot?.playersOnTurn
-                  .contains(player.id) ?? false
-              ).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-            }
+               !player.done {
+                 PlayerView(
+                   player: player,
+                   orientation: .horizontal,
+                   playerOnTurn: game.gameState.gameSnapshot?.playersOnTurn
+                     .contains(player.id) ?? false
+                 ).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+               }
           }
           .frame(maxWidth: .infinity, maxHeight: .infinity)
           .padding()
@@ -77,11 +73,12 @@ struct GameView: View {
             )
           )
           .overlay(
-            CardStackView(cards: snapshot.deckCards, offset: 2).padding(),
+            CardStackView(cards: snapshot.deckCards, offset: 2, numberOfCardsExtraSpace: 0)
+              .padding(),
             alignment: Alignment.topLeading
           )
           .overlay(
-            CardStackView(cards: snapshot.burntCards, offset: 2)
+            CardStackView(cards: snapshot.burntCards, offset: 2, numberOfCardsExtraSpace: 0)
               .padding(),
             alignment: Alignment.topTrailing
           )

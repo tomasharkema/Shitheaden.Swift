@@ -12,6 +12,7 @@
   import Logging
   import ShitheadenShared
 
+  @available(iOS 15.0, macOS 15.0, *)
   public class WebSocketClient: NSObject, ObservableObject, URLSessionWebSocketDelegate {
     private let logger = Logger(label: "runtime.WebSocketClient")
     let task: URLSessionWebSocketTask
@@ -26,7 +27,9 @@
     init(task: URLSessionWebSocketTask) {
       self.task = task
       super.init()
-      task.delegate = self
+      #if os(iOS)
+        task.delegate = self
+      #endif
       receive()
       task.resume()
 

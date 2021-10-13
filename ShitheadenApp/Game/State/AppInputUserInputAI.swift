@@ -9,24 +9,24 @@ import ShitheadenShared
 
 actor AppInputUserInputAI: GameAi {
   let beginMoveHandler: (@escaping ((Card, Card, Card)) async -> Void) async -> Void
-  let moveHandler: (@escaping (Turn) async -> Void) async -> Void
+  let moveHandler: (Bool, @escaping (Turn) async -> Void) async -> Void
   let errorHandler: (String) async -> Void
   let renderHandler: (GameSnapshot) async throws -> Void
 
-  required init() {
+  init() {
     beginMoveHandler = { _ in }
-    moveHandler = { _ in }
+    moveHandler = { _, _ in }
     errorHandler = { _ in }
     renderHandler = { _ in }
   }
 
   static func make() -> GameAi {
-    return AppInputUserInputAI()
+    AppInputUserInputAI()
   }
 
   init(
     beginMoveHandler: @escaping (@escaping ((Card, Card, Card)) async -> Void) async -> Void,
-    moveHandler: @escaping (@escaping (Turn) async -> Void) async -> Void,
+    moveHandler: @escaping (Bool, @escaping (Turn) async -> Void) async -> Void,
     errorHandler: @escaping (String) async -> Void,
     renderHandler: @escaping (GameSnapshot) async -> Void
   ) {
@@ -65,7 +65,7 @@ actor AppInputUserInputAI: GameAi {
 
     return await withUnsafeContinuation { cont in
       async {
-        await moveHandler {
+        await moveHandler(request.canPass) {
           cont.resume(returning: $0)
         }
       }

@@ -83,7 +83,7 @@ final class HttpServer {
       #if DEBUG
         try await WriteSnapshotToDisk.write(snapshot: snapshot)
       #else
-        try await WriteSnapshotToDisk.write(snapshot: snapshot)
+          try await WriteSnapshotToDisk.write(snapshot: snapshot)
       #endif
       return "ojoo!"
     }

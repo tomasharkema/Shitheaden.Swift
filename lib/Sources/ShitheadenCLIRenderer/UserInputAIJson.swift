@@ -18,7 +18,7 @@ public actor UserInputAIJson: GameAi {
   }
 
   public static func make() -> GameAi {
-    return UserInputAIJson()
+    UserInputAIJson()
   }
 
   public init(
@@ -64,7 +64,8 @@ public actor UserInputAIJson: GameAi {
   }
 
   public func move(request: TurnRequest, snapshot _: GameSnapshot) async throws -> Turn {
-    let string = try await reader(.requestNormalTurn, request.playerError)
+    let string = try await reader(.requestNormalTurn(canPass: true),
+                                  request.playerError) // get can pass!
 
     switch string {
     case let .string(string):

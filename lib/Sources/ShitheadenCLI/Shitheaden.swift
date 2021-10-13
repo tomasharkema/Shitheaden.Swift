@@ -13,6 +13,7 @@ import Foundation
 import Logging
 import ShitheadenCLIRenderer
 import ShitheadenRuntime
+import ShitheadenShared
 
 private let logger = Logger(label: "cli")
 
@@ -84,6 +85,7 @@ struct Shitheaden: ParsableCommand {
           })
         ),
       ],
+      rules: Rules.all,
       slowMode: true
     )
     do {

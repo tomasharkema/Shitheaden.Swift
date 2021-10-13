@@ -150,7 +150,7 @@ struct ConnectingView: View {
           connection.close()
           state = nil
         })
-          .buttonStyle(.bordered)
+        .buttonStyle(.bordered)
       }
     }
   }

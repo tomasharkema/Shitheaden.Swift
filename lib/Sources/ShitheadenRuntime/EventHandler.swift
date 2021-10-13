@@ -72,14 +72,15 @@ public class EventHandler<T> {
       return last
     }
 
-    var function: ((Result<T, Error>) -> Void)!
+    var function: ((Result<T, Error>) -> Void) = { _ in
+      assertionFailure("FUNCTION NOT SET!")
+    }
     await once { event in
       function(.success(event))
     }
 
-
     return try await withTaskCancellationHandler(handler: { [function] in
-      function!(.failure(NSError(domain: "", code: 0, userInfo: nil)))
+      function(.failure(NSError(domain: "", code: 0, userInfo: nil)))
     }, operation: {
       try await withUnsafeThrowingContinuation { cont in
         function = {

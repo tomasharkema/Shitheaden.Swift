@@ -29,7 +29,7 @@
         }
       },
       {
-        "package": "BlueSignals",
+        "package": "Signals",
         "repositoryURL": "https://github.com/IBM-Swift/BlueSignals.git",
         "state": {
           "branch": null,
@@ -66,11 +66,11 @@
       },
       {
         "package": "swift-argument-parser",
-        "repositoryURL": "https://github.com/tomasharkema/swift-argument-parser.git",
+        "repositoryURL": "https://github.com/apple/swift-argument-parser.git",
         "state": {
-          "branch": "swift-5.5-async",
-          "revision": "1c92828d434a87dea33d63e7276848e108617010",
-          "version": null
+          "branch": null,
+          "revision": "d2930e8fcf9c33162b9fcc1d522bc975e2d4179b",
+          "version": "1.0.1"
         }
       },
       {
@@ -92,16 +92,7 @@
         }
       },
       {
-        "package": "swift-log",
-        "repositoryURL": "https://github.com/apple/swift-log",
-        "state": {
-          "branch": null,
-          "revision": "5d66f7ba25daf4f94100e7022febf3c75e37a6c7",
-          "version": "1.4.2"
-        }
-      },
-      {
-        "package": "swift-log-oslog",
+        "package": "LoggingOSLog",
         "repositoryURL": "https://github.com/chrisaljoudi/swift-log-oslog.git",
         "state": {
           "branch": null,
@@ -123,8 +114,8 @@
         "repositoryURL": "https://github.com/apple/swift-nio.git",
         "state": {
           "branch": null,
-          "revision": "d79e33308b0ac83326b0ead0ea6446e604b8162d",
-          "version": "2.30.0"
+          "revision": "6aa9347d9bc5bbfe6a84983aec955c17ffea96ef",
+          "version": "2.33.0"
         }
       },
       {
@@ -141,8 +132,8 @@
         "repositoryURL": "https://github.com/apple/swift-nio-ssh",
         "state": {
           "branch": null,
-          "revision": "bc1a91daf3ae35134fbca5655ed221668d0369d3",
-          "version": "0.3.0"
+          "revision": "5a28f0d22e2057b09243f8a7e214938698a4b8c3",
+          "version": "0.3.1"
         }
       },
       {
@@ -168,8 +159,8 @@
         "repositoryURL": "https://github.com/nicklockwood/SwiftFormat",
         "state": {
           "branch": null,
-          "revision": "6f16a7c66c35cea3539becfc440b5d4822adc90f",
-          "version": "0.48.6"
+          "revision": "a1ae5b1fb8d593f276ead034b36129bc57453732",
+          "version": "0.48.15"
         }
       },
       {
@@ -177,7 +168,7 @@
         "repositoryURL": "https://github.com/vapor/vapor.git",
         "state": {
           "branch": "async-await",
-          "revision": "71d49a90543156a7ee9bc7ed18802dd78d3b6ec2",
+          "revision": "982184815c34daef8af1279c95cf41fa1c5f9d52",
           "version": null
         }
       },

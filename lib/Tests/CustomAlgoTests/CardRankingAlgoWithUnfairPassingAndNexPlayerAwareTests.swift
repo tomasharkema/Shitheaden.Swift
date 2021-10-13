@@ -16,6 +16,7 @@ class CardRankingAlgoWithUnfairPassingAndNexPlayerAwareTests: XCTestCase {
     let currentPlayerId = UUID()
 
     let currentPlayer = TurnRequest(
+      rules: Rules.all,
       id: currentPlayerId, name: "currentPlayer", handCards: [
         .card(card: .init(id: UUID(), symbol: .ruiten, number: .six)),
         .card(card: .init(id: UUID(), symbol: .ruiten, number: .seven)),
@@ -28,6 +29,7 @@ class CardRankingAlgoWithUnfairPassingAndNexPlayerAwareTests: XCTestCase {
 
     let nextPlayerId = UUID()
     let nextPlayer = TurnRequest(
+      rules: Rules.all,
       id: nextPlayerId, name: "nextPlayer", handCards: [], openTableCards: [
         .card(card: .init(id: UUID(), symbol: .harten, number: .six)),
         .card(card: .init(id: UUID(), symbol: .harten, number: .seven)),
@@ -62,6 +64,7 @@ class CardRankingAlgoWithUnfairPassingAndNexPlayerAwareTests: XCTestCase {
     let currentPlayerId = UUID()
 
     let currentPlayer = TurnRequest(
+      rules: Rules.all,
       id: currentPlayerId, name: "currentPlayer", handCards: [
         .card(card: .init(id: UUID(), symbol: .ruiten, number: .six)),
         .card(card: .init(id: UUID(), symbol: .ruiten, number: .seven)),
@@ -74,6 +77,7 @@ class CardRankingAlgoWithUnfairPassingAndNexPlayerAwareTests: XCTestCase {
 
     let nextPlayerId = UUID()
     let nextPlayer = TurnRequest(
+      rules: Rules.all,
       id: nextPlayerId, name: "nextPlayer", handCards: [], openTableCards: [
       ], lastTableCard: nil, closedCards: [
         .hidden(id: UUID()),

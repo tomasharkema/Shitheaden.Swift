@@ -48,7 +48,12 @@ extension TurnRequest {
         }
         .map { Turn.play([$0]) }
 
-      return Array([actions, [.pass]].joined()).includeDoubles()
+      if actions.isEmpty {
+        return [.pass]
+      }
+
+      return Array([actions, rules.contains(.unfairPassingAllowed) ? [.pass] : []].joined())
+        .includeDoubles()
 
     case .tableOpen:
       let actions = openTableCards.unobscure()
@@ -56,9 +61,18 @@ extension TurnRequest {
           lastTableCard?.number.afters.contains { $0 == handCard.number } ?? true
         }
         .map { Turn.play([$0]) }
+
       if actions.isEmpty {
-        return [Turn.pass]
+        if rules.contains(.getCardWhenPassOpenCardTables) {
+          return openTableCards.unobscure()
+            .map { Turn.play([$0]) }
+            .includeDoubles()
+
+        } else {
+          return [Turn.pass]
+        }
       }
+
       return actions.includeDoubles()
 
     case .tableClosed:

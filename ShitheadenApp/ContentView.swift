@@ -25,11 +25,14 @@ struct ContentView: View {
   var body: some View {
     switch appState {
     case let .singlePlayer(contestants):
-      GameView(state: $appState, game: offlineGame).onAppear {
-        async {
-          await offlineGame.start(contestants: contestants)
+      GameView(state: $appState, game: offlineGame)
+        .onAppear {
+          if #available(iOS 15.0, *) {
+            async {
+              await offlineGame.start(restart: true, contestants: contestants)
+            }
+          }
         }
-      }
     case .multiplayerChallenger:
       ConnectingView(state: $appState, code: nil)
     case let .multiplayerJoin(code):

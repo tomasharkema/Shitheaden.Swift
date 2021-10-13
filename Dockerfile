@@ -1,4 +1,4 @@
-FROM tomasharkema7/swift-5.5:1804 as builder
+FROM swift:5.5-bionic as builder
 
 WORKDIR /app
 
@@ -58,7 +58,7 @@ RUN find Sources/ShitheadenRuntime Sources/ShitheadenShared -type f -exec shasum
 
 RUN swift build -c release
 
-FROM tomasharkema7/swift-5.5:1804
+FROM swift:5.5-bionic-slim
 
 RUN apt-get update -y && apt-get install -y git curl libatomic1 libxml2 netcat-openbsd lsof perl && rm -rf /var/lib/apt/lists/*
 

@@ -238,7 +238,7 @@ actor MultiplayerHandler {
     }
 
     let game = Game(
-      players: [initiator] + joiners + cpus, slowMode: true
+      players: [initiator] + joiners + cpus, rules: Rules.all, slowMode: true
     )
     let gameTask: Task<EndGameSnapshot, Error> = async {
       try await withTaskCancellationHandler(operation: {

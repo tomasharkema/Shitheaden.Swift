@@ -19,7 +19,6 @@
   },
   "testTargets" : [
     {
-      "parallelizable" : true,
       "target" : {
         "containerPath" : "container:lib",
         "identifier" : "ShitheadenRuntimeTests",
@@ -27,7 +26,6 @@
       }
     },
     {
-      "parallelizable" : true,
       "target" : {
         "containerPath" : "container:lib",
         "identifier" : "ShitheadenSharedTests",
@@ -35,7 +33,6 @@
       }
     },
     {
-      "parallelizable" : true,
       "target" : {
         "containerPath" : "container:lib",
         "identifier" : "CustomAlgoTests",

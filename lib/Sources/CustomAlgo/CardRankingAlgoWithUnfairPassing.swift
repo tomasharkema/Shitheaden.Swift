@@ -11,7 +11,7 @@ public actor CardRankingAlgoWithUnfairPassing: GameAi {
   private let old = CardRankingAlgo()
 //  public init() {}
   public static func make() -> GameAi {
-    return CardRankingAlgoWithUnfairPassing()
+    CardRankingAlgoWithUnfairPassing()
   }
 
   public func render(snapshot: GameSnapshot) async throws {
@@ -25,11 +25,15 @@ public actor CardRankingAlgoWithUnfairPassing: GameAi {
   public func move(request: TurnRequest, snapshot: GameSnapshot) async -> Turn {
     let turn = await old.move(request: request, snapshot: snapshot)
 
+    if request.rules.contains(.againAfterPass) {
+      return turn
+    }
+
     if request.phase == .hand, request.deckCards.count > 3 {
       let playThreeOrThen = turn.playedCards.map(\.number).contains {
         [.ten, .three, .two].contains($0)
       }
-      if playThreeOrThen {
+      if playThreeOrThen, request.rules.contains(.unfairPassingAllowed) {
         return .pass
       } else {
         return turn

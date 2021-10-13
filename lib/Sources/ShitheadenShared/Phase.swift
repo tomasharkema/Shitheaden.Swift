@@ -10,4 +10,13 @@ public enum Phase: Codable, Hashable {
   case hand
   case tableOpen
   case tableClosed
+
+  public var isTableOpen: Bool {
+    switch self {
+    case .tableOpen:
+      return true
+    default:
+      return false
+    }
+  }
 }

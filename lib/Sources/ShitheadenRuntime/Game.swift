@@ -34,13 +34,14 @@ public actor Game {
   #endif
 
   var turns = [UserAndTurn]()
-  let rules = Rules.all
+  let rules: Rules
   var slowMode = false
   var playersOnTurn = Set<UUID>()
   var playerAndError = [UUID: PlayerError]()
 
   public init(
     players: [Player],
+    rules: Rules,
     slowMode: Bool
   ) {
     #if DEBUG
@@ -54,17 +55,19 @@ public actor Game {
     #endif
 
     self.players = players
+    self.rules = rules
     self.slowMode = slowMode
   }
 
   public convenience init(
     contestants: Int, ai: GameAi.Type,
     localPlayer: Player,
+    rules: Rules,
     slowMode: Bool
   ) {
     let contestantPlayers = (0 ..< contestants).map { index in
       Player(
-        name: "West (Unfair)",
+        name: "CPU \(index + 1)",
         position: Position.allCases.filter { $0 != localPlayer.position }[index],
         ai: ai.make()
       )
@@ -72,6 +75,7 @@ public actor Game {
 
     self.init(
       players: contestantPlayers + [localPlayer],
+      rules: rules,
       slowMode: slowMode
     )
   }
@@ -112,6 +116,7 @@ public actor Game {
   ) -> TurnRequest {
     if obscure, !includeEndState {
       return TurnRequest(
+        rules: rules,
         id: player.id,
         name: player.name,
         handCards: .init(obscured: player.handCards),
@@ -130,6 +135,7 @@ public actor Game {
       )
     } else {
       return TurnRequest(
+        rules: rules,
         id: player.id,
         name: player.name,
         handCards: .init(open: player.handCards),
@@ -180,7 +186,6 @@ public actor Game {
         deck.draw()!,
       ]
       players[index].sortCardsHandImportance()
-//      players[index].sortCards()
       players[index].closedTableCards = [deck.draw()!, deck.draw()!, deck.draw()!]
     }
   }
@@ -195,10 +200,10 @@ public actor Game {
 
     try Task.checkCancellation()
 
-    player.sortCardsHandImportance()
     updatePlayer(player: player)
 
     let req = TurnRequest(
+      rules: rules,
       id: player.id, name: player.name,
       handCards: .init(open: player.handCards),
       openTableCards: .init(open: player.openTableCards),
@@ -283,10 +288,10 @@ public actor Game {
       return (player, nil)
     }
 
-    player.sortCardsHandImportance()
     updatePlayer(player: player)
 
     let req = TurnRequest(
+      rules: rules,
       id: player.id, name: player.name,
       handCards: .init(open: player.handCards),
       openTableCards: .init(open: player.openTableCards),
@@ -316,11 +321,10 @@ public actor Game {
       do {
         try turn.verify()
 
-
         if !type(of: player.ai).algoName.contains("UserInputAI") {
           await playDelayIfNeeded()
         }
-        
+
         try await sendRender(error: previousError)
       } catch {
         if !type(of: player.ai).algoName.contains("UserInputAI") {
@@ -363,10 +367,10 @@ public actor Game {
       }
 
       playerAndError[player.id] = nil
+      let previousTable = table
       switch turn {
       case let .closedCardIndex(index):
         if player.phase == .tableClosed {
-          let previousTable = table
           let card = player.closedTableCards[index - 1]
 
           player.closedTableCards
@@ -382,9 +386,11 @@ public actor Game {
             await playDelayIfNeeded(multiplier: 2)
 
             player.handCards.append(contentsOf: table)
+            player.sortCardsHandImportance()
             table = []
             updatePlayer(player: player)
             try await sendRender(error: previousError)
+
             if rules.contains(.againAfterPass) {
               let (player, turnNext) = try await commitTurn(
                 playerIndex: playerIndex,
@@ -395,6 +401,12 @@ public actor Game {
               )
 
               return (player, .turnNext(turn, turnNext))
+            }
+          } else {
+            if player.ai.algoName.isUser {
+              updatePlayer(player: player)
+              try await sendRender(error: previousError)
+              await delay(for: .now() + 1)
             }
           }
         } else {
@@ -429,6 +441,32 @@ public actor Game {
           assert(!possibleBeurt.contains { !player.openTableCards.contains($0) }, "WTF")
           for turn in possibleBeurt {
             player.openTableCards.remove(at: player.openTableCards.firstIndex(of: turn)!)
+          }
+
+          if let lastTable = previousTable.filter({ $0.number != .three }).last,
+             let lastApplied = table.filter({ $0.number != .three }).last,
+             !lastTable.number.afters.contains(lastApplied.number),
+             rules.contains(.getCardWhenPassOpenCardTables)
+          {
+            try await sendRender(error: previousError)
+            await playDelayIfNeeded(multiplier: 2)
+
+            player.handCards.append(contentsOf: table)
+            player.sortCardsHandImportance()
+            table = []
+            updatePlayer(player: player)
+            try await sendRender(error: previousError)
+            if rules.contains(.againAfterPass) {
+              let (player, turnNext) = try await commitTurn(
+                playerIndex: playerIndex,
+                player: player,
+                numberCalled: numberCalled + 1,
+                previousError: previousError ??
+                  PlayerError.openCardFailed(lastApplied)
+              )
+
+              return (player, .turnNext(turn, turnNext))
+            }
           }
 
         case .tableClosed:
@@ -569,33 +607,36 @@ public actor Game {
   var lastFirstCardAndPlayerUUID: ([Card], UUID)?
 
   private func checkStalledCard(_ player: UUID) async throws {
-    if let lastFirstCardAndPlayerUUID = lastFirstCardAndPlayerUUID,
-       lastFirstCardAndPlayerUUID.0.containsSameElements(as: table),
-       lastFirstCardAndPlayerUUID.1 == player
-    {
-      try await sendRender(error: nil)
-      await playDelayIfNeeded()
+    guard let lastFirstCardAndPlayerUUID = lastFirstCardAndPlayerUUID,
+          lastFirstCardAndPlayerUUID.0.equalsIgnoringOrder(as: table),
+          lastFirstCardAndPlayerUUID.1 == player
+    else { return }
 
-      burnt += table
-      table = []
+    try await sendRender(error: nil)
+    await playDelayIfNeeded()
 
-      try await sendRender(error: nil)
-      await playDelayIfNeeded()
-    }
+    burnt += table
+    table = []
+
+    try await sendRender(error: nil)
+    await playDelayIfNeeded()
   }
 
   private func saveStalledCard(_ player: UUID) {
-    if table.count <= 4 {
-      if !table.contains(where: { $0.number != table.first?.number }) {
-        if let lastFirstCardAndPlayerUUID = lastFirstCardAndPlayerUUID,
-           lastFirstCardAndPlayerUUID.0 == table
-        {
-          return
-        }
+    if !table.isEmpty, table.count <= 4,
+       !table.contains(where: { $0.number != table.first?.number })
+    {
+      if let lastFirstCardAndPlayerUUID = lastFirstCardAndPlayerUUID,
+         lastFirstCardAndPlayerUUID.0.equalsIgnoringOrder(as: table)
+      {
+        return
+      }
 
-        lastFirstCardAndPlayerUUID = (table, player)
-      } else { lastFirstCardAndPlayerUUID = nil }
-    } else { lastFirstCardAndPlayerUUID = nil }
+      lastFirstCardAndPlayerUUID = (table, player)
+
+    } else {
+      lastFirstCardAndPlayerUUID = nil
+    }
   }
 
   func turn(number: Int = 0) async throws {
@@ -681,6 +722,7 @@ public actor Game {
     try await turn()
 
     try Task.checkCancellation()
+    await delay(for: .now() + 2)
     try await sendRender(error: nil, includeEndState: true)
     endDate = Date().timeIntervalSince1970
 

@@ -31,21 +31,29 @@ public struct Card: Equatable, Hashable, Codable {
 }
 
 public extension Array where Element == Card {
-//  @inlinable mutating func sortNumbers() {
-//    sort {
-//      $0 < $1
-//    }
-//  }
-
   @inlinable mutating func sortCardsHandImportance() {
     sort {
-      $0.number.handImportanceScore < $1.number.handImportanceScore
+      let firstHandImportance = $0.number.handImportanceScore
+      let secondHandImportance = $1.number.handImportanceScore
+
+      if firstHandImportance == secondHandImportance {
+        return $0.symbol.order < $1.symbol.order
+      } else {
+        return firstHandImportance < secondHandImportance
+      }
     }
   }
 
   @inlinable func sortedCardsHandImportance() -> Self {
     sorted {
-      $0.number.handImportanceScore < $1.number.handImportanceScore
+      let firstHandImportance = $0.number.handImportanceScore
+      let secondHandImportance = $1.number.handImportanceScore
+
+      if firstHandImportance == secondHandImportance {
+        return $0.symbol.order < $1.symbol.order
+      } else {
+        return firstHandImportance < secondHandImportance
+      }
     }
   }
 
@@ -73,10 +81,27 @@ extension Number {
     switch self {
     case .ten:
       return 1000
-    case .three, .two:
+    case .two:
       return 100
+    case .three:
+      return 99
     default:
       return order
+    }
+  }
+}
+
+public extension Symbol {
+  @inlinable var order: Int {
+    switch self {
+    case .harten:
+      return 1
+    case .ruiten:
+      return 2
+    case .schoppen:
+      return 3
+    case .klaver:
+      return 4
     }
   }
 }

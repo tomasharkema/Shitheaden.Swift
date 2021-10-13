@@ -14,7 +14,6 @@ struct PlayerView: View {
   let playerOnTurn: Bool
 
   var body: some View {
-
     VStack {
       if player.position == .zuid || player.position == .oost || player.position == .west {
         Text(player.name)
@@ -44,7 +43,7 @@ struct PlayerView: View {
             )
           )
 
-          CardStackView(cards: player.handCards, offset: 2)
+          CardStackView(cards: player.handCards, offset: 2, numberOfCardsExtraSpace: 0)
         }
       }
       .padding()

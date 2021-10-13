@@ -27,8 +27,8 @@ final class GameContainer: ObservableObject {
   private var contestants: Int?
 
   @Published var requestTurn: Bool = false
-  @Published var beginMoveHandler: (Card, Card, Card)? = nil
-  @Published var moveHandler: Turn? = nil
+  @Published var beginMoveHandler: (Card, Card, Card)?
+  @Published var moveHandler: Turn?
 
   func reset() async {
     appInput = nil
@@ -76,9 +76,10 @@ final class GameContainer: ObservableObject {
           }
         }
 
-      case .action(action: .requestNormalTurn):
+      case let .action(action: .requestNormalTurn(canPass)):
         logger.info("requestNormalTurn isBeginMove false")
-        newGameState.canPass = true
+
+        newGameState.canPass = canPass // refactor
         newGameState.isBeginMove = false
 
         moveHandlerCancel = $moveHandler.filter { $0 != nil }.first()
@@ -143,7 +144,7 @@ final class GameContainer: ObservableObject {
     return newGameState
   }
 
-  var gameTask: Task.Handle<EndGameSnapshot?, Never>?
+  var gameTask: Task<EndGameSnapshot?, Never>?
   func start(restart: Bool = false, contestants: Int) async {
     self.contestants = contestants
     if restart {
@@ -172,7 +173,7 @@ final class GameContainer: ObservableObject {
           newState.isBeginMove = true
           self.gameState = newState
         }
-      }, moveHandler: { handler in
+      }, moveHandler: { canPass, handler in
 
         self.moveHandlerCancel = self.$moveHandler.filter { $0 != nil }.first().sink { turn in
           async {
@@ -182,7 +183,7 @@ final class GameContainer: ObservableObject {
 
         await MainActor.run {
           var newState = self.gameState
-          newState.canPass = true
+          newState.canPass = canPass
           newState.isBeginMove = false
           self.gameState = newState
         }
@@ -205,11 +206,12 @@ final class GameContainer: ObservableObject {
         position: .zuid,
         ai: appInput
       ),
+      rules: Storage.shared.rules,
       slowMode: true
     )
 
     self.game = game
-    let gameTask: Task.Handle<EndGameSnapshot?, Never> = async {
+    let gameTask: Task<EndGameSnapshot?, Never> = async {
       var snap: EndGameSnapshot?
       do {
         let snapshot = try await game.startGame()
@@ -253,7 +255,7 @@ final class GameContainer: ObservableObject {
       return snap
     }
     self.gameTask = gameTask
-    await gameTask.get()
+    _ = await gameTask.value
   }
 
   func select(_ cards: [RenderCard], selected: Bool) {

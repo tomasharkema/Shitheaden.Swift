@@ -26,7 +26,7 @@ class Connecting: ObservableObject {
   private var dataHandler: AnyCancellable?
   private var quitHandler: AnyCancellable?
 
-  private var connectingTask: Task.Handle<Void, Error>?
+  private var connectingTask: Task<Void, Error>?
 
   func start() async throws {
     connectingTask?.cancel()

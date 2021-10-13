@@ -24,16 +24,18 @@ struct EndStateView: View {
           case let .place(int):
             Text("Je bent \(int)e geworden...").font(.title)
           }
+          if #available(iOS 15.0, *) {
+            Button("Nog een spelletje") {
+              async {
+                await restart()
+              }
+            }.buttonStyle(.bordered)
 
-          Button("Nog een spelletje") { async {
-            await restart()
+            Button("Stoppen") { async {
+              await quit()
+            }
+            }.buttonStyle(.bordered).tint(Color.red)
           }
-          }.buttonStyle(.bordered)
-
-          Button("Stoppen") { async {
-            await quit()
-          }
-          }.buttonStyle(.bordered).tint(Color.red)
         }
         .padding()
         .background(Color.green)

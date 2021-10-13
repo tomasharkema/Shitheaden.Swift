@@ -29,7 +29,11 @@ extension Array {
 }
 
 extension Array where Element: Comparable {
-  func containsSameElements(as other: [Element]) -> Bool {
-    count == other.count && sorted() == other.sorted()
+  func equalsIgnoringOrder(as other: [Element]) -> Bool {
+    if self == other {
+      return true
+    } else {
+      return count == other.count && sorted() == other.sorted()
+    }
   }
 }

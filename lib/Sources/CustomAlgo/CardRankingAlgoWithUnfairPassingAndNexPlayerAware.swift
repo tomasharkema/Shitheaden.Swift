@@ -13,7 +13,7 @@ public actor CardRankingAlgoWithUnfairPassingAndNexPlayerAware: GameAi {
   private let old = CardRankingAlgoWithUnfairPassing()
 
   public static func make() -> GameAi {
-    return CardRankingAlgoWithUnfairPassingAndNexPlayerAware()
+    CardRankingAlgoWithUnfairPassingAndNexPlayerAware()
   }
 
   public func render(snapshot: GameSnapshot) async throws {

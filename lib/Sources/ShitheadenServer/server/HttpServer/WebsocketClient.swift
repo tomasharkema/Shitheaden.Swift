@@ -148,6 +148,7 @@ class WebsocketClient: Client {
             .send(.multiplayerEvent(multiplayerEvent: .gameSnapshot(snapshot: $0)))
         })
       ),
+      rules: Rules.all,
       slowMode: true
     )
     let snapshot = try await game.startGame()

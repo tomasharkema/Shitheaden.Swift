@@ -11,10 +11,12 @@ import SwiftUI
 struct CardStackView: View {
   let cards: [RenderCard]
   let offset: CGFloat
+  let numberOfCardsExtraSpace: Int
   let alignment = Alignment.center
 
-  func offsetCalc(_ number: CGFloat) -> CGFloat {
-    (min(number, 4) * offset) + (max(0, number - 4) * offset * 0.1)
+  private func offsetCalc(_ number: CGFloat) -> CGFloat {
+    (min(number, CGFloat(numberOfCardsExtraSpace) - 1) * offset) +
+      (max(0, number - (CGFloat(numberOfCardsExtraSpace) - 1)) * offset * 0.1)
   }
 
   var body: some View {

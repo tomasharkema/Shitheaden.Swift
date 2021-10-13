@@ -16,6 +16,7 @@ public enum PlayerError: LocalizedError, Codable, Equatable, Hashable {
   case notSameNumber
   case turnNotPossible(turn: Turn)
   case closedCardFailed(Card)
+  case openCardFailed(Card)
   case closedOneCard
   case openCardsThreeCards
   case cardNotInHand
@@ -51,6 +52,8 @@ public enum PlayerError: LocalizedError, Codable, Equatable, Hashable {
       return turn.explain + " niet mogelijk."
     case let .closedCardFailed(card):
       return "Je dichte kaart was \(card)... Je mag opnieuw!"
+    case let .openCardFailed(card):
+      return "Je open kaart was \(card)... Je mag opnieuw!"
     case .openCardsThreeCards:
       return "Je moet 3 kaarten spelen"
     case .closedOneCard:

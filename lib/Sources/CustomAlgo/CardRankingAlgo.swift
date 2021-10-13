@@ -9,9 +9,9 @@ import ShitheadenShared
 
 public actor CardRankingAlgo: GameAi {
   private var passes = 0
-  
+
   public static func make() -> GameAi {
-    return CardRankingAlgo()
+    CardRankingAlgo()
   }
 
   public func render(snapshot _: GameSnapshot) async throws {}

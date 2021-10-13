@@ -1,5 +1,5 @@
 //
-//  File.swift
+//  TurnRequest.swift
 //
 //
 //  Created by Tomas Harkema on 15/06/2021.
@@ -8,6 +8,7 @@
 import Foundation
 
 public struct TurnRequest: Equatable, Codable, Hashable {
+  public let rules: Rules
   public let id: UUID
   public let name: String
   public let handCards: [RenderCard]
@@ -25,6 +26,7 @@ public struct TurnRequest: Equatable, Codable, Hashable {
   public let endState: EndPlace?
 
   public init(
+    rules: Rules,
     id: UUID, name: String,
     handCards: [RenderCard],
     openTableCards: [RenderCard],
@@ -37,8 +39,10 @@ public struct TurnRequest: Equatable, Codable, Hashable {
     done: Bool,
     position: Position,
     isObscured: Bool,
-    playerError: PlayerError?, endState: EndPlace?
+    playerError: PlayerError?,
+    endState: EndPlace?
   ) {
+    self.rules = rules
     self.id = id
     self.name = name
     self.handCards = handCards
@@ -54,5 +58,20 @@ public struct TurnRequest: Equatable, Codable, Hashable {
     self.isObscured = isObscured
     self.playerError = playerError
     self.endState = endState
+  }
+
+  public var canPass: Bool {
+    switch phase {
+    case .tableClosed:
+      return false
+    case .tableOpen:
+      if rules.contains(.getCardWhenPassOpenCardTables) {
+        return false
+      } else {
+        return true
+      }
+    case .hand:
+      return true
+    }
   }
 }

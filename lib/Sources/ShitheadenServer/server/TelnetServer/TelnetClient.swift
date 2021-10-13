@@ -50,7 +50,7 @@ class TelnetClient: Client {
 
   func start() async throws {
     do {
-      let task: Task.Handle<Void, Error> = async {
+      let task: Task<Void, Error> = async {
         await send(string: CLI.clear() + """
         ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
         ░░░░░░░░░░░░░░░▓████████▓░░░░░░░░░░░░░░░░
@@ -296,10 +296,11 @@ class TelnetClient: Client {
             .send(.multiplayerEvent(multiplayerEvent: .gameSnapshot(snapshot: $0)))
         })
       ),
+      rules: Rules.all,
       slowMode: true
     )
 
-//    let task: Task.Handle<EndGameSnapshot, Error> = async {
+//    let task: Task<EndGameSnapshot, Error> = async {
     let snapshot = try await game.startGame()
     asyncDetached(priority: .background) {
       try await WriteSnapshotToDisk.write(snapshot: snapshot)

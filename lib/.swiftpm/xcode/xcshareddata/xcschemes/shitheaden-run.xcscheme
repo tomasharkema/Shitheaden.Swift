@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
    LastUpgradeVersion = "1300"
-   version = "1.7">
+   version = "1.3">
    <BuildAction
       parallelizeBuildables = "YES"
       buildImplicitDependencies = "YES">
@@ -14,10 +14,10 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "C3812A51267C816400397E65"
-               BuildableName = "ShitheadenApp.app"
-               BlueprintName = "ShitheadenApp"
-               ReferencedContainer = "container:ShitheadenApp.xcodeproj">
+               BlueprintIdentifier = "shitheaden"
+               BuildableName = "shitheaden"
+               BlueprintName = "shitheaden"
+               ReferencedContainer = "container:">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -27,49 +27,14 @@
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       shouldUseLaunchSchemeArgsEnv = "YES">
-      <TestPlans>
-         <TestPlanReference
-            reference = "container:ShitheadenApp.xcodeproj/ShitheadenApp.xctestplan"
-            default = "YES">
-         </TestPlanReference>
-      </TestPlans>
       <Testables>
-         <TestableReference
-            skipped = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "ShitheadenRuntimeTests"
-               BuildableName = "ShitheadenRuntimeTests"
-               BlueprintName = "ShitheadenRuntimeTests"
-               ReferencedContainer = "container:lib">
-            </BuildableReference>
-         </TestableReference>
-         <TestableReference
-            skipped = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "ShitheadenSharedTests"
-               BuildableName = "ShitheadenSharedTests"
-               BlueprintName = "ShitheadenSharedTests"
-               ReferencedContainer = "container:lib">
-            </BuildableReference>
-         </TestableReference>
-         <TestableReference
-            skipped = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "CustomAlgoTests"
-               BuildableName = "CustomAlgoTests"
-               BlueprintName = "CustomAlgoTests"
-               ReferencedContainer = "container:lib">
-            </BuildableReference>
-         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction
       buildConfiguration = "Debug"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
+      enableThreadSanitizer = "YES"
       launchStyle = "0"
       useCustomWorkingDirectory = "NO"
       ignoresPersistentStateOnLaunch = "NO"
@@ -80,12 +45,18 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "C3812A51267C816400397E65"
-            BuildableName = "ShitheadenApp.app"
-            BlueprintName = "ShitheadenApp"
-            ReferencedContainer = "container:ShitheadenApp.xcodeproj">
+            BlueprintIdentifier = "shitheaden"
+            BuildableName = "shitheaden"
+            BlueprintName = "shitheaden"
+            ReferencedContainer = "container:">
          </BuildableReference>
       </BuildableProductRunnable>
+      <CommandLineArguments>
+         <CommandLineArgument
+            argument = "--test-ai"
+            isEnabled = "YES">
+         </CommandLineArgument>
+      </CommandLineArguments>
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "Release"
@@ -97,10 +68,10 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "C3812A51267C816400397E65"
-            BuildableName = "ShitheadenApp.app"
-            BlueprintName = "ShitheadenApp"
-            ReferencedContainer = "container:ShitheadenApp.xcodeproj">
+            BlueprintIdentifier = "shitheaden"
+            BuildableName = "shitheaden"
+            BlueprintName = "shitheaden"
+            ReferencedContainer = "container:">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

@@ -61,7 +61,7 @@ public enum MultiplayerEvent: Equatable, Codable {
 
 public enum Action: Equatable, Codable {
   case requestBeginTurn
-  case requestNormalTurn
+  case requestNormalTurn(canPass: Bool)
 }
 
 public enum ServerRequest: Equatable, Codable {

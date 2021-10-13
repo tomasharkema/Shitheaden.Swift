@@ -57,7 +57,7 @@
               }
             }
             return await group.reduce([], +)
-        }
+          }
 
       var playerAndScores = [String: [String: Int]]()
 

@@ -41,14 +41,7 @@ class TelnetServer {
 
     let bind = bootstrap.bind(host: "0.0.0.0", port: 3333)
 
-    let channel: Channel = try await withUnsafeThrowingContinuation { cont in
-      bind.whenSuccess {
-        cont.resume(returning: $0)
-      }
-      bind.whenFailure {
-        cont.resume(throwing: $0)
-      }
-    }
+    let channel: Channel = try await bind.get()
 
     guard let localAddress = channel.localAddress else {
       fatalError(
@@ -58,5 +51,18 @@ class TelnetServer {
     logger.info("Server started and listening on \(localAddress)")
     self.channel = channel
     return channel
+  }
+}
+
+extension EventLoopFuture {
+  func get() async throws -> Value {
+    try await withUnsafeThrowingContinuation { cont in
+      whenSuccess {
+        cont.resume(returning: $0)
+      }
+      whenFailure {
+        cont.resume(throwing: $0)
+      }
+    }
   }
 }
