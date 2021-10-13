@@ -1,4 +1,4 @@
-FROM tomasharkema7/swift-5.5:1804
+FROM swift:5.5-bionic
 
 WORKDIR /app
 
