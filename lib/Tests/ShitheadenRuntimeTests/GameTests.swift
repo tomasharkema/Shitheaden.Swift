@@ -35,7 +35,7 @@ class GameTests: XCTestCase {
         position: .zuid,
         ai: CardRankingAlgo.make()
       ),
-    ], slowMode: false)
+    ], rules: .all, slowMode: false)
 
     asyncTest(timeout: 20) {
       await game.set(deck: randomDeck)
@@ -57,7 +57,7 @@ class GameTests: XCTestCase {
         position: .noord,
         ai: CardRankingAlgo.make()
       ),
-    ], slowMode: false)
+    ], rules: .all,slowMode: false)
 
     asyncTest(timeout: 20) {
       await game.set(deck: randomDeck)
@@ -132,7 +132,7 @@ class GameTests: XCTestCase {
       deck.draw()!,
     ]
 
-    let game = Game(players: [firstPlayer, secondPlayer], slowMode: false)
+    let game = Game(players: [firstPlayer, secondPlayer],rules: .all, slowMode: false)
 
     asyncTest(timeout: 20) {
       await game.set(deck: Deck(cards: []))
@@ -155,7 +155,7 @@ class GameTests: XCTestCase {
       ai: CardRankingAlgoWithUnfairPassingAndNexPlayerAware.make()
     )
 
-    let game = Game(players: [firstPlayer, secondPlayer], slowMode: false)
+    let game = Game(players: [firstPlayer, secondPlayer],rules: .all, slowMode: false)
 
     asyncTest(timeout: 20) {
       try await game.startGame()
