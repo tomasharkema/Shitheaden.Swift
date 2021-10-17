@@ -14,12 +14,12 @@ import ShitheadenShared
 public actor Game {
   private let logger = Logger(label: "runtime.Game")
 
-  let gameId = UUID()
-  let beginDate = Date().timeIntervalSince1970
-  var endDate: TimeInterval?
+  private let gameId = UUID()
+  private let beginDate = Date().timeIntervalSince1970
+  private var endDate: TimeInterval?
 
   private(set) var deck = Deck()
-  var players = [Player]()
+  private var players = [Player]()
   private(set) var table = Table()
   private(set) var burnt = [Card]()
 
@@ -33,11 +33,11 @@ public actor Game {
     }
   #endif
 
-  var turns = [UserAndTurn]()
-  let rules: Rules
-  var slowMode = false
-  var playersOnTurn = Set<UUID>()
-  var playerAndError = [UUID: PlayerError]()
+  private var turns = [UserAndTurn]()
+  private let rules: Rules
+  private var slowMode = false
+  private var playersOnTurn = Set<UUID>()
+  private var playerAndError = [UUID: PlayerError]()
 
   public init(
     players: [Player],
@@ -80,11 +80,11 @@ public actor Game {
     )
   }
 
-  var lastCard: Card? {
+  private var lastCard: Card? {
     table.lastCard
   }
 
-  var notDonePlayers: [Player] {
+  private var notDonePlayers: [Player] {
     Array(players.filter { !$0.done })
   }
 
@@ -171,7 +171,7 @@ public actor Game {
     )
   }
 
-  func shuffle() {
+  private func shuffle() {
     deck = .new
   }
 
@@ -190,7 +190,7 @@ public actor Game {
     }
   }
 
-  func commitBeginTurn(
+  private func commitBeginTurn(
     playerIndex: Int,
     player oldP: Player,
     numberCalled: Int,
@@ -275,7 +275,7 @@ public actor Game {
   }
 
   // swiftlint:disable:next cyclomatic_complexity function_body_length
-  func commitTurn(
+  private func commitTurn(
     playerIndex: Int,
     player oldP: Player,
     numberCalled: Int, previousError: PlayerError?
@@ -604,7 +604,7 @@ public actor Game {
     }
   }
 
-  var lastFirstCardAndPlayerUUID: ([Card], UUID)?
+  private var lastFirstCardAndPlayerUUID: ([Card], UUID)?
 
   private func checkStalledCard(_ player: UUID) async throws {
     guard let lastFirstCardAndPlayerUUID = lastFirstCardAndPlayerUUID,
@@ -683,18 +683,18 @@ public actor Game {
     }
   }
 
-  func pickDonePlayers() -> [Player] {
+  private func pickDonePlayers() -> [Player] {
     players.filter { el -> Bool in
       el.done
     }
   }
 
-  func shouldDoAnotherRound() -> Bool {
+  private func shouldDoAnotherRound() -> Bool {
     pickDonePlayers().count != (players.count - 1) && pickDonePlayers().count != players
       .count
   }
 
-  func resetBeurten() {
+  private func resetBeurten() {
     for index in players.indices {
       players[index].turns = []
     }
@@ -722,9 +722,9 @@ public actor Game {
     try await turn()
 
     try Task.checkCancellation()
-    await delay(for: .now() + 2)
-    try await sendRender(error: nil, includeEndState: true)
     endDate = Date().timeIntervalSince1970
+    await delay(for: .now() + 1)
+    try await sendRender(error: nil, includeEndState: true)
 
     return EndGameSnapshot(
       gameId: gameId,
@@ -733,7 +733,7 @@ public actor Game {
     )
   }
 
-  func checkIntegrity() throws {
+  private func checkIntegrity() throws {
     #if DEBUG
       var pastCards = [(Card, String)]()
 

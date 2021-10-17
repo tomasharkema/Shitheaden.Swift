@@ -27,13 +27,3 @@ extension Array {
     return enumerated().sorted(by: { shift($0.offset) < shift($1.offset) }).map(\.element)
   }
 }
-
-extension Array where Element: Comparable {
-  func equalsIgnoringOrder(as other: [Element]) -> Bool {
-    if self == other {
-      return true
-    } else {
-      return count == other.count && sorted() == other.sorted()
-    }
-  }
-}

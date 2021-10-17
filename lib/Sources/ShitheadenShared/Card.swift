@@ -69,12 +69,19 @@ public extension Card {
     number.order
   }
 }
-
-extension Card: Comparable {
-  @inlinable public static func < (lhs: Card, rhs: Card) -> Bool {
-    lhs.number < rhs.number
-  }
-}
+//
+//extension Card: Comparable {
+//  @inlinable public static func < (lhs: Card, rhs: Card) -> Bool {
+//    let firstHandImportance = lhs.number.handImportanceScore
+//    let secondHandImportance = rhs.number.handImportanceScore
+//
+//    if firstHandImportance == secondHandImportance {
+//      return lhs.symbol.order < rhs.symbol.order
+//    } else {
+//      return lhs.order < rhs.order
+//    }
+//  }
+//}
 
 extension Number {
   @inlinable var handImportanceScore: Int {
@@ -102,6 +109,20 @@ public extension Symbol {
       return 3
     case .klaver:
       return 4
+    }
+  }
+}
+
+extension Array where Element == Card {
+  public func equalsIgnoringOrder(as other: [Element]) -> Bool {
+    if self == other {
+      return true
+    } else {
+      return count == other.count && sorted {
+        $0.hashValue < $1.hashValue
+      } == other.sorted {
+        $0.hashValue < $1.hashValue
+      }
     }
   }
 }

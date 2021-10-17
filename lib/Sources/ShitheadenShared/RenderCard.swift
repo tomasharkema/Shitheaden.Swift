@@ -7,7 +7,7 @@
 
 import Foundation
 
-public enum RenderCard: Equatable, Hashable, Codable, Comparable {
+public enum RenderCard: Equatable, Hashable, Codable {
   case hidden(id: UUID)
   case card(card: Card)
 
@@ -33,18 +33,18 @@ public enum RenderCard: Equatable, Hashable, Codable, Comparable {
     }
   }
 
-  public static func < (lhs: RenderCard, rhs: RenderCard) -> Bool {
-    switch (lhs, rhs) {
-    case let (.card(left), .card(right)):
-      return left < right
-    case (.hidden, .card):
-      return true
-    case (.card, .hidden):
-      return false
-    case let (.hidden(left), .hidden(right)):
-      return left.uuidString < right.uuidString
-    }
-  }
+//  public static func < (lhs: RenderCard, rhs: RenderCard) -> Bool {
+//    switch (lhs, rhs) {
+//    case let (.card(left), .card(right)):
+//      return left < right
+//    case (.hidden, .card):
+//      return true
+//    case (.card, .hidden):
+//      return false
+//    case let (.hidden(left), .hidden(right)):
+//      return left.uuidString < right.uuidString
+//    }
+//  }
 
   public func isOrderedAfter(rhs: RenderCard) -> Bool {
     switch (self, rhs) {
@@ -85,11 +85,11 @@ public extension Array where Element == RenderCard {
 }
 
 public extension Array where Element == RenderCard {
-  func sortNumbers() -> [RenderCard] {
-    sorted {
-      $0 < $1
-    }
-  }
+//  func sortNumbers() -> [RenderCard] {
+//    sorted {
+//      $0 < $1
+//    }
+//  }
 
   func sortCardsHandImportance() -> [RenderCard] {
     sorted {

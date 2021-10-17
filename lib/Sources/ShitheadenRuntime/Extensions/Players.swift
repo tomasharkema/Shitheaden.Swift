@@ -8,14 +8,22 @@
 import Foundation
 import ShitheadenShared
 
+extension Array where Element == Card {
+  func lowestCard() -> Element? {
+    return min {
+      $0.number < $1.number
+    }
+  }
+}
+
 extension Array where Element == Player {
   mutating func sortPlayerLowestCard() {
     let lowest = min { left, right in
       let lFilter = left.handCards.filter { $0.number >= .four }
       let rFilter = right.handCards.filter { $0.number >= .four }
 
-      let lMin = lFilter.min() ?? Card(id: .init(), symbol: .harten, number: .aas)
-      let rMin = rFilter.min() ?? Card(id: .init(), symbol: .harten, number: .aas)
+      let lMin = lFilter.lowestCard() ?? Card(id: .init(), symbol: .harten, number: .aas)
+      let rMin = rFilter.lowestCard() ?? Card(id: .init(), symbol: .harten, number: .aas)
 
       if lMin == rMin {
         let lCount = left.handCards.filter { $0.number == lMin.number }.count
@@ -23,7 +31,7 @@ extension Array where Element == Player {
         return lCount < rCount
       }
 
-      return lMin < rMin
+      return lMin.number < rMin.number
     }
 
     guard let player = lowest, let place = firstIndex(of: player) else {
