@@ -210,12 +210,15 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = C3812A60267C816500397E65 /* Build configuration list for PBXNativeTarget "ShitheadenApp" */;
 			buildPhases = (
+				3A827523292F87C8EEF259D8 /* [RC] RemoteCache_prebuild */,
 				C3DBF4FE2686550D0027D011 /* Run Script */,
 				C3DBF4FF2686601E0027D011 /* ShellScript */,
 				C3DBF4F72685CB810027D011 /* ShellScript */,
 				C3812A4E267C816400397E65 /* Sources */,
 				C3812A4F267C816400397E65 /* Frameworks */,
 				C3812A50267C816400397E65 /* Resources */,
+				2014EAB01D88C4AF15B88DDD /* [RC] RemoteCache_postbuild */,
+				87CB2168F735F4DF8F2D95BE /* [RC] RemoteCache_mark */,
 			);
 			buildRules = (
 			);
@@ -279,6 +282,56 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		2014EAB01D88C4AF15B88DDD /* [RC] RemoteCache_postbuild */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			dependencyFile = "$(TARGET_TEMP_DIR)/postbuild.d";
+			files = (
+			);
+			inputPaths = (
+				/Users/tomas/Developer/Shitheaden.Swift/xcremotecache/xcpostbuild,
+			);
+			name = "[RC] RemoteCache_postbuild";
+			outputPaths = (
+				"$(TARGET_BUILD_DIR)/$(MODULES_FOLDER_PATH)/$(PRODUCT_MODULE_NAME).swiftmodule/$(PLATFORM_PREFERRED_ARCH).swiftmodule.md5",
+				"$(TARGET_BUILD_DIR)/$(MODULES_FOLDER_PATH)/$(PRODUCT_MODULE_NAME).swiftmodule/$(PLATFORM_PREFERRED_ARCH)-$(LLVM_TARGET_TRIPLE_VENDOR)-$(SWIFT_PLATFORM_TARGET_PREFIX)$(LLVM_TARGET_TRIPLE_SUFFIX).swiftmodule.md5",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"$SCRIPT_INPUT_FILE_0\"";
+		};
+		3A827523292F87C8EEF259D8 /* [RC] RemoteCache_prebuild */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			dependencyFile = "$(TARGET_TEMP_DIR)/prebuild.d";
+			files = (
+			);
+			inputPaths = (
+				/Users/tomas/Developer/Shitheaden.Swift/xcremotecache/xcprebuild,
+			);
+			name = "[RC] RemoteCache_prebuild";
+			outputPaths = (
+				"$(TARGET_TEMP_DIR)/rc.enabled",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"$SCRIPT_INPUT_FILE_0\"";
+		};
+		87CB2168F735F4DF8F2D95BE /* [RC] RemoteCache_mark */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				/Users/tomas/Developer/Shitheaden.Swift/xcremotecache/xcprepare,
+			);
+			name = "[RC] RemoteCache_mark";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"$SCRIPT_INPUT_FILE_0\" mark --configuration \"$CONFIGURATION\" --platform \"$PLATFORM_NAME\"";
+		};
 		C3DBF4F72685CB810027D011 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -513,12 +566,16 @@
 					"$(PROJECT_DIR)/ShitheadenApp",
 				);
 				MARKETING_VERSION = 1.0;
+				OTHER_CFLAGS = "$(inherited) -fdebug-prefix-map=/Users/tomas/Developer/Shitheaden.Swift=$(XCRC_FAKE_SRCROOT)";
+				OTHER_SWIFT_FLAGS = "$(inherited) -debug-prefix-map /Users/tomas/Developer/Shitheaden.Swift=$(XCRC_FAKE_SRCROOT)";
 				PRODUCT_BUNDLE_IDENTIFIER = ma.harkema.ShitheadenApp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTS_MACCATALYST = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_EXEC = /Users/tomas/Developer/Shitheaden.Swift/xcremotecache/xcswiftc;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
+				XCRC_FAKE_SRCROOT = /xxxxxxxxxx;
 			};
 			name = Debug;
 		};

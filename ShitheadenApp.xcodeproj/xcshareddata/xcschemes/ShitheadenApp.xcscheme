@@ -29,13 +29,14 @@
       shouldUseLaunchSchemeArgsEnv = "YES">
       <TestPlans>
          <TestPlanReference
-            reference = "container:ShitheadenApp.xcodeproj/ShitheadenApp.xctestplan"
-            default = "YES">
+            default = "YES"
+            reference = "container:ShitheadenApp.xcodeproj/ShitheadenApp.xctestplan">
          </TestPlanReference>
       </TestPlans>
       <Testables>
          <TestableReference
-            skipped = "NO">
+            skipped = "NO"
+            useTestSelectionWhitelist = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "ShitheadenRuntimeTests"
@@ -45,7 +46,8 @@
             </BuildableReference>
          </TestableReference>
          <TestableReference
-            skipped = "NO">
+            skipped = "NO"
+            useTestSelectionWhitelist = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "ShitheadenSharedTests"
@@ -55,7 +57,8 @@
             </BuildableReference>
          </TestableReference>
          <TestableReference
-            skipped = "NO">
+            skipped = "NO"
+            useTestSelectionWhitelist = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "CustomAlgoTests"
