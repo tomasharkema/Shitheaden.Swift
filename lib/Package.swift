@@ -6,7 +6,7 @@ import PackageDescription
 let package = Package(
   name: "Shitheaden",
   platforms: [
-    .macOS(.v10_15),
+    .macOS(.v12),
     .iOS(.v13),
     .tvOS(.v13),
   ],
@@ -46,16 +46,17 @@ let package = Package(
   dependencies: [
     .package(
       url: "https://github.com/apple/swift-argument-parser.git",
-      from: "1.0.1"
+      from: "1.0.2"
     ),
-    .package(url: "https://github.com/apple/swift-nio-ssh", from: "0.3.1"),
-    .package(url: "https://github.com/flintprocessor/ANSIEscapeCode", branch: "master"),
+    .package(url: "https://github.com/apple/swift-nio-ssh", from: "0.3.3"),
+    .package(url: "https://github.com/flintprocessor/ANSIEscapeCode", from: "0.1.1"),
     .package(url: "https://github.com/apple/swift-log", from: "1.4.2"),
-    .package(url: "https://github.com/chrisaljoudi/swift-log-oslog.git", from: "0.2.1"),
-    .package(url: "https://github.com/nicklockwood/SwiftFormat", from: "0.48.15"),
-    .package(url: "https://github.com/vapor/vapor.git", branch: "async-await"),
-    .package(url: "https://github.com/IBM-Swift/BlueSignals.git", from: "1.0.0"),
-    .package(url: "https://github.com/apple/swift-nio-extras", from: "1.10.0"),
+    .package(url: "https://github.com/chrisaljoudi/swift-log-oslog.git", from: "0.2.2"),
+    .package(url: "https://github.com/nicklockwood/SwiftFormat", from: "0.48.18"),
+    .package(url: "https://github.com/vapor/vapor.git", from: "4.52.2"),
+    .package(url: "https://github.com/IBM-Swift/BlueSignals.git", from: "2.0.0"),
+    .package(url: "https://github.com/apple/swift-nio-extras", from: "1.10.2"),
+    .package(url: "https://github.com/tomasharkema/AsyncAwaitHelpers", branch: "main")
   ],
   targets: [
     .executableTarget(
@@ -68,14 +69,8 @@ let package = Package(
       ],
       path: "./Sources/ShitheadenCLI",
       swiftSettings: [
-        .unsafeFlags([
-          "-Xfrontend",
-          "-enable-experimental-concurrency",
-          "-Xfrontend",
-          "-disable-availability-checking",
-        ]),
         .define("DEBUG", .when(configuration: .debug)),
-        .define("RELEASE", .when(configuration: .release)),
+        .define("RELEASE", .when(configuration: .release))
       ]
     ),
     .executableTarget(
@@ -88,14 +83,8 @@ let package = Package(
         .product(name: "Signals", package: "BlueSignals"),
         .product(name: "NIOExtras", package: "swift-nio-extras"),
       ], swiftSettings: [
-        .unsafeFlags([
-          "-Xfrontend",
-          "-enable-experimental-concurrency",
-          "-Xfrontend",
-          "-disable-availability-checking",
-        ]),
         .define("DEBUG", .when(configuration: .debug)),
-        .define("RELEASE", .when(configuration: .release)),
+        .define("RELEASE", .when(configuration: .release))
       ]
     ),
     .target(
@@ -116,14 +105,8 @@ let package = Package(
         .target(name: "ShitheadenRuntime"),
       ],
       swiftSettings: [
-        .unsafeFlags([
-          "-Xfrontend",
-          "-enable-experimental-concurrency",
-          "-Xfrontend",
-          "-disable-availability-checking",
-        ]),
         .define("DEBUG", .when(configuration: .debug)),
-        .define("RELEASE", .when(configuration: .release)),
+        .define("RELEASE", .when(configuration: .release))
       ]
     ),
     .target(
@@ -131,30 +114,17 @@ let package = Package(
       dependencies: [
         .target(name: "ShitheadenShared"),
         .product(name: "Logging", package: "swift-log"),
+        .product(name: "AsyncAwaitHelpers", package: "AsyncAwaitHelpers")
       ],
       swiftSettings: [
-        .unsafeFlags([
-          "-Xfrontend",
-          "-enable-experimental-concurrency",
-          "-Xfrontend",
-          "-disable-availability-checking",
-        ]),
         .define("DEBUG", .when(configuration: .debug)),
-        .define("RELEASE", .when(configuration: .release)),
+        .define("RELEASE", .when(configuration: .release))
       ]
     ),
     .target(
       name: "ShitheadenShared",
       dependencies: [
-        .product(name: "Logging", package: "swift-log"),
-      ],
-      swiftSettings: [
-        .unsafeFlags([
-          "-Xfrontend",
-          "-enable-experimental-concurrency",
-          "-Xfrontend",
-          "-disable-availability-checking",
-        ]),
+        .product(name: "Logging", package: "swift-log")
       ]
     ),
     .target(
@@ -162,28 +132,12 @@ let package = Package(
       dependencies: [
         .target(name: "ShitheadenShared"),
         .target(name: "ShitheadenRuntime"),
-        .product(name: "Logging", package: "swift-log"),
-      ],
-      swiftSettings: [
-        .unsafeFlags([
-          "-Xfrontend",
-          "-enable-experimental-concurrency",
-          "-Xfrontend",
-          "-disable-availability-checking",
-        ]),
+        .product(name: "Logging", package: "swift-log")
       ]
     ),
     .target(
       name: "TestsHelpers",
-      dependencies: [],
-      swiftSettings: [
-        .unsafeFlags([
-          "-Xfrontend",
-          "-enable-experimental-concurrency",
-          "-Xfrontend",
-          "-disable-availability-checking",
-        ]),
-      ]
+      dependencies: []
     ),
     .testTarget(
       name: "ShitheadenRuntimeTests",
@@ -192,12 +146,7 @@ let package = Package(
         "CustomAlgo",
         "TestsHelpers",
       ],
-      swiftSettings: [.unsafeFlags([
-        "-Xfrontend",
-        "-enable-experimental-concurrency",
-        "-Xfrontend",
-        "-disable-availability-checking",
-      ]),
+      swiftSettings: [
       .define("DEBUG", .when(configuration: .debug)),
       .define("RELEASE", .when(configuration: .release)),
       .define("TESTING")]
@@ -209,15 +158,11 @@ let package = Package(
         "CustomAlgo",
         "TestsHelpers",
       ],
-      swiftSettings: [.unsafeFlags([
-        "-Xfrontend",
-        "-enable-experimental-concurrency",
-        "-Xfrontend",
-        "-disable-availability-checking",
-      ]),
+      swiftSettings: [
       .define("DEBUG", .when(configuration: .debug)),
       .define("RELEASE", .when(configuration: .release)),
-      .define("TESTING")]
+      .define("TESTING")
+      ]
     ),
     .testTarget(
       name: "CustomAlgoTests",
@@ -225,12 +170,7 @@ let package = Package(
         "CustomAlgo",
         "TestsHelpers",
       ],
-      swiftSettings: [.unsafeFlags([
-        "-Xfrontend",
-        "-enable-experimental-concurrency",
-        "-Xfrontend",
-        "-disable-availability-checking",
-      ]),
+      swiftSettings: [
       .define("DEBUG", .when(configuration: .debug)),
       .define("RELEASE", .when(configuration: .release)),
       .define("TESTING")]

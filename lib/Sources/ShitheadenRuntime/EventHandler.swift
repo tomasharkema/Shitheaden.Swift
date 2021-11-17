@@ -7,17 +7,18 @@
 
 import Foundation
 import ShitheadenShared
+import AsyncAwaitHelpers
 
 public class EventHandler<T> {
   var events = [T]()
-  var dataHandlers = AtomicDictionary<UUID, (T) async -> Void>()
+  var dataHandlers = DictionaryActor<UUID, (T) async -> Void>()
 
   public init() {}
 
-  public func removeOnDataHandler(id: UUID?) {
-    if let id = id {
-      async {
-        await dataHandlers.insert(id, value: nil)
+  public func removeOnDataHandler(for identifier: UUID?) {
+    if let identifier = identifier {
+      Task {
+        await dataHandlers.insert(identifier, value: nil)
       }
     }
   }
@@ -38,7 +39,7 @@ public class EventHandler<T> {
 
   public func on(_ handler: @escaping (T) async -> Void) -> UUID {
     events.forEach { element in
-      async {
+      Task {
         await handler(element)
       }
     }
@@ -47,19 +48,19 @@ public class EventHandler<T> {
 
     let uuid = UUID()
 
-    async {
+    Task {
       await dataHandlers.insert(uuid, value: handler)
     }
     return uuid
   }
 
   public func emit(_ value: T) {
-    async {
+    Task {
       if await dataHandlers.isEmpty() {
         events.append(value)
       }
       await dataHandlers.values().forEach { handler in
-        async {
+        Task {
           await handler(value)
         }
       }
@@ -82,7 +83,7 @@ public class EventHandler<T> {
     return try await withTaskCancellationHandler(handler: { [function] in
       function(.failure(NSError(domain: "", code: 0, userInfo: nil)))
     }, operation: {
-      try await withUnsafeThrowingContinuation { cont in
+      try await withCheckedThrowingContinuation { cont in
         function = {
           cont.resume(with: $0)
         }
@@ -92,7 +93,7 @@ public class EventHandler<T> {
 
   public func map<N>(_ fn: @escaping (T) -> N) -> EventHandler<N>.ReadOnly {
     let eventHandler = EventHandler<N>()
-    on {
+    _ = on {
       eventHandler.emit(fn($0))
     }
     return eventHandler.readOnly
@@ -111,8 +112,8 @@ public extension EventHandler {
       self.event = event
     }
 
-    public func removeOnDataHandler(id: UUID?) {
-      event.removeOnDataHandler(id: id)
+    public func removeOnDataHandler(for identifier: UUID?) {
+      event.removeOnDataHandler(for: identifier)
     }
 
     public func once(initial: Bool = false, _ fn: @escaping (T) -> Void) async {

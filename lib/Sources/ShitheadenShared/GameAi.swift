@@ -6,7 +6,7 @@
 //  Copyright © 2015 Tomas Harkema. All rights reserved.
 //
 
-public protocol GameAi: AnyObject, Actor {
+public protocol GameAi: Actor {
 //  init()
 
   static func make() -> GameAi

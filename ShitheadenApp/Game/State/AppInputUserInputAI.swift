@@ -49,8 +49,8 @@ actor AppInputUserInputAI: GameAi {
       await errorHandler(error.errorDescription ?? error.localizedDescription)
     }
 
-    return await withUnsafeContinuation { cont in
-      async {
+    return await withCheckedContinuation { cont in
+      Task {
         await beginMoveHandler {
           cont.resume(returning: $0)
         }
@@ -63,8 +63,8 @@ actor AppInputUserInputAI: GameAi {
       await errorHandler(error.errorDescription ?? error.localizedDescription)
     }
 
-    return await withUnsafeContinuation { cont in
-      async {
+    return await withCheckedContinuation { cont in
+      Task {
         await moveHandler(request.canPass) {
           cont.resume(returning: $0)
         }

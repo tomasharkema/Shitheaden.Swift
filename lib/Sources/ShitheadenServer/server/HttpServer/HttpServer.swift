@@ -12,13 +12,15 @@ import NIOSSL
 import ShitheadenRuntime
 import ShitheadenShared
 import Vapor
+import AsyncAwaitHelpers
 
+@available(macOS 12, iOS 15, watchOS 8, tvOS 15, *)
 final class HttpServer {
   private let logger = Logger(label: "cli.HttpServer")
-  let games: AtomicDictionary<String, MultiplayerHandler>
+  let games: DictionaryActor<String, MultiplayerHandler>
   private var channel: Channel?
 
-  init(games: AtomicDictionary<String, MultiplayerHandler>) {
+  init(games: DictionaryActor<String, MultiplayerHandler>) {
     self.games = games
   }
 
@@ -48,6 +50,7 @@ final class HttpServer {
       )
     }
 
+    #if os(Linux)
     if !FileManager.default
       .fileExists(atPath: keyPath.replacingOccurrences(of: "file://", with: "")) || !FileManager
       .default.fileExists(atPath: certPath.replacingOccurrences(of: "file://", with: ""))
@@ -65,11 +68,12 @@ final class HttpServer {
       task.waitUntilExit()
       logger.info("Done!")
     }
-
+    #endif
+    
     let certs = try NIOSSLCertificate
       .fromPEMFile(certPath.replacingOccurrences(of: "file://", with: ""))
       .map { NIOSSLCertificateSource.certificate($0) }
-    let tls = TLSConfiguration.forServer(
+    let tls = TLSConfiguration.makeServerConfiguration(
       certificateChain: certs,
       privateKey: .file(keyPath.replacingOccurrences(of: "file://", with: ""))
     )
@@ -117,19 +121,7 @@ final class HttpServer {
 
         ws.send("Connecting...", promise: nil)
 
-        let channel: Channel = try await withUnsafeThrowingContinuation { handler in
-          do {
-            let channel = try bootstrap.connect(host: "localhost", port: 3332)
-            channel.whenSuccess {
-              handler.resume(returning: $0)
-            }
-            channel.whenFailure {
-              handler.resume(throwing: $0)
-            }
-          } catch {
-            handler.resume(throwing: error)
-          }
-        }
+        let channel = try await bootstrap.connect(host: "localhost", port: 3332).getAsync()
 
         let childChannel: Channel = try channel.pipeline.handler(type: NIOSSHHandler.self)
           .flatMap { sshHandler in
@@ -153,7 +145,7 @@ final class HttpServer {
       } catch {
         self.logger.error("Error: \(error)")
         ws.send("Error: \(error)", promise: nil)
-        ws.close()
+        _ = ws.close()
       }
     }
 
@@ -163,7 +155,7 @@ final class HttpServer {
         websocket: ws,
         games: self.games
       )
-      async {
+      Task {
         try await client.start()
       }
     }
@@ -192,7 +184,7 @@ class Handler: ChannelDuplexHandler {
       context.eventLoop.execute {
         var buffer = context.channel.allocator.buffer(capacity: text.count)
         buffer.writeString(text)
-        context.writeAndFlush(self.wrapOutboundOut(buffer))
+        _ = context.writeAndFlush(self.wrapOutboundOut(buffer))
       }
     }
   }
@@ -205,7 +197,7 @@ class Handler: ChannelDuplexHandler {
 
   func errorCaught(context _: ChannelHandlerContext, error: Error) {
     webSocket.send("Error: \(error)", promise: nil)
-    webSocket.close()
+    _ = webSocket.close()
   }
 }
 

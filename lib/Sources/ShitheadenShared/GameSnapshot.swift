@@ -27,6 +27,8 @@ public struct GameSnapshot: Equatable, Codable {
   public let beginDate: TimeInterval
   public let endDate: TimeInterval?
   public let turns: [UserAndTurn]?
+  public let rules: Rules
+
   public init(
     deckCards: [RenderCard],
     players: [TurnRequest],
@@ -34,7 +36,8 @@ public struct GameSnapshot: Equatable, Codable {
     burntCards: [RenderCard],
     playersOnTurn: Set<UUID>,
     requestFor: UUID?, beginDate: TimeInterval, endDate: TimeInterval?,
-    turns: [UserAndTurn]?
+    turns: [UserAndTurn]?,
+    rules: Rules
   ) {
     self.deckCards = deckCards
     self.players = players
@@ -45,6 +48,7 @@ public struct GameSnapshot: Equatable, Codable {
     self.beginDate = beginDate
     self.endDate = endDate
     self.turns = turns
+    self.rules = rules
     currentRequest = requestFor != nil ? players.first { $0.id == requestFor } : nil
   }
 

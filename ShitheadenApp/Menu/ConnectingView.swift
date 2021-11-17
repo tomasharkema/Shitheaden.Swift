@@ -24,13 +24,13 @@ struct ConnectingView: View {
         Text("Wat is je naam?")
         TextField("Naam", text: $name).padding()
         Button("Verder") {
-          async {
+          Task {
             Storage.shared.name = name
             self.connection.set(name: name)
             if let code = code {
-              try await self.connection.connect(code: code)
+              await self.connection.connect(code: code)
             } else {
-              try await self.connection.connect()
+              await self.connection.connect()
             }
           }
         }.disabled(name.isEmpty).buttonStyle(.bordered)
@@ -41,14 +41,12 @@ struct ConnectingView: View {
       case .connecting:
         VStack {
           Text("CONNECTING")
-            .onAppear {
-              async {
-                try await connection.start()
-              }
+            .task {
+              await connection.start()
             }
           Button("Opnieuw proberen") {
-            async {
-              try await connection.start()
+            Task {
+              await connection.start()
             }
           }.buttonStyle(.bordered)
         }
@@ -57,19 +55,17 @@ struct ConnectingView: View {
         VStack {
           Text("Nog een spelletje?")
           Text("Finding game...")
-            .onAppear {
-              async {
+            .task {
                 if let code = code {
-                  try await self.connection.connect(code: code)
+                  await self.connection.connect(code: code)
                 } else {
-                  try await self.connection.connect()
+                  await self.connection.connect()
                 }
-              }
             }
           if canStart {
             Button("Opnieuw proberen") {
-              async {
-                try await self.connection.start()
+              Task {
+                await self.connection.start()
               }
             }.buttonStyle(.bordered)
           }
@@ -79,18 +75,16 @@ struct ConnectingView: View {
         VStack {
           Text("CONNECTED!")
           Text("Finding game...")
-            .onAppear {
-              async {
+            .task {
                 if let code = code {
-                  try await self.connection.connect(code: code)
+                  await self.connection.connect(code: code)
                 } else {
-                  try await self.connection.connect()
+                  await self.connection.connect()
                 }
-              }
             }
           Button("Opnieuw proberen") {
-            async {
-              try await self.connection.start()
+            Task {
+              await self.connection.start()
             }
           }.buttonStyle(.bordered)
         }
@@ -108,20 +102,20 @@ struct ConnectingView: View {
           if canStart {
             if contestants.count + cpus + 1 < 4 {
               Button("Add cpu!") {
-                async {
+                Task {
                   try await self.connection.addCpu()
                 }
               }.buttonStyle(.bordered)
             }
             if contestants.count + cpus + 1 > 1 {
               Button("Remove cpu!") {
-                async {
+                Task {
                   try await self.connection.removeCpu()
                 }
               }.buttonStyle(.bordered)
             }
             Button("Start!") {
-              async {
+              Task {
                 try await self.connection.startGame()
               }
             }.buttonStyle(.bordered)
@@ -131,7 +125,7 @@ struct ConnectingView: View {
       case let .codeCreated(code):
         Text("Je code is \(code)... Wachten tot er mensen joinen!")
         Button("Add cpu!") {
-          async {
+          Task {
             try await self.connection.addCpu()
           }
         }.buttonStyle(.bordered)

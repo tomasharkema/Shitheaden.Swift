@@ -3,6 +3,7 @@ import NIOExtras
 import ShitheadenRuntime
 import Signals
 import Vapor
+import AsyncAwaitHelpers
 
 var httpServer: Task<Void, Error>!
 var telnetServer: Task<Void, Error>!
@@ -36,15 +37,19 @@ enum ShitheadenServer {
     }
 
     let group = MultiThreadedEventLoopGroup(numberOfThreads: max(4, System.coreCount / 2))
-    let games = AtomicDictionary<String, MultiplayerHandler>()
+    let games = DictionaryActor<String, MultiplayerHandler>()
 
-    httpServer = async {
-      let httpServer = HttpServer(games: games)
-      try await httpServer.start(group: group)
-      cancel()
+    httpServer = Task.detached {
+      if #available(macCatalyst 15, *) {
+        let httpServer = HttpServer(games: games)
+        try await httpServer.start(group: group)
+        cancel()
+      } else {
+        cancel()
+      }
     }
 
-    telnetServer = async {
+    telnetServer = Task.detached {
       let helper = ServerQuiescingHelper(group: group)
       let server = TelnetServer(games: games)
       let channel = try await server.start(quiesce: helper, group: group)
@@ -58,7 +63,7 @@ enum ShitheadenServer {
 
       cancel()
     }
-    sshServer = async {
+    sshServer = Task.detached {
       let helper = ServerQuiescingHelper(group: group)
       let server = SSHServer(games: games)
       let channel = try await server.start(quiesce: helper, group: group)
@@ -83,8 +88,8 @@ enum ShitheadenServer {
       cancel()
     }
 
-    try await httpServer.get()
-    try await telnetServer.get()
-    try await sshServer.get()
+    try await httpServer.value
+    try await telnetServer.value
+    try await sshServer.value
   }
 }

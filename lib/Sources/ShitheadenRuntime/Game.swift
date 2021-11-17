@@ -9,6 +9,7 @@
 import Foundation
 import Logging
 import ShitheadenShared
+import AsyncAwaitHelpers
 
 // swiftlint:disable:next type_body_length
 public actor Game {
@@ -60,7 +61,8 @@ public actor Game {
   }
 
   public convenience init(
-    contestants: Int, ai: GameAi.Type,
+    contestants: Int,
+    ai: GameAi.Type,
     localPlayer: Player,
     rules: Rules,
     slowMode: Bool
@@ -78,6 +80,32 @@ public actor Game {
       rules: rules,
       slowMode: slowMode
     )
+  }
+
+  public init(snapshot: GameSnapshot, localPlayerAi: GameAi, otherAi: GameAi) {
+    deck = Deck(cards: snapshot.deckCards.unobscure())
+    burnt = snapshot.burntCards.unobscure()
+    table = snapshot.tableCards.unobscure()
+
+    players = snapshot.players.map {
+
+      let ai = $0.algoName.isUser ? localPlayerAi : otherAi
+
+      let restoredPlayer = Player(
+        id: $0.id,
+        name: $0.name,
+        position: $0.position,
+        ai: ai,
+        handCards: $0.handCards.unobscure(),
+        openTableCards: $0.openTableCards.unobscure(),
+        closedTableCards: $0.closedCards.unobscure(),
+        turns: [] // FIXME
+      )
+
+      return restoredPlayer
+    }
+    slowMode = true
+    self.rules = snapshot.rules
   }
 
   private var lastCard: Card? {
@@ -111,7 +139,7 @@ public actor Game {
   }
 
   private func getPlayerSnapshot(
-    _ obscure: Bool, player: Player,
+    obscure: Bool, player: Player,
     includeEndState: Bool
   ) -> TurnRequest {
     if obscure, !includeEndState {
@@ -159,7 +187,7 @@ public actor Game {
     GameSnapshot(
       deckCards: deck.cards.map { .hidden(id: $0.id) },
       players: players.map {
-        getPlayerSnapshot($0.id != uuid, player: $0, includeEndState: includeEndState)
+        getPlayerSnapshot(obscure: $0.id != uuid, player: $0, includeEndState: includeEndState)
       }.orderPosition(for: uuid),
       tableCards: .init(open: table, limit: 5),
       burntCards: burnt.map { .hidden(id: $0.id) },
@@ -167,8 +195,47 @@ public actor Game {
       requestFor: uuid,
       beginDate: beginDate,
       endDate: endDate,
-      turns: includeEndState ? turns : []
+      turns: includeEndState ? turns : [],
+      rules: rules
     )
+  }
+
+  private func getPersistenceSnapshot() -> GameSnapshot {
+    return GameSnapshot(
+      deckCards: deck.cards.map { .card(card: $0) },
+      players: players.map { player in
+        TurnRequest(
+          rules: rules,
+          id: player.id,
+          name: player.name,
+          handCards: .init(open: player.handCards),
+          openTableCards: .init(open: player.openTableCards),
+          lastTableCard: table.lastCard,
+          closedCards: .init(open: player.closedTableCards),
+          phase: player.phase,
+          tableCards: .init(open: table, limit: 5),
+          deckCards: .init(open: deck.cards),
+          algoName: player.ai.algoName,
+          done: player.done,
+          position: player.position,
+          isObscured: false,
+          playerError: playerAndError[player.id],
+          endState: nil
+        )
+      },
+      tableCards: table.map { .card(card: $0) },
+      burntCards: burnt.map { .card(card: $0) },
+      playersOnTurn: playersOnTurn,
+      requestFor: nil,
+      beginDate: beginDate,
+      endDate: endDate,
+      turns: turns,
+      rules: rules
+    )
+  }
+
+  private func savePersistenceSnaphot() async {
+    await Persistence.saveSnapshot(snapshot: getPersistenceSnapshot())
   }
 
   private func shuffle() {
@@ -265,12 +332,13 @@ public actor Game {
     }
   }
 
-  private func playDelayIfNeeded(multiplier: Double = 1.0) async {
-    if slowMode {
-      let userPlayer = players.first { $0.ai.algoName.isUser }
-      if !(userPlayer?.done ?? true) {
-        await delay(for: .now() + (0.5 * multiplier))
-      }
+  private func isUserPlayerUnfinished() -> Bool {
+    !(players.first { $0.ai.algoName.isUser }?.done ?? true)
+  }
+
+  private func playDelayIfNeeded(multiplier: Double = 1.0) async throws {
+    if slowMode, isUserPlayerUnfinished() {
+      try await Task.sleep(time: (0.5 * multiplier))
     }
   }
 
@@ -307,7 +375,7 @@ public actor Game {
       playerError: previousError, endState: nil
     )
 
-    await playDelayIfNeeded()
+    try await playDelayIfNeeded()
 
     try await sendRender(error: previousError)
 
@@ -322,7 +390,7 @@ public actor Game {
         try turn.verify()
 
         if !type(of: player.ai).algoName.contains("UserInputAI") {
-          await playDelayIfNeeded()
+          try await playDelayIfNeeded()
         }
 
         try await sendRender(error: previousError)
@@ -383,7 +451,7 @@ public actor Game {
              !lastTable.number.afters.contains(lastApplied.number)
           {
             try await sendRender(error: previousError)
-            await playDelayIfNeeded(multiplier: 2)
+            try await playDelayIfNeeded(multiplier: 2)
 
             player.handCards.append(contentsOf: table)
             player.sortCardsHandImportance()
@@ -402,12 +470,10 @@ public actor Game {
 
               return (player, .turnNext(turn, turnNext))
             }
-          } else {
-            if player.ai.algoName.isUser {
-              updatePlayer(player: player)
-              try await sendRender(error: previousError)
-              await delay(for: .now() + 1)
-            }
+          } else if player.ai.algoName.isUser {
+            updatePlayer(player: player)
+            try await sendRender(error: previousError)
+            try await Task.sleep(time: 1)
           }
         } else {
           fatalError("Can not throw closedCardIndex")
@@ -449,7 +515,7 @@ public actor Game {
              rules.contains(.getCardWhenPassOpenCardTables)
           {
             try await sendRender(error: previousError)
-            await playDelayIfNeeded(multiplier: 2)
+            try await playDelayIfNeeded(multiplier: 2)
 
             player.handCards.append(contentsOf: table)
             player.sortCardsHandImportance()
@@ -498,14 +564,14 @@ public actor Game {
       if lastCard?.number == .ten {
         updatePlayer(player: player)
         try await sendRender(error: previousError)
-        await playDelayIfNeeded(multiplier: 2)
+        try await playDelayIfNeeded(multiplier: 2)
 
         burnt += table
         table = []
 
         try await sendRender(error: previousError)
 
-        if rules.contains(.againAfterGoodBehavior), !player.done, !done {
+        if !player.done, !done {
           let (player, turnNext) = try await commitTurn(
             playerIndex: playerIndex,
             player: player,
@@ -526,12 +592,12 @@ public actor Game {
       }).0 == 4 {
         updatePlayer(player: player)
         try await sendRender(error: previousError)
-        await playDelayIfNeeded(multiplier: 2)
+        try await playDelayIfNeeded(multiplier: 2)
 
         burnt += table
         table = []
         try await sendRender(error: previousError)
-        if rules.contains(.againAfterGoodBehavior), !player.done, !done {
+        if rules.contains(.againAfterPlayingFourCards), !player.done, !done {
           let (player, turnNext) = try await commitTurn(
             playerIndex: playerIndex,
             player: player,
@@ -575,33 +641,32 @@ public actor Game {
 
   nonisolated func beginRound() async throws {
     try Task.checkCancellation()
-    return await withTaskGroup(of: Void.self) { group in
-      for (index, player) in await players.enumerated() {
-        group.async { [weak self] in
-          guard let self = self else { return }
-          do {
-            await self.startPlayerOnSet(player: player)
 
-            let newPlayer = try await self.commitBeginTurn(
-              playerIndex: index,
-              player: player,
-              numberCalled: 0,
-              previousError: nil
-            )
-            await self.removePlayerOnSet(player: player)
-            await self.updatePlayer(player: newPlayer)
-            do {
-              try await self.checkIntegrity()
-              try await self.sendRender(error: nil)
-            } catch {
-              assertionFailure("\(error)")
-            }
+    await whenAll(await players.enumerated().map { [weak self] (index, player) in
+      return { [weak self] in
+        guard let self = self else { return }
+        do {
+          await self.startPlayerOnSet(player: player)
+
+          let newPlayer = try await self.commitBeginTurn(
+            playerIndex: index,
+            player: player,
+            numberCalled: 0,
+            previousError: nil
+          )
+          await self.removePlayerOnSet(player: player)
+          await self.updatePlayer(player: newPlayer)
+          do {
+            try await self.checkIntegrity()
+            try await self.sendRender(error: nil)
           } catch {
-            self.logger.error("Error: \(error)")
+            assertionFailure("\(error)")
           }
+        } catch {
+          self.logger.error("Error: \(error)")
         }
       }
-    }
+    })
   }
 
   private var lastFirstCardAndPlayerUUID: ([Card], UUID)?
@@ -613,13 +678,13 @@ public actor Game {
     else { return }
 
     try await sendRender(error: nil)
-    await playDelayIfNeeded()
+    try await playDelayIfNeeded()
 
     burnt += table
     table = []
 
     try await sendRender(error: nil)
-    await playDelayIfNeeded()
+    try await playDelayIfNeeded()
   }
 
   private func saveStalledCard(_ player: UUID) {
@@ -668,8 +733,14 @@ public actor Game {
         saveStalledCard(player.id)
 
         try await sendRender(error: nil)
+
       }
     }
+
+    if isUserPlayerUnfinished() {
+      Task { await savePersistenceSnaphot() }
+    }
+
     if number > 1000 {
       logger
         .error(
@@ -723,8 +794,28 @@ public actor Game {
 
     try Task.checkCancellation()
     endDate = Date().timeIntervalSince1970
-    await delay(for: .now() + 1)
+    try await Task.sleep(time: 1)
     try await sendRender(error: nil, includeEndState: true)
+
+    Persistence.invalidateSnapshot()
+
+    return EndGameSnapshot(
+      gameId: gameId,
+      snapshot: getSnapshot(for: nil, includeEndState: true),
+      signature: (try? await Signature.getSignature()) ?? "NO_SIGNATURE"
+    )
+  }
+
+  public func resume() async throws -> EndGameSnapshot {
+    try Task.checkCancellation()
+    try await turn()
+
+    try Task.checkCancellation()
+    endDate = Date().timeIntervalSince1970
+    try await Task.sleep(time: 1)
+    try await sendRender(error: nil, includeEndState: true)
+
+    Persistence.invalidateSnapshot()
 
     return EndGameSnapshot(
       gameId: gameId,

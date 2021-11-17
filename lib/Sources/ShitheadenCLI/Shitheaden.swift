@@ -41,14 +41,9 @@ struct Shitheaden: ParsableCommand {
 
   #if os(macOS)
     private func playTournament() async {
-      let _: Void = await withUnsafeContinuation { cont in
-        DispatchQueue.global().async {
-          async {
-            await Tournament(roundsPerGame: rounds, parallelization: parallelization)
-              .playTournament()
-            cont.resume()
-          }
-        }
+      Task.detached {
+        await Tournament(roundsPerGame: rounds, parallelization: parallelization)
+          .playTournament()
       }
     }
   #endif

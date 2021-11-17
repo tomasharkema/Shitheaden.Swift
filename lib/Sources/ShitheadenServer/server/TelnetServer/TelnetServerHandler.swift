@@ -10,15 +10,16 @@ import Logging
 import NIO
 import ShitheadenRuntime
 import ShitheadenShared
+import AsyncAwaitHelpers
 
 final class TelnetServerHandler: ChannelInboundHandler {
   private let logger = Logger(label: "cli.TelnetServerHandler")
   typealias InboundIn = ByteBuffer
   typealias OutboundOut = ByteBuffer
 
-  let games: AtomicDictionary<String, MultiplayerHandler>
+  let games: DictionaryActor<String, MultiplayerHandler>
 
-  init(games: AtomicDictionary<String, MultiplayerHandler>) {
+  init(games: DictionaryActor<String, MultiplayerHandler>) {
     self.games = games
   }
 
@@ -38,7 +39,7 @@ final class TelnetServerHandler: ChannelInboundHandler {
       games: games
     )
     handler.emit(client)
-    async {
+    Task {
       try await client.start()
     }
   }
@@ -52,7 +53,9 @@ final class TelnetServerHandler: ChannelInboundHandler {
     }
 
     if string.hasSuffix("\u{3}") || string.hasSuffix("\u{6}") {
-      context.close()
+      Task {
+        try await context.close().getAsync()
+      }
       return
     }
 
@@ -82,5 +85,18 @@ final class TelnetServerHandler: ChannelInboundHandler {
 
   deinit {
     logger.info("DEINIT!")
+  }
+}
+
+extension EventLoopFuture {
+  func getAsync() async throws -> Value {
+    return try await withCheckedThrowingContinuation { res in
+      whenSuccess {
+        res.resume(returning: $0)
+      }
+      whenFailure {
+        res.resume(throwing: $0)
+      }
+    }
   }
 }

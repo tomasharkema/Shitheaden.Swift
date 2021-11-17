@@ -8,6 +8,7 @@
   import Foundation
   import ShitheadenShared
 
+@available(iOS 15.0, macOS 15.0, *)
   public class WebSocketGameClient {
     private let address =
       URL(

@@ -12,11 +12,12 @@ import ShitheadenCLIRenderer
 import ShitheadenRuntime
 import ShitheadenShared
 import Vapor
+import AsyncAwaitHelpers
 
 class WebsocketClient: Client {
   private let logger = Logger(label: "cli.WebsocketClient")
   private let websocket: WebSocket
-  let games: AtomicDictionary<String, MultiplayerHandler>
+  let games: DictionaryActor<String, MultiplayerHandler>
 
   let onQuit = EventHandler<UUID>()
   let onData = EventHandler<ServerRequest>()
@@ -26,7 +27,7 @@ class WebsocketClient: Client {
 
   init(
     websocket: WebSocket,
-    games: AtomicDictionary<String, MultiplayerHandler>
+    games: DictionaryActor<String, MultiplayerHandler>
   ) {
     self.websocket = websocket
     self.games = games
@@ -66,7 +67,7 @@ class WebsocketClient: Client {
 
       logger.info("Received signature: \(signature)")
       logger.info("Fetch local signature")
-      let localSignature = await try Signature.getSignature()
+      let localSignature = try await Signature.getSignature()
 
       logger.info("Local signature: \(localSignature)")
 
@@ -120,7 +121,7 @@ class WebsocketClient: Client {
       let id = UUID()
       try await game
         .join(competitor: Contestant(uuid: id, name: name, client: self)) // (id: id, client: self)
-      try await game.finished()
+      _ = try await game.finished()
     } else {
       try await send(.error(error: .gameNotFound(code: code)))
       return try await start()
@@ -152,7 +153,7 @@ class WebsocketClient: Client {
       slowMode: true
     )
     let snapshot = try await game.startGame()
-    asyncDetached(priority: .background) {
+    Task.detached(priority: .background) {
       try await WriteSnapshotToDisk.write(snapshot: snapshot)
     }
   }
@@ -166,7 +167,7 @@ class WebsocketClient: Client {
   }
 
   func send(_ event: ServerEvent) async throws {
-    let _: Void = try await withUnsafeThrowingContinuation { cont in
+    return try await withCheckedThrowingContinuation { cont in
       do {
         let data = try JSONEncoder().encode(event)
 

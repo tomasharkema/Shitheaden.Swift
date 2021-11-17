@@ -14,6 +14,7 @@ import NIOExtras
 import NIOSSH
 import ShitheadenRuntime
 import ShitheadenShared
+import AsyncAwaitHelpers
 
 final class HardcodedPasswordDelegate: NIOSSHServerUserAuthenticationDelegate {
   var supportedAuthenticationMethods: NIOSSHAvailableUserAuthenticationMethods {
@@ -43,7 +44,7 @@ final class Writeback: ChannelDuplexHandler {
   typealias OutboundOut = ByteBuffer
 
   func channelRead(context: ChannelHandlerContext, data: NIOAny) {
-    context.write(data)
+    _ = context.write(data)
     context.fireChannelRead(data)
   }
 
@@ -91,10 +92,10 @@ final class DataToBufferCodec: ChannelDuplexHandler {
 
 final class SSHServer {
   private let logger = Logger(label: "cli.SSHServer")
-  let games: AtomicDictionary<String, MultiplayerHandler>
+  let games: DictionaryActor<String, MultiplayerHandler>
   private var channel: Channel?
 
-  init(games: AtomicDictionary<String, MultiplayerHandler>) {
+  init(games: DictionaryActor<String, MultiplayerHandler>) {
     self.games = games
   }
 
@@ -105,7 +106,7 @@ final class SSHServer {
     case .session:
       return channel.pipeline
         .addHandlers([DataToBufferCodec(), Writeback(), TelnetServerHandler(games: games)])
-    case let .directTCPIP(target):
+    case .directTCPIP:
       return channel.eventLoop.makeFailedFuture(SSHServerError.invalidChannelType)
     case .forwardedTCPIP:
       return channel.eventLoop.makeFailedFuture(SSHServerError.invalidChannelType)
@@ -157,7 +158,7 @@ final class SSHServer {
 
     let bind = bootstrap.bind(host: "0.0.0.0", port: 3332)
 
-    let channel: Channel = try await withUnsafeThrowingContinuation { cont in
+    let channel: Channel = try await withCheckedThrowingContinuation { cont in
       bind.whenSuccess {
         cont.resume(returning: $0)
       }

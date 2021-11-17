@@ -34,16 +34,16 @@
       task.resume()
 
       dataCancable = $data.sink { data in
-        async {
+        Task {
           switch data {
           case .requestSignature:
             do {
-              try await self.write(.signature(Signature.getSignature()))
+              _ = try await self.write(.signature(Signature.getSignature()))
             } catch {
               self.logger.error("\(error)")
             }
           default:
-            self.logger.info("\(data)")
+            self.logger.info("\(String(describing: data))")
           }
         }
       }
@@ -76,7 +76,7 @@
     }
 
     func connected() async throws -> Self {
-      let result: Void = try await withUnsafeThrowingContinuation { cont in
+      let result: Void = try await withCheckedThrowingContinuation { cont in
         task.sendPing(pongReceiveHandler: {
           if let error = $0 {
             cont.resume(throwing: error)
@@ -95,9 +95,9 @@
       webSocketTask: URLSessionWebSocketTask,
       didOpenWithProtocol proto: String?
     ) {
-      logger.info("didOpenWithProtocol: \(proto)")
+      logger.info("didOpenWithProtocol: \(String(describing: proto))")
       webSocketTask.sendPing(pongReceiveHandler: { pong in
-        self.logger.info("pongReceiveHandler: \(proto) \(pong)")
+        self.logger.info("pongReceiveHandler: \(String(describing: proto)) \(String(describing: pong))")
       })
     }
 
@@ -106,13 +106,13 @@
       task _: URLSessionTask,
       didCompleteWithError error: Error?
     ) {
-      logger.error("didCompleteWithError: \(error)")
+      logger.error("didCompleteWithError: \(String(describing: error))")
       quit = UUID()
       closed = true
     }
 
     public func write(_ req: ServerRequest) async throws -> ServerRequest {
-      try await withUnsafeThrowingContinuation { cont in
+      try await withCheckedThrowingContinuation { cont in
         logger.info("Write request: \(req)")
         do {
           let data = try JSONEncoder().encode(req)

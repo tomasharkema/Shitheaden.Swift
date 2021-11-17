@@ -10,7 +10,7 @@ import ShitheadenShared
 
 extension Array where Element == Card {
   func lowestCard() -> Element? {
-    return min {
+    return self.min {
       $0.number < $1.number
     }
   }
@@ -18,7 +18,7 @@ extension Array where Element == Card {
 
 extension Array where Element == Player {
   mutating func sortPlayerLowestCard() {
-    let lowest = min { left, right in
+    let lowest = self.min { left, right in
       let lFilter = left.handCards.filter { $0.number >= .four }
       let rFilter = right.handCards.filter { $0.number >= .four }
 

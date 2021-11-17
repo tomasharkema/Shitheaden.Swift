@@ -55,7 +55,7 @@ public actor CardRankingAlgoWithUnfairPassingAndNexPlayerAware: GameAi {
 
             return turn1count < turn2count
           }
-          logger.debug("p: \(possibleTurn)")
+          logger.debug("p: \(String(describing: possibleTurn))")
 
           if let possibleTurn = possibleTurn {
             return possibleTurn

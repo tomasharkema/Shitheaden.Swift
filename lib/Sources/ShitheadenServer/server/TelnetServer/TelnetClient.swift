@@ -13,13 +13,14 @@ import NIO
 import ShitheadenCLIRenderer
 import ShitheadenRuntime
 import ShitheadenShared
+import AsyncAwaitHelpers
 
 class TelnetClient: Client {
   private let logger = Logger(label: "cli.TelnetClient")
   private let id: UUID
   private let context: ChannelHandlerContext
   private let handler: TelnetServerHandler
-  let games: AtomicDictionary<String, MultiplayerHandler>
+  let games: DictionaryActor<String, MultiplayerHandler>
   let quit: EventHandler<UUID>.ReadOnly
   let data: EventHandler<ServerRequest>.ReadOnly
 
@@ -28,7 +29,7 @@ class TelnetClient: Client {
     handler: TelnetServerHandler,
     quit: EventHandler<Void>.ReadOnly,
     data: EventHandler<String>.ReadOnly,
-    games: AtomicDictionary<String, MultiplayerHandler>
+    games: DictionaryActor<String, MultiplayerHandler>
   ) {
     let id = UUID()
     self.id = id
@@ -50,7 +51,7 @@ class TelnetClient: Client {
 
   func start() async throws {
     do {
-      let task: Task<Void, Error> = async {
+      let task: Task<Void, Error> = Task {
         await send(string: CLI.clear() + """
         ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
         ░░░░░░░░░░░░░░░▓████████▓░░░░░░░░░░░░░░░░
@@ -119,7 +120,7 @@ class TelnetClient: Client {
         self.logger.info("CANCELLED BY: \(uuid)")
         task.cancel()
       }
-      return try await task.get()
+      return try await task.value
 
     } catch {
       logger.info("Error: \(error)")
@@ -144,7 +145,7 @@ class TelnetClient: Client {
     """)
     let event = try await data.once()
 
-    guard let name = try await event.getMultiplayerRequest().string?
+    guard let name = try event.getMultiplayerRequest().string?
       .trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     else {
       return try await askName()
@@ -161,7 +162,7 @@ class TelnetClient: Client {
     """)
     let event = try await data.once()
 
-    guard let code = try await event.getMultiplayerRequest().string?
+    guard let code = try event.getMultiplayerRequest().string?
       .trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     else {
       return try await joinGame(name: name)
@@ -179,7 +180,7 @@ class TelnetClient: Client {
       }
 
       try await game.join(competitor: Contestant(uuid: id, name: name, client: self))
-      try await game.finished()
+      _ = try await game.finished()
 
       return try await start()
     } else {
@@ -198,7 +199,7 @@ class TelnetClient: Client {
   func send(_ event: ServerEvent) async {
     switch event {
     case let .multiplayerEvent(.string(string)):
-      let _: Void = await withUnsafeContinuation { cont in
+      let _: Void = await withCheckedContinuation { cont in
         self.context.eventLoop.execute {
           let trimmedString = string.trimmingCharacters(in: .whitespacesAndNewlines)
             .replacingOccurrences(of: "\n", with: "\n\r") + "\n\r"
@@ -208,7 +209,7 @@ class TelnetClient: Client {
 
           self.context.writeAndFlush(self.handler.wrapOutboundOut(buffer))
             .whenComplete { _ in
-              async {
+              Task {
                 cont.resume()
               }
             }
@@ -226,7 +227,8 @@ class TelnetClient: Client {
 
       Joined! Wachten tot de game begint...
       """)
-    case let .joined(numberOfPlayers):
+    case let .joined(_, contestants, cpus):
+      let numberOfPlayers = contestants.count + cpus
       await send(string: """
 
       Aantal spelers: \(numberOfPlayers)
@@ -245,15 +247,15 @@ class TelnetClient: Client {
       Start game!
       """)
     case let .error(.playerError(error)):
-      await send(string: await Renderer.error(error: error))
+      await send(string: Renderer.error(error: error))
 
     case .requestMultiplayerChoice:
       logger.info("START \(event)")
-    case let .error(error: .text(text: text)):
+    case .error(error: .text):
       logger.info("START \(event)")
-    case let .error(error: .gameNotFound(code: code)):
+    case .error(error: .gameNotFound):
       logger.info("START, \(event)")
-    case let .multiplayerEvent(multiplayerEvent: .action(action: action)):
+    case .multiplayerEvent(multiplayerEvent: .action):
 
       await send(string: ANSIEscapeCode.Cursor.showCursor + ANSIEscapeCode.Cursor.position(
         row: RenderPosition.input.yAxis + 2,
@@ -302,7 +304,7 @@ class TelnetClient: Client {
 
 //    let task: Task<EndGameSnapshot, Error> = async {
     let snapshot = try await game.startGame()
-    asyncDetached(priority: .background) {
+    Task.detached(priority: .background) {
       try await WriteSnapshotToDisk.write(snapshot: snapshot)
     }
     return snapshot

@@ -114,7 +114,7 @@ struct GameView: View {
       showMenu = true
     }).foregroundColor(Color.green).padding(), alignment: .topTrailing)
     .overlay(EndStateView(endState: game.gameState.endState, restart: {
-      async {
+      Task {
         await game.restart()
       }
     }, quit: {
@@ -124,7 +124,7 @@ struct GameView: View {
       ActionSheet(title: Text("Weet je zeker dat je wilt stoppen?"), message: nil, buttons: [
         .destructive(Text("Stoppen"), action: {
           state = nil
-          async {
+          Task {
             await game.stop()
           }
         }),

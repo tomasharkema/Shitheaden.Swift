@@ -7,10 +7,29 @@
 
 import Logging
 import SwiftUI
+import ShitheadenShared
+import ShitheadenRuntime
+import AsyncAwaitHelpers
+
+class SnapshotHolder: ObservableObject {
+
+  @Published var snapshot: GameSnapshot?
+
+  func start() async {
+    Task.detached(priority: .userInitiated) {
+      assertNotMainQueue()
+      let snap = await Persistence.getSnapshot()
+      await MainActor.run {
+        self.snapshot = snap
+      }
+    }
+  }
+}
 
 struct MenuView: View {
   private let logger = Logger(label: "app.MenuView")
 
+  @ObservedObject var snapshotHolder = SnapshotHolder()
   @Binding var state: AppState?
   @State var showAlert: Bool = false
   @State var joinCode: String = ""
@@ -26,6 +45,15 @@ struct MenuView: View {
           Spacer()
           VStack(spacing: 20) {
             Spacer()
+
+            if let snapshot = snapshotHolder.snapshot {
+              Button("Speel verder", action: {
+                withAnimation {
+                  state = .resume(snapshot: snapshot)
+                }
+              })
+            }
+
             Button("Single Player 4p", action: {
               withAnimation {
                 state = .singlePlayer(contestants: 3)
@@ -90,6 +118,8 @@ struct MenuView: View {
           Spacer()
         }
       }
+    }.task {
+      await snapshotHolder.start()
     }
   }
 }

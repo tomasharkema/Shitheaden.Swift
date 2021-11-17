@@ -26,12 +26,12 @@ struct EndStateView: View {
           }
           if #available(iOS 15.0, *) {
             Button("Nog een spelletje") {
-              async {
+              Task {
                 await restart()
               }
             }.buttonStyle(.bordered)
 
-            Button("Stoppen") { async {
+            Button("Stoppen") { Task {
               await quit()
             }
             }.buttonStyle(.bordered).tint(Color.red)

@@ -31,7 +31,18 @@ public struct Player: CustomStringConvertible, Equatable, Hashable {
     self.ai = ai
   }
 
-  @inlinable var phase: Phase {
+  public init(id: UUID, name: String, position: ShitheadenShared.Position, ai: GameAi, handCards: [Card], openTableCards: [Card], closedTableCards: [Card], turns: [TurnNext]) {
+    self.id = id
+    self.handCards = handCards
+    self.openTableCards = openTableCards
+    self.closedTableCards = closedTableCards
+    self.name = name
+    self.turns = turns
+    self.position = position
+    self.ai = ai
+  }
+
+  var phase: Phase {
     if !handCards.isEmpty {
       return .hand
     } else if !openTableCards.isEmpty {
@@ -49,7 +60,7 @@ public struct Player: CustomStringConvertible, Equatable, Hashable {
     hasher.combine(id)
   }
 
-  @inlinable public var done: Bool {
+  public var done: Bool {
     handCards.isEmpty && openTableCards.isEmpty && closedTableCards
       .isEmpty
   }
@@ -58,11 +69,11 @@ public struct Player: CustomStringConvertible, Equatable, Hashable {
 //    handCards.sortNumbers()
 //  }
 
-  @inlinable mutating func sortCardsHandImportance() {
+  mutating func sortCardsHandImportance() {
     handCards.sortCardsHandImportance()
   }
 
-  @inlinable public static func == (lhs: Player, rhs: Player) -> Bool {
+  public static func == (lhs: Player, rhs: Player) -> Bool {
     lhs.handCards == rhs.handCards &&
       lhs.closedTableCards == rhs.closedTableCards &&
       lhs.openTableCards == rhs.openTableCards &&

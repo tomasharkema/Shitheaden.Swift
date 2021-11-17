@@ -23,7 +23,7 @@
 		C33A6C0D267CA87400FCF8C5 /* GameContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C33A6C0C267CA87400FCF8C5 /* GameContainer.swift */; };
 		C33A6C17267CD04800FCF8C5 /* CustomAlgo in Frameworks */ = {isa = PBXBuildFile; productRef = C33A6C16267CD04800FCF8C5 /* CustomAlgo */; };
 		C3443ABA2684C4CC0002F946 /* GameState.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3443AB92684C4CC0002F946 /* GameState.swift */; };
-		C3812A56267C816400397E65 /* ShitheadenAppApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3812A55267C816400397E65 /* ShitheadenAppApp.swift */; };
+		C3812A56267C816400397E65 /* ShitheadenApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3812A55267C816400397E65 /* ShitheadenApp.swift */; };
 		C3812A58267C816400397E65 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3812A57267C816400397E65 /* ContentView.swift */; };
 		C3812A5A267C816500397E65 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C3812A59267C816500397E65 /* Assets.xcassets */; };
 		C3812A5D267C816500397E65 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C3812A5C267C816500397E65 /* Preview Assets.xcassets */; };
@@ -54,7 +54,7 @@
 		C33A6C0C267CA87400FCF8C5 /* GameContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameContainer.swift; sourceTree = "<group>"; };
 		C3443AB92684C4CC0002F946 /* GameState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameState.swift; sourceTree = "<group>"; };
 		C3812A52267C816400397E65 /* ShitheadenApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ShitheadenApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		C3812A55267C816400397E65 /* ShitheadenAppApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShitheadenAppApp.swift; sourceTree = "<group>"; };
+		C3812A55267C816400397E65 /* ShitheadenApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShitheadenApp.swift; sourceTree = "<group>"; };
 		C3812A57267C816400397E65 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		C3812A59267C816500397E65 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		C3812A5C267C816500397E65 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
@@ -164,7 +164,7 @@
 				C303CC4A2680B27700201FEF /* Menu */,
 				C303CC472680B22D00201FEF /* Game */,
 				C3FFA11C267CA6C3007972BA /* ShitheadenApp.entitlements */,
-				C3812A55267C816400397E65 /* ShitheadenAppApp.swift */,
+				C3812A55267C816400397E65 /* ShitheadenApp.swift */,
 				C3812A57267C816400397E65 /* ContentView.swift */,
 				C3812A59267C816500397E65 /* Assets.xcassets */,
 				C3812A5B267C816500397E65 /* Preview Content */,
@@ -358,7 +358,7 @@
 				C39A09572682159C00F011BB /* AlertView.swift in Sources */,
 				C3443ABA2684C4CC0002F946 /* GameState.swift in Sources */,
 				C303CC5A2680B7E900201FEF /* TableView.swift in Sources */,
-				C3812A56267C816400397E65 /* ShitheadenAppApp.swift in Sources */,
+				C3812A56267C816400397E65 /* ShitheadenApp.swift in Sources */,
 				C3DCCF39270DA010003388E2 /* SettingsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -518,7 +518,7 @@
 				SUPPORTS_MACCATALYST = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2,6";
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
 		};
@@ -558,7 +558,7 @@
 				SUPPORTS_MACCATALYST = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2,6";
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
 		};

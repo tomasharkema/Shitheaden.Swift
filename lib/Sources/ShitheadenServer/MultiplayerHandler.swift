@@ -42,15 +42,15 @@ actor MultiplayerHandler {
   }
 
   nonisolated func start() async {
-    await challenger.client.quit.on { [weak self] uuid in
+    _ = await challenger.client.quit.on { [weak self] uuid in
       guard let self = self else {
         return
       }
       self.logger.info("onQuitRead")
 
-      asyncDetached {
+      Task.detached {
         await self.competitors.forEach { competitor in
-          asyncDetached {
+          Task.detached {
             try await competitor.client.send(.quit(from: uuid))
           }
         }
@@ -60,15 +60,15 @@ actor MultiplayerHandler {
       await self.gameTask?.cancel()
     }
     await competitors.forEach { competitor in
-      competitor.client.quit.on { [weak self] uuid in
+      _ = competitor.client.quit.on { [weak self] uuid in
         guard let self = self else {
           return
         }
-        asyncDetached {
+        Task.detached {
           let challenger = await self.challenger
           try await challenger.client.send(.quit(from: uuid))
           await self.competitors.filter { $0.uuid != competitor.uuid }.forEach { competitor in
-            asyncDetached {
+            Task.detached {
               try await competitor.client.send(.quit(from: uuid))
             }
           }
@@ -147,14 +147,14 @@ actor MultiplayerHandler {
   nonisolated func startGame() async throws {
     try await send(.start)
 
-    let game = try await startMultiplayerGame()
+    let _ = try await startMultiplayerGame()
 
     logger.info("RESTART?")
 
     try await challenger.client.send(.requestRestart)
 
     await competitors.forEach { competitor in
-      async {
+      Task {
         try await competitor.client.send(.waitForRestart)
       }
     }
@@ -240,12 +240,12 @@ actor MultiplayerHandler {
     let game = Game(
       players: [initiator] + joiners + cpus, rules: Rules.all, slowMode: true
     )
-    let gameTask: Task<EndGameSnapshot, Error> = async {
+    let gameTask: Task<EndGameSnapshot, Error> = Task {
       try await withTaskCancellationHandler(operation: {
         do {
           let result = try await game.startGame()
 
-          asyncDetached(priority: .background) {
+          Task.detached(priority: .background) {
             try await WriteSnapshotToDisk.write(snapshot: result)
           }
 
@@ -265,7 +265,7 @@ actor MultiplayerHandler {
     }
 
     await setGameTask(gameTask)
-    return try await gameTask.get()
+    return try await gameTask.value
   }
 
   private func setGameTask(_ gameTask: Task<EndGameSnapshot, Error>) {

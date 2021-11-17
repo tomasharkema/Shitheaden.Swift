@@ -55,10 +55,10 @@ struct LocalPlayerView: View {
                 playClosedCard(closedCard.offset)
               }, label: {
                 CardView(card: closedCard.element)
-              }).buttonStyle(PlainButtonStyle())
+              })
+              .buttonStyle(PlainButtonStyle())
             }
           }
-          .padding(5)
           Spacer()
         } else {
           LazyVGrid(columns: [

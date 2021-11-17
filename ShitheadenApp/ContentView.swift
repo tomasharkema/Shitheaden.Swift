@@ -15,6 +15,7 @@ enum AppState {
   case singlePlayer(contestants: Int)
   case multiplayerChallenger
   case multiplayerJoin(String)
+  case resume(snapshot: GameSnapshot)
 }
 
 struct ContentView: View {
@@ -26,15 +27,24 @@ struct ContentView: View {
     switch appState {
     case let .singlePlayer(contestants):
       GameView(state: $appState, game: offlineGame)
-        .onAppear {
-          if #available(iOS 15.0, *) {
-            async {
+        .task {
+
               await offlineGame.start(restart: true, contestants: contestants)
-            }
-          }
         }
+
+
+    case .resume(let snapshot):
+      GameView(state: $appState, game: offlineGame)
+        .task {
+              await offlineGame.resume(snapshot: snapshot)
+        }
+
+
+
     case .multiplayerChallenger:
       ConnectingView(state: $appState, code: nil)
+
+
     case let .multiplayerJoin(code):
       ConnectingView(state: $appState, code: code)
     case .none:

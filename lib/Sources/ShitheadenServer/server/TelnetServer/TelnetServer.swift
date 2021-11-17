@@ -13,13 +13,14 @@ import NIO
 import NIOExtras
 import ShitheadenRuntime
 import ShitheadenShared
+import AsyncAwaitHelpers
 
 class TelnetServer {
   private let logger = Logger(label: "cli.TelnetServer")
-  let games: AtomicDictionary<String, MultiplayerHandler>
+  let games: DictionaryActor<String, MultiplayerHandler>
   private var channel: Channel?
 
-  init(games: AtomicDictionary<String, MultiplayerHandler>) {
+  init(games: DictionaryActor<String, MultiplayerHandler>) {
     self.games = games
   }
 
@@ -56,7 +57,7 @@ class TelnetServer {
 
 extension EventLoopFuture {
   func get() async throws -> Value {
-    try await withUnsafeThrowingContinuation { cont in
+    try await withCheckedThrowingContinuation { cont in
       whenSuccess {
         cont.resume(returning: $0)
       }

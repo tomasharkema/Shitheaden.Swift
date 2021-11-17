@@ -17,6 +17,7 @@ class Connecting: ObservableObject {
   private let websocket = WebSocketGameClient()
   @Published private var client: WebSocketClient?
   @Published var connection: ConnectionState = .connecting
+  @Published var lastError: Error?
   let gameContainer = GameContainer()
 
   private var identifier: UUID?
@@ -26,12 +27,12 @@ class Connecting: ObservableObject {
   private var dataHandler: AnyCancellable?
   private var quitHandler: AnyCancellable?
 
-  private var connectingTask: Task<Void, Error>?
+  private var connectingTask: Task<Void, Never>?
 
-  func start() async throws {
+  func start() async {
     connectingTask?.cancel()
 
-    let connectingTask = async {
+    let connectingTask = Task {
       connection = .connecting
       do {
         let client = try await websocket.start()
@@ -41,7 +42,7 @@ class Connecting: ObservableObject {
           .filter { $0 != nil }
           .receive(on: RunLoop.main)
           .sink { event in
-            async {
+            Task {
               await self.onData(event!, client)
             }
           }
@@ -53,20 +54,19 @@ class Connecting: ObservableObject {
           }
       } catch {
         connection = .gameNotFound
-        throw error
+        lastError = error
+//        throw error
       }
     }
 
     self.connectingTask = connectingTask
 
-    return try await connectingTask.get()
+    return await connectingTask.value
   }
 
   func close() {
     connectingTask?.cancel()
-    async {
-      await client?.close()
-    }
+    client?.close()
   }
 
   var isInitiator: Bool = false
@@ -93,7 +93,7 @@ class Connecting: ObservableObject {
         )
       }
 
-    case let .error(error: .gameNotFound(code)):
+    case .error(error: .gameNotFound):
       connection = .gameNotFound
 
     case let .error(error: error):
@@ -102,17 +102,17 @@ class Connecting: ObservableObject {
     case .requestMultiplayerChoice:
       connection = .makeChoice
 
-    case let .multiplayerEvent(.gameSnapshot(snapshot)):
+    case .multiplayerEvent(.gameSnapshot):
       if case .gameContainer = connection {
         // NO-OP
       } else {
-        async {
+        Task {
           await gameContainer.startOnline(client, restart: false)
         }
       }
       connection = .gameContainer(gameContainer)
 
-    case let .multiplayerEvent(multiplayerEvent):
+    case .multiplayerEvent:
       break
 
     case let .joined(initiator, contestants, cpus):
@@ -150,36 +150,44 @@ class Connecting: ObservableObject {
     }
   }
 
-  func connect(code: String) async throws {
+  func connect(code: String) async {
     guard let name = name else {
       connection = .getName
       return
     }
     self.code = code
-    try await client?.write(.joinMultiplayer(name: name, code: code))
+    do {
+      _ = try await client?.write(.joinMultiplayer(name: name, code: code))
+    } catch {
+      lastError = error
+    }
   }
 
-  func connect() async throws {
+  func connect() async {
     guard let name = name else {
       connection = .getName
 
       return
     }
-    try await client?.write(.startMultiplayer(name: name))
+    do {
+      _ = try await client?.write(.startMultiplayer(name: name))
+    } catch {
+      lastError = error
+    }
   }
 
   func addCpu() async throws {
-    try await client?
+    _ = try await client?
       .write(.multiplayerRequest(.string("cpu+")))
   }
 
   func removeCpu() async throws {
-    try await client?
+    _ = try await client?
       .write(.multiplayerRequest(.string("cpu-")))
   }
 
   func startGame() async throws {
-    try await client?.write(.multiplayerRequest(.string("start")))
+    _ = try await client?.write(.multiplayerRequest(.string("start")))
   }
 
   func set(name: String) {

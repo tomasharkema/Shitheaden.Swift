@@ -65,10 +65,10 @@ final class GameContainer: ObservableObject {
         newGameState.isBeginMove = true
 
         beginMoveHandlerCancel = $beginMoveHandler.filter { $0 != nil }.first().sink { cards in
-          async {
+          Task {
             do {
               self.logger.debug("\(String(describing: cards))")
-              try await client
+              _ = try await client
                 .write(.multiplayerRequest(.concreteCards([cards!.0, cards!.1, cards!.2])))
             } catch {
               self.logger.error("Error: \(error)")
@@ -84,10 +84,10 @@ final class GameContainer: ObservableObject {
 
         moveHandlerCancel = $moveHandler.filter { $0 != nil }.first()
           .sink { turn in
-            async {
+            Task {
               do {
                 self.logger.debug("\(String(describing: turn!))")
-                try await client.write(.multiplayerRequest(.concreteTurn(turn!)))
+                _ = try await client.write(.multiplayerRequest(.concreteTurn(turn!)))
               } catch {
                 self.logger.error("Error: \(error)")
               }
@@ -145,24 +145,13 @@ final class GameContainer: ObservableObject {
   }
 
   var gameTask: Task<EndGameSnapshot?, Never>?
-  func start(restart: Bool = false, contestants: Int) async {
-    self.contestants = contestants
-    if restart {
-      appInput = nil
-      game = nil
-      gameTask?.cancel()
-      gameTask = nil
-    }
 
-    guard appInput == nil, game == nil else {
-      return
-    }
-    gameState = GameState()
-    let appInput = AppInputUserInputAI(
+  private func createAppInput() -> AppInputUserInputAI {
+    AppInputUserInputAI(
       beginMoveHandler: { handler in
 
         self.beginMoveHandlerCancel = self.$beginMoveHandler.filter { $0 != nil }.first()
-          .sink { cards in async {
+          .sink { cards in Task {
             await handler(cards!)
 
           }}
@@ -176,7 +165,7 @@ final class GameContainer: ObservableObject {
       }, moveHandler: { canPass, handler in
 
         self.moveHandlerCancel = self.$moveHandler.filter { $0 != nil }.first().sink { turn in
-          async {
+          Task {
             await handler(turn!)
           }
         }
@@ -195,6 +184,82 @@ final class GameContainer: ObservableObject {
         self.gameState = self.handle(snapshot: game)
       }
     )
+  }
+
+  func resume(snapshot: GameSnapshot) async {
+    self.contestants = snapshot.players.count - 1
+    gameState = GameState()
+    let appInput = createAppInput()
+    self.appInput = appInput
+
+    let game = Game(
+      snapshot: snapshot,
+      localPlayerAi: createAppInput(),
+      otherAi: CardRankingAlgoWithUnfairPassingAndNexPlayerAware.make()
+    )
+
+    self.game = game
+    let gameTask: Task<EndGameSnapshot?, Never> = Task {
+      var snap: EndGameSnapshot?
+      do {
+        let snapshot = try await game.resume()
+
+        Task.detached(priority: .background) {
+          do {
+            let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+              .appendingPathComponent(
+                "shitheaden"
+              )
+              .appendingPathComponent(
+                "game-\(snapshot.gameId)-\(Int(snapshot.snapshot.beginDate))-\(snapshot.signature).json"
+              )
+            let data = try JSONEncoder().encode(snapshot)
+            try data
+              .write(to: url)
+
+            var request = URLRequest(url: Host.host.appendingPathComponent("playedGame"))
+            request.httpMethod = "POST"
+            request.addValue("application/json", forHTTPHeaderField: "content-type")
+
+            let result = try await URLSession.shitheaden.upload(
+              for: request,
+                 from: data,
+                 delegate: nil
+            )
+
+            let resultString = String(data: result.0, encoding: .utf8)
+
+            self.logger.info("UPLOAD: \(result) \(String(describing: resultString))")
+          } catch {
+            self.logger.error("Error: \(error)")
+          }
+        }
+
+        snap = snapshot
+      } catch {
+        self.logger.error("\(String(describing: error))")
+      }
+      self.logger.info("DONE! \(String(describing: snap))")
+      return snap
+    }
+    self.gameTask = gameTask
+    _ = await gameTask.value
+  }
+
+  func start(restart: Bool = false, contestants: Int) async {
+    self.contestants = contestants
+    if restart {
+      appInput = nil
+      game = nil
+      gameTask?.cancel()
+      gameTask = nil
+    }
+
+    guard appInput == nil, game == nil else {
+      return
+    }
+    gameState = GameState()
+    let appInput = createAppInput()
     self.appInput = appInput
 
     let game = Game(
@@ -211,12 +276,12 @@ final class GameContainer: ObservableObject {
     )
 
     self.game = game
-    let gameTask: Task<EndGameSnapshot?, Never> = async {
+    let gameTask: Task<EndGameSnapshot?, Never> = Task {
       var snap: EndGameSnapshot?
       do {
         let snapshot = try await game.startGame()
 
-        asyncDetached(priority: .background) {
+        Task.detached(priority: .background) {
           do {
             let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
               .appendingPathComponent(
@@ -241,7 +306,7 @@ final class GameContainer: ObservableObject {
 
             let resultString = String(data: result.0, encoding: .utf8)
 
-            self.logger.info("UPLOAD: \(result) \(resultString)")
+            self.logger.info("UPLOAD: \(result) \(String(describing: resultString))")
           } catch {
             self.logger.error("Error: \(error)")
           }
@@ -294,7 +359,7 @@ final class GameContainer: ObservableObject {
   }
 
   func play() {
-    async {
+    Task {
       if gameState.isBeginMove {
         guard selectedCards.count == 3 else {
           self.gameState.error = "Select drie kaarten!"
@@ -331,7 +396,7 @@ final class GameContainer: ObservableObject {
 
   func stop() async {
     logger.info("STOP game controller for client \(String(describing: client))")
-    try? await client?.write(.quit(from: id))
+    _ = try? await client?.write(.quit(from: id))
   }
 
   func restart() async {

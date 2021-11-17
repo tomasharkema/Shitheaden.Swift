@@ -80,7 +80,7 @@ public extension Array where Element == RenderCard {
   //  }
 
   func unobscure() -> [Card] {
-    flatMap(\.card)
+    compactMap(\.card)
   }
 }
 

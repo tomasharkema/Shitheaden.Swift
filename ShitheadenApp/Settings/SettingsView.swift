@@ -10,10 +10,17 @@ import SwiftUI
 
 struct Setting: View {
   let title: String
-  @Binding var state: Bool
+  let rule: Rules
+  @ObservedObject var storage = Storage.shared
 
   var body: some View {
-    Toggle(title, isOn: $state)
+    Toggle(title, isOn: Binding(get: {
+      storage.rules.contains(rule)
+    }, set: {
+      let newRules = $0 ? storage.rules.union(rule) : storage.rules
+        .subtracting(rule)
+      storage.rules = newRules
+    }))
   }
 }
 
@@ -27,43 +34,19 @@ struct SettingsView: View {
         Section("Regels") {
           Setting(
             title: "Krijg opnieuw de beurt als je niet kan",
-            state: Binding(get: {
-              storage.rules.contains(.againAfterPass)
-            }, set: {
-              let newRules = $0 ? storage.rules.union(.againAfterPass) : storage.rules
-                .subtracting(.againAfterPass)
-              storage.rules = newRules
-            })
+            rule: .againAfterPass
           )
           Setting(
-            title: "Krijg opnieuw de beurt als je een 10 of 4 dezelfde kaarten opgooit",
-            state: Binding(get: {
-              storage.rules.contains(.againAfterGoodBehavior)
-            }, set: {
-              let newRules = $0 ? storage.rules.union(.againAfterGoodBehavior) : storage.rules
-                .subtracting(.againAfterGoodBehavior)
-              storage.rules = newRules
-            })
+            title: "Krijg opnieuw de beurt als je 4 dezelfde kaarten opgooit",
+            rule: .againAfterPlayingFourCards
           )
           Setting(
             title: "Krijg open kaart wanneer je open kaart niet kan",
-            state: Binding(get: {
-              storage.rules.contains(.getCardWhenPassOpenCardTables)
-            }, set: {
-              let newRules = $0 ? storage.rules.union(.getCardWhenPassOpenCardTables) : storage
-                .rules.subtracting(.getCardWhenPassOpenCardTables)
-              storage.rules = newRules
-            })
+            rule: .getCardWhenPassOpenCardTables
           )
           Setting(
             title: "Je mag passen ondanks dat je niet kan",
-            state: Binding(get: {
-              storage.rules.contains(.unfairPassingAllowed)
-            }, set: {
-              let newRules = $0 ? storage.rules.union(.unfairPassingAllowed) : storage.rules
-                .subtracting(.unfairPassingAllowed)
-              storage.rules = newRules
-            })
+            rule: .unfairPassingAllowed
           )
         }
 

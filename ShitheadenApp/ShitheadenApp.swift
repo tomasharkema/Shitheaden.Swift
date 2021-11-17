@@ -1,5 +1,5 @@
 //
-//  ShitheadenAppApp.swift
+//  ShitheadenApp.swift
 //  ShitheadenApp
 //
 //  Created by Tomas Harkema on 18/06/2021.
@@ -10,7 +10,7 @@ import LoggingOSLog
 import SwiftUI
 
 @main
-struct ShitheadenAppApp: App {
+struct ShitheadenApp: App {
   var body: some Scene {
     WindowGroup {
       ContentView()
