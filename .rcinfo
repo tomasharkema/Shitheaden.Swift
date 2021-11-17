@@ -1,3 +1,4 @@
-primary_repo: https://github.com/tomasharkema/Shitheaden.Swift.git
+primary_repo: https://tomasharkema@github.com/tomasharkema/Shitheaden.Swift.git
 cache_addresses:
-- https://xcremotecache.harkema.io
+- https://xcremotecache.harkema.io/cache
+primary_branch: main
